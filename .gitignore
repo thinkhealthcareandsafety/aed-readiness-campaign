@@ -36,12 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
-# sqlite data
+# sqlite data + admin-uploaded images (persisted via a hosting volume, not committed)
 /data/*.db
 /data/*.db-*
-
-# admin-uploaded images (persisted via a hosting volume, not committed)
-/public/uploads/*
+/data/uploads/
 
 # typescript
 *.tsbuildinfo

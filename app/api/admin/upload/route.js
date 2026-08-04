@@ -4,7 +4,10 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-const uploadsDir = path.join(process.cwd(), "public", "uploads");
+// Lives on the same persisted volume as the database (see next.config.mjs and
+// app/api/uploads/[filename]/route.js for how these are served back out at
+// the same /uploads/<file> URL, despite not being under /public anymore).
+const uploadsDir = path.join(process.cwd(), "data", "uploads");
 
 const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif"]);
 
