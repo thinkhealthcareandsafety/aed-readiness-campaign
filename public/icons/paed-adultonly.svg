@@ -1,0 +1,6 @@
+<svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="30" y="24" width="60" height="52" rx="10" fill="#ffffff" stroke="#c7ccd3"/>
+  <rect x="42" y="38" width="36" height="16" rx="8" fill="#e3e5e8"/>
+  <circle cx="68" cy="46" r="9" fill="#c23b3b"/>
+  <text x="60" y="70" text-anchor="middle" font-family="ui-sans-serif, system-ui" font-size="9" font-weight="700" fill="#586170">ADULT ONLY</text>
+</svg>
