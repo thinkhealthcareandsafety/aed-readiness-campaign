@@ -78,6 +78,11 @@
 
 * { box-sizing: border-box; }
 html, body { padding: 0; margin: 0; }
+/* Each wizard step's icons load asynchronously and shift layout as they
+   resolve; without this, the browser's default scroll-anchoring quietly
+   readjusts scroll position to compensate as they load in, fighting the
+   explicit scroll-to-top on every step change (AuditWizard.jsx). */
+html { overflow-anchor: none; }
 body {
   background: var(--paper);
   color: var(--ink);
