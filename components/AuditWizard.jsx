@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, LinearScale } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
@@ -26,6 +26,13 @@ export default function AuditWizard({ schema }) {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+
+  // Without this, the browser keeps whatever scroll position you were at —
+  // on mobile that's usually the bottom of the previous (longer) step, right
+  // by the Next button, leaving the new step's questions off-screen above.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [stepIndex]);
 
   const expandedSchema = useMemo(() => expandUnitQuestions(schema, answers), [schema, answers]);
   const visibleSections = useMemo(
