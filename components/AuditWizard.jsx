@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, LinearScale } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
+import { ExpiryReferenceGuide, PaediatricReferenceGuide } from "@/components/ReferenceGuide";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions } from "@/lib/genericScoring";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
@@ -166,6 +167,8 @@ export default function AuditWizard({ schema }) {
             </h2>
           </div>
           <p className="section-note">{step.note}</p>
+          {step.title === "Expiry Status" && <ExpiryReferenceGuide />}
+          {step.title === "Paediatric Readiness" && <PaediatricReferenceGuide />}
 
           {isReview ? (
             <div className="callout ready">
