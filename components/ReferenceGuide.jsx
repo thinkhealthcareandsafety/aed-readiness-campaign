@@ -1,81 +1,100 @@
 "use client";
 
 // Real photos of where to find the serial number / battery expiry / pad
-// expiry on the AED brands this audit sees most — the Expiry Status
-// questions are the most commonly mis-answered ones because people don't
-// know where to look on the physical unit.
-const AED_PHOTO_GROUPS = [
-  {
+// expiry on the AED brands we have reference shots for. Keyed by the same
+// model `value`s used in the AED model quantity question (frx, hs1,
+// zollPlus, defibtech, …) so a selected model maps straight to its photos.
+const MODEL_PHOTOS = {
+  frx: {
     brand: "Philips HeartStart FRx",
-    items: [
-      { label: "Battery expiry date", src: "/reference/frx-battery.jpg" },
-      { label: "Electrode pad expiry date", src: "/reference/frx-pads.jpg" },
-      { label: "Serial number", src: "/reference/frx-serial.jpg" },
-    ],
+    serial: "/reference/frx-serial.jpg",
+    battery: "/reference/frx-battery.jpg",
+    pads: "/reference/frx-pads.jpg",
+    paediatric: "/reference/paed-key-photo.jpg",
+    paediatricLabel: "Infant/Child Key",
   },
-  {
+  hs1: {
     brand: "Philips HeartStart HS1",
-    items: [
-      { label: "Battery expiry date", src: "/reference/hs1-battery.jpg" },
-      { label: "Electrode pad expiry date", src: "/reference/hs1-pads.jpg" },
-      { label: "Serial number", src: "/reference/hs1-serial.jpg" },
-    ],
+    serial: "/reference/hs1-serial.jpg",
+    battery: "/reference/hs1-battery.jpg",
+    pads: "/reference/hs1-pads.jpg",
+    paediatric: "/reference/paed-key-photo.jpg",
+    paediatricLabel: "Infant/Child Key",
   },
-  {
+  zollPlus: {
     brand: "ZOLL AED Plus",
-    items: [
-      { label: "Electrode pad expiry date (CPR-D-padz box)", src: "/reference/zollplus-pads.jpg" },
-      { label: "Serial number", src: "/reference/zollplus-serial.jpg" },
-    ],
+    serial: "/reference/zollplus-serial.jpg",
+    pads: "/reference/zollplus-pads.jpg",
+    paediatric: "/reference/paed-pads-zoll-photo.jpg",
+    paediatricLabel: "ZOLL Pedi-padz II",
   },
-  {
+  defibtech: {
     brand: "Defibtech",
-    items: [{ label: "Battery expiry date", src: "/reference/defibtech-battery.jpg" }],
+    battery: "/reference/defibtech-battery.jpg",
   },
-];
+};
 
-const PAEDIATRIC_PHOTOS = [
-  { label: "Infant/Child Key", src: "/reference/paed-key-photo.jpg" },
-  { label: "ZOLL Pedi-padz II (0-8 years)", src: "/reference/paed-pads-zoll-photo.jpg" },
-];
+// Questions ask about a specific unit ("Battery (1) expiry date", "... (2)
+// ...", a clone's "... (3) ..."), but which physical unit is which brand
+// isn't tracked — the model question only captures a total count per model.
+// So instead of guessing a 1:1 match, every selected model's photo is shown
+// for every unit's fields; each thumbnail is labeled with its brand so it's
+// never ambiguous which device it refers to.
+function modelsWithPhoto(models, kind) {
+  return models.map((m) => MODEL_PHOTOS[m]).filter((m) => m && m[kind]);
+}
 
-function PhotoGrid({ items }) {
+function ThumbRow({ items, kind, labelKey = "brand" }) {
+  if (items.length === 0) return null;
   return (
-    <div className="ref-grid">
-      {items.map((it) => (
-        <a key={it.src} href={it.src} target="_blank" rel="noreferrer" className="ref-item">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static reference photo, not build-optimized content */}
-          <img src={it.src} alt={it.label} loading="lazy" />
-          <span className="ref-item-label">{it.label}</span>
+    <div className="ref-inline">
+      <span className="ref-inline-hint">Yours: </span>
+      {items.map((m) => (
+        <a key={m[labelKey] + m[kind]} href={m[kind]} target="_blank" rel="noreferrer" className="ref-inline-item">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static reference photo, not build-time content */}
+          <img src={m[kind]} alt={`${m.brand} — where to find this`} loading="lazy" />
+          <span>{m.brand}</span>
         </a>
       ))}
     </div>
   );
 }
 
-export function ExpiryReferenceGuide() {
+// Placed right under a single serial/battery/pad field — only the models the
+// responder actually selected earlier, only if we have that photo for them.
+export function FieldReferencePhoto({ models, kind }) {
+  const items = modelsWithPhoto(models, kind);
+  return <ThumbRow items={items} kind={kind} />;
+}
+
+export function PaediatricReferencePhoto({ models }) {
+  const items = models
+    .map((m) => MODEL_PHOTOS[m])
+    .filter((m) => m && m.paediatric)
+    // de-dupe identical paediatric photos shared across models (FRx/HS1 both use the key)
+    .filter((m, i, arr) => arr.findIndex((x) => x.paediatric === m.paediatric) === i);
+  if (items.length === 0) return null;
   return (
-    <details className="ref-guide">
-      <summary>Not sure where to look? See labeled photos by AED brand</summary>
-      <div className="ref-guide-body">
-        {AED_PHOTO_GROUPS.map((g) => (
-          <div key={g.brand} className="ref-group">
-            <div className="ref-group-title">{g.brand}</div>
-            <PhotoGrid items={g.items} />
-          </div>
-        ))}
-      </div>
-    </details>
+    <div className="ref-inline">
+      <span className="ref-inline-hint">Yours: </span>
+      {items.map((m) => (
+        <a key={m.paediatric} href={m.paediatric} target="_blank" rel="noreferrer" className="ref-inline-item">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static reference photo, not build-time content */}
+          <img src={m.paediatric} alt={`${m.paediatricLabel} — reference photo`} loading="lazy" />
+          <span>{m.paediatricLabel}</span>
+        </a>
+      ))}
+    </div>
   );
 }
 
-export function PaediatricReferenceGuide() {
-  return (
-    <details className="ref-guide">
-      <summary>Not sure what this looks like? See reference photos</summary>
-      <div className="ref-guide-body">
-        <PhotoGrid items={PAEDIATRIC_PHOTOS} />
-      </div>
-    </details>
-  );
+// Maps a question to which kind of reference photo helps it, purely from its
+// label/type — works for AED (1), (2), and any (3)+ clone without needing
+// per-unit special-casing.
+export function referenceKindFor(question) {
+  const label = (question.label || "").toLowerCase();
+  if (question.type === "text" && label.includes("serial")) return "serial";
+  if (question.type === "date" && label.includes("battery")) return "battery";
+  if (question.type === "date" && label.includes("pad")) return "pads";
+  return null;
 }

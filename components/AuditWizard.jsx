@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, LinearScale } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
-import { ExpiryReferenceGuide, PaediatricReferenceGuide } from "@/components/ReferenceGuide";
-import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions } from "@/lib/genericScoring";
+import { FieldReferencePhoto, PaediatricReferencePhoto, referenceKindFor } from "@/components/ReferenceGuide";
+import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels } from "@/lib/genericScoring";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
 
@@ -36,6 +36,7 @@ export default function AuditWizard({ schema }) {
   }, [stepIndex]);
 
   const expandedSchema = useMemo(() => expandUnitQuestions(schema, answers), [schema, answers]);
+  const selectedAedModels = useMemo(() => getSelectedAedModels(schema, answers), [schema, answers]);
   const visibleSections = useMemo(
     () => expandedSchema.sections.filter((s) => isSectionVisible(s, answers)),
     [expandedSchema, answers]
@@ -167,8 +168,7 @@ export default function AuditWizard({ schema }) {
             </h2>
           </div>
           <p className="section-note">{step.note}</p>
-          {step.title === "Expiry Status" && <ExpiryReferenceGuide />}
-          {step.title === "Paediatric Readiness" && <PaediatricReferenceGuide />}
+          {step.title === "Paediatric Readiness" && <PaediatricReferencePhoto models={selectedAedModels} />}
 
           {isReview ? (
             <div className="callout ready">
@@ -187,6 +187,7 @@ export default function AuditWizard({ schema }) {
                 setCheckboxAnswer={setCheckboxAnswer}
                 setQuantityAnswer={setQuantityAnswer}
                 setFreeText={setFreeText}
+                selectedAedModels={selectedAedModels}
               />
             ))
           )}
@@ -215,10 +216,11 @@ export default function AuditWizard({ schema }) {
   );
 }
 
-function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText }) {
+function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels }) {
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
   const name = `q${question.id}`;
+  const refKind = referenceKindFor(question);
 
   if (question.type === "text" || question.type === "email" || question.type === "tel") {
     return (
@@ -228,6 +230,7 @@ function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckb
           value={answers[question.id] || ""}
           onChange={(v) => setAnswer(question.id, v)}
         />
+        {refKind && <FieldReferencePhoto models={selectedAedModels} kind={refKind} />}
       </QBlock>
     );
   }
@@ -236,6 +239,7 @@ function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckb
     return (
       <QBlock label={question.label} required={question.required} hint={question.hint}>
         <TextInput type="date" value={answers[question.id] || ""} onChange={(v) => setAnswer(question.id, v)} />
+        {refKind && <FieldReferencePhoto models={selectedAedModels} kind={refKind} />}
       </QBlock>
     );
   }
