@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { insertSubmission, listSubmissions, getFormSchema } from "@/lib/db";
-import { scoreSubmission, extractIdentity, validateAnswers, resolveDerivedAnswers } from "@/lib/genericScoring";
+import { scoreSubmission, extractIdentity, validateAnswers, resolveDerivedAnswers, expandUnitQuestions } from "@/lib/genericScoring";
 import { isAdminAuthed } from "@/lib/adminAuth";
 
 export async function POST(request) {
@@ -16,7 +16,13 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid submission" }, { status: 400 });
   }
 
-  const schema = getFormSchema();
+  // Mirror the wizard's own schema transform before validating/scoring —
+  // without this, a responder who reported 3+ AEDs would have their extra
+  // units' answers (required and scored client-side) silently ignored here,
+  // since those unit blocks only ever existed as the wizard's in-memory
+  // clones and were never re-derived server-side.
+  const baseSchema = getFormSchema();
+  const schema = expandUnitQuestions(baseSchema, rawAnswers);
   // Recompute date-derived answers (e.g. expiry tier) server-side too, so a
   // stale or tampered client value can never override the date that was
   // actually entered.

@@ -4,12 +4,14 @@ import path from "path";
 
 const uploadsDir = path.join(process.cwd(), "data", "uploads");
 
+// Kept in lockstep with ALLOWED_EXT in app/api/admin/upload/route.js — .svg
+// is deliberately absent from both (an SVG can carry a <script> that a
+// browser will execute if its URL is ever opened as a top-level navigation).
 const CONTENT_TYPES = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".png": "image/png",
   ".webp": "image/webp",
-  ".svg": "image/svg+xml",
   ".gif": "image/gif",
 };
 
@@ -40,6 +42,7 @@ export async function GET(request, { params }) {
     headers: {
       "Content-Type": contentType,
       "Cache-Control": "public, max-age=31536000, immutable",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkPassword, adminCookieValue, ADMIN_COOKIE_NAME } from "@/lib/adminAuth";
+import { checkPassword, issueAdminSession, ADMIN_COOKIE_NAME, ADMIN_SESSION_TTL_MS } from "@/lib/adminAuth";
 
 export async function POST(request) {
   let body;
@@ -13,13 +13,14 @@ export async function POST(request) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
 
+  const token = issueAdminSession();
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(ADMIN_COOKIE_NAME, adminCookieValue(), {
+  res.cookies.set(ADMIN_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 8,
+    maxAge: ADMIN_SESSION_TTL_MS / 1000,
   });
   return res;
 }

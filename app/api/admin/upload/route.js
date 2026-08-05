@@ -9,7 +9,12 @@ import crypto from "crypto";
 // the same /uploads/<file> URL, despite not being under /public anymore).
 const uploadsDir = path.join(process.cwd(), "data", "uploads");
 
-const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif"]);
+// .svg deliberately excluded: browsers execute inline <script>/event-handler
+// content in an SVG opened as a top-level document, so an uploaded SVG could
+// carry stored XSS if its /uploads/<file> URL is ever navigated to directly
+// — unlike the raster formats here, which can't execute script.
+const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB — generous for a reference photo, not for filling a disk
 
 export async function POST(request) {
   if (!(await isAdminAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,6 +23,9 @@ export async function POST(request) {
   const file = formData?.get("file");
   if (!file || typeof file === "string") {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return NextResponse.json({ error: "File too large (max 8MB)" }, { status: 400 });
   }
 
   const originalName = file.name || "upload";

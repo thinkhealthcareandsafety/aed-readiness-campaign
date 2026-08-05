@@ -4,10 +4,30 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, LinearScale } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
-import { FieldReferencePhoto, PaediatricReferencePhoto, referenceKindFor } from "@/components/ReferenceGuide";
-import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels } from "@/lib/genericScoring";
+import { FieldReferencePhoto, PaediatricReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
+import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence } from "@/lib/genericScoring";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
+
+// A refresh mid-audit (accidental reload, a flaky connection, closing the
+// tab to come back to a long form later) used to wipe every answer back to
+// step 1, since progress only ever lived in React state. Mirroring it into
+// localStorage — restored once on mount, cleared on a successful submit —
+// means a reload resumes exactly where the responder left off instead.
+const DRAFT_KEY = "aed-audit-draft-v1";
+const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // older than this, treat it as abandoned rather than resuming it
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    if (!draft?.savedAt || Date.now() - new Date(draft.savedAt).getTime() > DRAFT_MAX_AGE_MS) return null;
+    return draft;
+  } catch {
+    return null;
+  }
+}
 
 export default function AuditWizard({ schema }) {
   const router = useRouter();
@@ -27,6 +47,39 @@ export default function AuditWizard({ schema }) {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  // Runs once on mount, client-side only (localStorage doesn't exist during
+  // server rendering) — restores a prior in-progress draft, if any. This
+  // can't be a lazy useState initializer instead (the usual way to avoid an
+  // effect-plus-setState): that runs during render, including the server
+  // render, where localStorage isn't defined, and reading it only on the
+  // client there would make the client's first render disagree with the
+  // already-sent server HTML — a real hydration mismatch. Starting at the
+  // server-safe default and correcting it here, after mount, avoids that.
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above: intentional one-time client-only hydration, not a prop/state sync
+      if (draft.answers) setAnswersRaw(draft.answers);
+      if (typeof draft.stepIndex === "number") setStepIndex(draft.stepIndex);
+    }
+    setDraftRestored(true);
+  }, []);
+
+  // Mirrors current progress into localStorage on every change, so a reload
+  // resumes here instead of at step 1. Gated on draftRestored so the initial
+  // blank state (before the restore effect above has run) can't race ahead
+  // and overwrite a real draft with nothing.
+  useEffect(() => {
+    if (!draftRestored) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ answers, stepIndex, savedAt: new Date().toISOString() }));
+    } catch {
+      // localStorage can throw (private browsing, quota) — losing draft
+      // persistence isn't worth surfacing an error over.
+    }
+  }, [answers, stepIndex, draftRestored]);
 
   // Without this, the browser keeps whatever scroll position you were at —
   // on mobile that's usually the bottom of the previous (longer) step, right
@@ -37,6 +90,7 @@ export default function AuditWizard({ schema }) {
 
   const expandedSchema = useMemo(() => expandUnitQuestions(schema, answers), [schema, answers]);
   const selectedAedModels = useMemo(() => getSelectedAedModels(schema, answers), [schema, answers]);
+  const aedModelSequence = useMemo(() => getAedModelSequence(schema, answers), [schema, answers]);
   const visibleSections = useMemo(
     () => expandedSchema.sections.filter((s) => isSectionVisible(s, answers)),
     [expandedSchema, answers]
@@ -126,6 +180,11 @@ export default function AuditWizard({ schema }) {
       });
       if (!res.ok) throw new Error("Submission failed");
       const { id } = await res.json();
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        // best-effort cleanup only
+      }
       router.push(`/report/${id}`);
     } catch {
       setSubmitError("Something went wrong sending your audit. Please try again.");
@@ -167,7 +226,9 @@ export default function AuditWizard({ schema }) {
               {step.title}
             </h2>
           </div>
-          <p className="section-note">{step.note}</p>
+          <p className="section-note">
+            {step.title === "Expiry Status" ? expiryStatusNote(aedModelSequence.length) : step.note}
+          </p>
           {step.title === "Paediatric Readiness" && <PaediatricReferencePhoto models={selectedAedModels} />}
 
           {isReview ? (
@@ -188,6 +249,7 @@ export default function AuditWizard({ schema }) {
                 setQuantityAnswer={setQuantityAnswer}
                 setFreeText={setFreeText}
                 selectedAedModels={selectedAedModels}
+                aedModelSequence={aedModelSequence}
               />
             ))
           )}
@@ -216,21 +278,61 @@ export default function AuditWizard({ schema }) {
   );
 }
 
-function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels }) {
+// A field labeled "... AED (2)" should only ever show AED 2's own reference
+// photo, never every brand the responder owns. `sequence` is the ordered
+// per-unit model list from getAedModelSequence (e.g. ["frx", "frx",
+// "zollPlus"] for 2x FRx + 1x ZOLL). Falls back to the full selected-models
+// list when the field isn't tied to a unit number, or the sequence doesn't
+// (yet) cover that unit — e.g. the responder hasn't finished the AED Status
+// step, or navigated back and shrank their reported count — so a badge still
+// shows something useful instead of silently disappearing.
+// Traffic-light urgency for an auto-detected expiry tier (battery/pad expiry
+// status), matching the gt2y/1to2y/gt6m/within6m/expired values from
+// computeExpiryTierValue in genericScoring.js: plenty of runway is green,
+// under a year is a yellow heads-up, already expired is red.
+// The DB-seeded note for "Expiry Status" originally read "Scored on AED
+// (1). AED (2) is optional inventory only." — accurate back when a second
+// AED was only a maybe, but expandUnitQuestions now scores every unit the
+// responder actually reported (see genericScoring.js), so that copy became
+// misleading the moment someone reported 2+ units. Overridden here instead
+// of edited in the DB so it stays correct for any reported count, not just
+// the 1-vs-2 case a static string could describe.
+function expiryStatusNote(unitCount) {
+  if (unitCount <= 1) return "Every field below is scored.";
+  return `You reported ${unitCount} AEDs — every one is scored below, not just the first.`;
+}
+
+function expiryTierClass(tierValue) {
+  if (tierValue === "expired") return "notready";
+  if (tierValue === "gt6m" || tierValue === "within6m") return "warn";
+  return "ready"; // gt2y, 1to2y
+}
+
+function referenceModelsFor(question, sequence, fallbackModels) {
+  const unit = unitNumberFromLabel(question.label);
+  if (unit == null) return fallbackModels;
+  const model = sequence[unit - 1];
+  return model ? [model] : fallbackModels;
+}
+
+function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence }) {
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
   const name = `q${question.id}`;
   const refKind = referenceKindFor(question);
+  const refModels = refKind ? referenceModelsFor(question, aedModelSequence || [], selectedAedModels) : null;
 
   if (question.type === "text" || question.type === "email" || question.type === "tel") {
     return (
       <QBlock label={question.label} required={question.required} hint={question.hint}>
-        <TextInput
-          type={question.type === "email" ? "email" : question.type === "tel" ? "tel" : "text"}
-          value={answers[question.id] || ""}
-          onChange={(v) => setAnswer(question.id, v)}
-        />
-        {refKind && <FieldReferencePhoto models={selectedAedModels} kind={refKind} />}
+        <div className={refKind ? "field-with-ref" : undefined}>
+          <TextInput
+            type={question.type === "email" ? "email" : question.type === "tel" ? "tel" : "text"}
+            value={answers[question.id] || ""}
+            onChange={(v) => setAnswer(question.id, v)}
+          />
+          {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
+        </div>
       </QBlock>
     );
   }
@@ -238,8 +340,10 @@ function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckb
   if (question.type === "date") {
     return (
       <QBlock label={question.label} required={question.required} hint={question.hint}>
-        <TextInput type="date" value={answers[question.id] || ""} onChange={(v) => setAnswer(question.id, v)} />
-        {refKind && <FieldReferencePhoto models={selectedAedModels} kind={refKind} />}
+        <div className={refKind ? "field-with-ref" : undefined}>
+          <TextInput type="date" value={answers[question.id] || ""} onChange={(v) => setAnswer(question.id, v)} />
+          {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
+        </div>
       </QBlock>
     );
   }
@@ -290,8 +394,8 @@ function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckb
     return (
       <QBlock label={question.label} required={question.required} points={max || null}>
         {selectedOpt ? (
-          <div className="callout ready" style={{ margin: 0 }}>
-            Auto-detected: <b>{selectedOpt.label}</b>
+          <div className={`callout ${expiryTierClass(val)}`} style={{ margin: 0 }}>
+            <b>{selectedOpt.label}</b>
           </div>
         ) : (
           <div className="callout" style={{ margin: 0 }}>

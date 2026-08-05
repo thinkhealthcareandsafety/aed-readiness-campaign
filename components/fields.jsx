@@ -6,7 +6,7 @@ export function QBlock({ label, required, points, hint, children }) {
       <div className="qlabel">
         <span>
           {label}
-          {required && <span className="req"> *</span>}
+          {required && <span className="req">&nbsp;*</span>}
         </span>
         {points != null && <span className="pts-badge">{points} pt{points === 1 ? "" : "s"}</span>}
       </div>
@@ -183,9 +183,9 @@ export function LinearScale({ value, onChange, min = 1, max = 5, minLabel, maxLa
       <span className="end">{minLabel}</span>
       <div className="dots">
         {nums.map((n) => (
-          <label key={n}>
+          <label key={n} className={value === n ? "selected" : undefined}>
             <input type="radio" checked={value === n} onChange={() => onChange(n)} />
-            {n}
+            <span>{n}</span>
           </label>
         ))}
       </div>

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getSubmission, getFormSchema } from "@/lib/db";
-import { scoreSubmission } from "@/lib/genericScoring";
+import { scoreSubmission, expandUnitQuestions } from "@/lib/genericScoring";
 import { barColor } from "@/lib/scoreColor";
 import PrintButton from "./PrintButton";
 
@@ -24,7 +24,11 @@ export default async function ReportPage({ params }) {
   const submission = getSubmission(id);
   if (!submission) return notFound();
 
-  const schema = getFormSchema();
+  // Expand to however many AED units this specific submission reported —
+  // without this, a submission with 3+ AEDs would redisplay with its extra
+  // units' answers scored as 0 even though the API scored them correctly at
+  // submission time (see app/api/submissions/route.js).
+  const schema = expandUnitQuestions(getFormSchema(), submission.answers);
   const scored = scoreSubmission(schema, submission.answers);
   const pct = scored.total.max > 0 ? Math.round((scored.total.points / scored.total.max) * 100) : 0;
   const hotelName = submission.hotel;
