@@ -6,6 +6,7 @@ import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, Icon
 import { OptionImage } from "@/components/OptionImage";
 import { FieldReferencePhoto, PaediatricReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
+import Landing from "@/components/Landing";
 import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence } from "@/lib/genericScoring";
 
@@ -279,7 +280,12 @@ export default function AuditWizard({ schema }) {
   const identity = extractIdentity(schema, answers);
 
   return (
-    <div className="wizard-page" id="audit">
+    <>
+      {/* Marketing/landing content only belongs on the very first step —
+          once the responder starts answering, it should never resurface
+          above every subsequent step of a 14-step form. */}
+      {stepIndex === 0 && <Landing />}
+      <div className="wizard-page" id="audit">
       <div className="wizard-topbar">
         <div className="brandrow">
           <div className="brand">
@@ -385,7 +391,8 @@ export default function AuditWizard({ schema }) {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

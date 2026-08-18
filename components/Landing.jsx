@@ -20,6 +20,10 @@ export default function Landing() {
   return (
     <>
       <section className="landing-hero">
+        <video className="landing-hero-video" autoPlay muted loop playsInline preload="auto">
+          <source src="/videos/aed-kit-reveal.mp4" type="video/mp4" />
+        </video>
+        <div className="landing-hero-overlay" />
         <div className="landing-hero-inner">
           <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
           <h1 className="landing-h1">Is your AED ready to save a life right now?</h1>
@@ -41,10 +45,9 @@ export default function Landing() {
 
       <section className="landing-gift">
         <div className="landing-section-inner landing-gift-inner">
-          <div className="landing-gift-video-wrap">
-            <video className="landing-gift-video" autoPlay muted loop playsInline preload="metadata">
-              <source src="/videos/aed-kit-reveal.mp4" type="video/mp4" />
-            </video>
+          <div className="landing-gift-media-wrap">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static bundled photo, no next/image needed */}
+            <img src="/images/hero-hotel-hallway.jpg" alt="" className="landing-gift-media" />
           </div>
           <div className="landing-gift-copy">
             <span className="landing-eyebrow dark">Limited-time offer</span>
