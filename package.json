@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/genai": "^1.0.0",
     "better-sqlite3": "^13.0.2",
     "next": "16.2.12",
     "react": "19.2.4",
@@ -17,5 +18,12 @@
   "devDependencies": {
     "eslint": "^9",
     "eslint-config-next": "16.2.12"
+  },
+  "allowScripts": {
+    "@google/genai@1.52.0": true,
+    "better-sqlite3@13.0.2": true,
+    "protobufjs@7.6.5": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
   }
 }

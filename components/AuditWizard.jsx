@@ -5,9 +5,32 @@ import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, LinearScale } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
 import { FieldReferencePhoto, PaediatricReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
+import AutoInspection from "@/components/AutoInspection";
+import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence } from "@/lib/genericScoring";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
+
+// Only ever inserted right before the first gated equipment section (i.e.
+// only when the responder has already confirmed they have an AED — see
+// modeChoiceInsertIndex below), so auto-scan is never offered when there's
+// nothing to point a camera at.
+const MODE_CHOICE_STEP = {
+  id: "__mode_choice",
+  letter: "✦",
+  title: "How would you like to complete this?",
+  note: "Photograph your AED and let AI read the details, or answer each question yourself.",
+  questions: [],
+};
+
+function findQuestionByFieldRole(schema, role) {
+  for (const s of schema.sections) {
+    for (const q of s.questions) {
+      if (q.fieldRole === role) return q;
+    }
+  }
+  return null;
+}
 
 // A refresh mid-audit (accidental reload, a flaky connection, closing the
 // tab to come back to a long form later) used to wipe every answer back to
@@ -48,6 +71,11 @@ export default function AuditWizard({ schema }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [autoScanActive, setAutoScanActive] = useState(false);
+  // Question id -> the AI verdict that filled it, so the field can show a
+  // small "auto-detected" badge without ever hiding the normal editable
+  // input underneath it (a bad read must always stay correctable).
+  const [aiFilled, setAiFilled] = useState({});
 
   // Runs once on mount, client-side only (localStorage doesn't exist during
   // server rendering) — restores a prior in-progress draft, if any. This
@@ -95,10 +123,27 @@ export default function AuditWizard({ schema }) {
     () => expandedSchema.sections.filter((s) => isSectionVisible(s, answers)),
     [expandedSchema, answers]
   );
-  const steps = useMemo(() => [...visibleSections, REVIEW_STEP], [visibleSections]);
+  // The mode-choice screen only makes sense once there's an AED to point a
+  // camera at, so it's inserted right before whichever visible section is
+  // the first one gated on the has_aed_gate answer ("AED Status", the first
+  // equipment section) — never shown at all when the responder said no.
+  const modeChoiceInsertIndex = useMemo(
+    () => visibleSections.findIndex((s) => s.visibleIfValue != null),
+    [visibleSections]
+  );
+  const steps = useMemo(() => {
+    if (modeChoiceInsertIndex === -1) return [...visibleSections, REVIEW_STEP];
+    return [
+      ...visibleSections.slice(0, modeChoiceInsertIndex),
+      MODE_CHOICE_STEP,
+      ...visibleSections.slice(modeChoiceInsertIndex),
+      REVIEW_STEP,
+    ];
+  }, [visibleSections, modeChoiceInsertIndex]);
   const step = steps[Math.min(stepIndex, steps.length - 1)];
   const isLast = stepIndex === steps.length - 1;
   const isReview = step.id === "__review";
+  const isModeChoice = step.id === "__mode_choice";
 
   function setAnswer(questionId, value) {
     setAnswers((a) => ({ ...a, [questionId]: value }));
@@ -152,6 +197,45 @@ export default function AuditWizard({ schema }) {
     });
   }
 
+  // Maps each auto-inspection checklist result onto the question tagged
+  // with the matching fieldRole (see lib/inspectionChecklist.js and the
+  // fieldRole tags in lib/seedFormData.js — the checklist item id and the
+  // fieldRole are the same string by convention), through the exact same
+  // setAnswer/setRadioAnswer the manual inputs use. That keeps derived
+  // fields (expiry tier), validation, and scoring working unmodified — the
+  // wizard can't tell an AI-filled answer from a typed one downstream.
+  function handleAutoInspectionComplete(results) {
+    const aiInfoUpdates = {};
+    for (const item of CHECKLIST_ITEMS) {
+      const result = results[item.id];
+      if (!result || (result.status !== "pass" && result.status !== "fail")) continue;
+      const q = findQuestionByFieldRole(expandedSchema, item.id);
+      if (!q) continue;
+
+      if (item.id === "serial_number_1") {
+        if (!result.serial_number) continue;
+        setAnswer(q.id, result.serial_number);
+      } else if (item.id === "battery_expiry_date_1" || item.id === "pads_expiry_date_1") {
+        if (!result.expiry_date) continue;
+        // A month-only read ("YYYY-MM") needs a day for the <input type=date>
+        // — default to the 1st; it's a starting point the responder reviews
+        // and can correct, not a claim about the real expiry day.
+        setAnswer(q.id, result.expiry_date.length === 7 ? `${result.expiry_date}-01` : result.expiry_date);
+      } else if (item.id === "battery_attached" || item.id === "pads_connected" || item.id === "aed_cabinet_ok") {
+        setRadioAnswer(q, result.passed ? "yes" : "no");
+      } else if (item.id === "readiness_indicator") {
+        if (result.readinessStatus !== "ready" && result.readinessStatus !== "fault") continue; // "unclear" — leave for manual
+        setRadioAnswer(q, result.readinessStatus === "ready" ? "green" : "red");
+      } else {
+        continue;
+      }
+      aiInfoUpdates[q.id] = result;
+    }
+    setAiFilled((prev) => ({ ...prev, ...aiInfoUpdates }));
+    setAutoScanActive(false);
+    setStepIndex((i) => Math.min(i + 1, steps.length - 1));
+  }
+
   function goNext() {
     if (!isReview) {
       const err = validateSection(step, answers);
@@ -195,7 +279,7 @@ export default function AuditWizard({ schema }) {
   const identity = extractIdentity(schema, answers);
 
   return (
-    <div className="wizard-page">
+    <div className="wizard-page" id="audit">
       <div className="wizard-topbar">
         <div className="brandrow">
           <div className="brand">
@@ -237,11 +321,36 @@ export default function AuditWizard({ schema }) {
               <b>{identity.hotel || "your hotel"}</b>. Press <b>Submit audit</b> below to save this response and see
               your PREPARED score and detailed AED report.
             </div>
+          ) : isModeChoice ? (
+            autoScanActive ? (
+              <AutoInspection onComplete={handleAutoInspectionComplete} onCancel={() => setAutoScanActive(false)} />
+            ) : (
+              <div className="mode-choice-grid">
+                <button
+                  type="button"
+                  className="mode-choice-card"
+                  onClick={() => setStepIndex((i) => Math.min(i + 1, steps.length - 1))}
+                >
+                  <span className="tag">Manual</span>
+                  <h3>Continue manually</h3>
+                  <p>Answer each question yourself, same as before — takes about 5 minutes.</p>
+                </button>
+                <button type="button" className="mode-choice-card" onClick={() => setAutoScanActive(true)}>
+                  <span className="tag">AI scan</span>
+                  <h3>Scan automatically</h3>
+                  <p>
+                    Photograph your AED&rsquo;s labels and status light — AI reads the serial number, expiry dates,
+                    and condition for you.
+                  </p>
+                </button>
+              </div>
+            )
           ) : (
             step.questions.map((q) => (
               <QuestionBlock
                 key={q.id}
                 question={q}
+                aiInfo={aiFilled[q.id]}
                 answers={answers}
                 setAnswer={setAnswer}
                 setRadioAnswer={setRadioAnswer}
@@ -256,24 +365,26 @@ export default function AuditWizard({ schema }) {
         </div>
       </div>
 
-      <div className="wizard-footer">
-        <div className="inner">
-          <button className="btn btn-ghost" onClick={goBack} disabled={stepIndex === 0 || submitting}>
-            Back
-          </button>
-          {error && <span className="error-msg">{error}</span>}
-          {submitError && <span className="error-msg">{submitError}</span>}
-          {!isLast ? (
-            <button className="btn btn-primary" onClick={goNext}>
-              Next
+      {!autoScanActive && (
+        <div className="wizard-footer">
+          <div className="inner">
+            <button className="btn btn-ghost" onClick={goBack} disabled={stepIndex === 0 || submitting}>
+              Back
             </button>
-          ) : (
-            <button className="btn btn-primary" onClick={submit} disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit audit"}
-            </button>
-          )}
+            {error && <span className="error-msg">{error}</span>}
+            {submitError && <span className="error-msg">{submitError}</span>}
+            {isModeChoice ? null : !isLast ? (
+              <button className="btn btn-primary" onClick={goNext}>
+                Next
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={submit} disabled={submitting}>
+                {submitting ? "Submitting..." : "Submit audit"}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -315,36 +426,50 @@ function referenceModelsFor(question, sequence, fallbackModels) {
   return model ? [model] : fallbackModels;
 }
 
-function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence }) {
+function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence }) {
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
   const name = `q${question.id}`;
   const refKind = referenceKindFor(question);
   const refModels = refKind ? referenceModelsFor(question, aedModelSequence || [], selectedAedModels) : null;
+  // The field itself always stays a normal, editable input underneath this
+  // — a bad AI read is never silently trusted, only pre-filled for review.
+  const aiBadge = aiInfo ? (
+    <div className="ai-badge">
+      Auto-detected{typeof aiInfo.confidence === "number" ? ` · ${Math.round(aiInfo.confidence * 100)}% confidence` : ""} — edit if
+      needed
+    </div>
+  ) : null;
 
   if (question.type === "text" || question.type === "email" || question.type === "tel") {
     return (
-      <QBlock label={question.label} required={question.required} hint={question.hint}>
-        <div className={refKind ? "field-with-ref" : undefined}>
-          <TextInput
-            type={question.type === "email" ? "email" : question.type === "tel" ? "tel" : "text"}
-            value={answers[question.id] || ""}
-            onChange={(v) => setAnswer(question.id, v)}
-          />
-          {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
-        </div>
-      </QBlock>
+      <>
+        {aiBadge}
+        <QBlock label={question.label} required={question.required} hint={question.hint}>
+          <div className={refKind ? "field-with-ref" : undefined}>
+            <TextInput
+              type={question.type === "email" ? "email" : question.type === "tel" ? "tel" : "text"}
+              value={answers[question.id] || ""}
+              onChange={(v) => setAnswer(question.id, v)}
+            />
+            {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
+          </div>
+        </QBlock>
+      </>
     );
   }
 
   if (question.type === "date") {
     return (
-      <QBlock label={question.label} required={question.required} hint={question.hint}>
-        <div className={refKind ? "field-with-ref" : undefined}>
-          <TextInput type="date" value={answers[question.id] || ""} onChange={(v) => setAnswer(question.id, v)} />
-          {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
-        </div>
-      </QBlock>
+      <>
+        {aiBadge}
+        <QBlock label={question.label} required={question.required} hint={question.hint}>
+          <div className={refKind ? "field-with-ref" : undefined}>
+            <TextInput type="date" value={answers[question.id] || ""} onChange={(v) => setAnswer(question.id, v)} />
+            {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
+          </div>
+        </QBlock>
+      </>
     );
   }
 
@@ -410,7 +535,9 @@ function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckb
     const val = answers[question.id]?.value || "";
     const selectedOpt = question.options.find((o) => o.value === val);
     return (
-      <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint}>
+      <>
+        {aiBadge}
+        <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint}>
         {hasImages ? (
           <IconRadioGrid
             name={name}
@@ -442,7 +569,8 @@ function QuestionBlock({ question, answers, setAnswer, setRadioAnswer, setCheckb
             />
           </div>
         )}
-      </QBlock>
+        </QBlock>
+      </>
     );
   }
 
