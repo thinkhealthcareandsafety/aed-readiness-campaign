@@ -7,8 +7,9 @@ import { OptionImage } from "@/components/OptionImage";
 import { FieldReferencePhoto, PaediatricReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
 import Landing from "@/components/Landing";
+import LiveScore from "@/components/LiveScore";
 import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
-import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence } from "@/lib/genericScoring";
+import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, scoreSubmission } from "@/lib/genericScoring";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
 
@@ -118,6 +119,10 @@ export default function AuditWizard({ schema }) {
   }, [stepIndex]);
 
   const expandedSchema = useMemo(() => expandUnitQuestions(schema, answers), [schema, answers]);
+  // Cheap pure function over the schema/answers already in memory — safe to
+  // recompute on every keystroke/click for the live-score badge, the same
+  // way the report page computes it once at the end.
+  const scored = useMemo(() => scoreSubmission(expandedSchema, answers), [expandedSchema, answers]);
   const selectedAedModels = useMemo(() => getSelectedAedModels(schema, answers), [schema, answers]);
   const aedModelSequence = useMemo(() => getAedModelSequence(schema, answers), [schema, answers]);
   const visibleSections = useMemo(
@@ -292,7 +297,8 @@ export default function AuditWizard({ schema }) {
             AED Readiness Campaign
             <small>Think Health &middot; PREPARED Score</small>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+            {!isModeChoice && <LiveScore points={scored.total.points} max={scored.total.max} />}
             <div className="step-label">
               Step {stepIndex + 1} / {steps.length}
             </div>

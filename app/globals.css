@@ -242,6 +242,29 @@ button { font-family: inherit; }
 .admin-link { font-size: .72rem; color: var(--ink-soft); text-decoration: none; white-space: nowrap; opacity: .75; }
 .admin-link:hover { color: var(--accent-deep); opacity: 1; text-decoration: underline; }
 
+/* ---------- Live score badge (see LiveScore.jsx) ---------- */
+.live-score {
+  position: relative; display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap;
+  background: var(--accent-tint); color: var(--accent-deep); border-radius: 999px; padding: 5px 12px 5px 10px;
+  transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), box-shadow .18s ease;
+}
+.live-score-pulse { transform: scale(1.09); box-shadow: 0 6px 16px rgba(217, 118, 28, 0.32); }
+.live-score-cap { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .8; }
+.live-score-value { font-family: var(--font-mono); font-size: .88rem; font-weight: 800; }
+.live-score-max { font-family: var(--font-mono); font-size: .74rem; font-weight: 600; opacity: .72; }
+.live-score-gain {
+  position: absolute; top: -8px; right: 10px; color: var(--ready); font-weight: 800; font-size: .78rem;
+  font-family: var(--font-mono); pointer-events: none; animation: liveScoreFloat .95s ease forwards;
+}
+@keyframes liveScoreFloat {
+  0% { opacity: 0; transform: translateY(2px) scale(.85); }
+  18% { opacity: 1; transform: translateY(-4px) scale(1.05); }
+  100% { opacity: 0; transform: translateY(-24px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-score, .live-score-gain { animation: none; transition: none; }
+}
+
 .wizard-main { flex: 1; display: flex; justify-content: center; padding: 32px clamp(16px, 4vw, 40px) 140px; }
 .wizard-card {
   width: 100%; max-width: 760px; background: var(--paper-raised); border: 1px solid var(--line);
