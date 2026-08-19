@@ -155,6 +155,13 @@ export function TextInput({ type = "text", value, onChange, placeholder }) {
       type={type}
       value={value || ""}
       placeholder={placeholder}
+      // Real format enforcement lives server-side (lib/genericScoring.js
+      // isValidEmail/isValidIndianMobile) — these are just the matching
+      // mobile-keyboard/length hints so a phone field doesn't invite a
+      // 20-character paste in the first place.
+      inputMode={type === "tel" ? "tel" : undefined}
+      maxLength={type === "tel" ? 15 : undefined}
+      autoComplete={type === "email" ? "email" : type === "tel" ? "tel" : undefined}
       onChange={(e) => onChange(e.target.value)}
     />
   );
