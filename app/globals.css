@@ -137,12 +137,17 @@ button { font-family: inherit; }
 .landing-lead { color: rgba(255, 255, 255, 0.88); font-size: 1.08rem; max-width: 56ch; margin: 20px 0 0; line-height: 1.6; }
 
 .landing-cta {
-  margin-top: 30px; padding: 14px 28px; font-size: .96rem; border-radius: 11px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  margin-top: 30px; padding: 14px 28px; font-size: .96rem; font-weight: 700; letter-spacing: .01em;
+  border-radius: 11px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 2px 8px color-mix(in srgb, var(--accent-deep) 45%, transparent);
   transition: transform .2s cubic-bezier(.2, .8, .2, 1), filter .2s ease, box-shadow .2s ease;
 }
-.landing-cta:hover { transform: translateY(-2px); filter: brightness(1.07); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4); }
+.landing-cta:hover {
+  transform: translateY(-2px); filter: brightness(1.07);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.4), 0 3px 12px color-mix(in srgb, var(--accent-deep) 55%, transparent);
+}
 .landing-cta:active { transform: translateY(0); }
-.landing-cta-lg { padding: 17px 34px; font-size: 1.02rem; }
+.landing-cta-lg { padding: 18px 38px; font-size: 1.06rem; border-radius: 13px; }
 .landing-cta-arrow { width: 17px; height: 17px; transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
 .landing-cta:hover .landing-cta-arrow { transform: translateX(4px); }
 
@@ -711,10 +716,23 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
    link's margin-top does nothing unless its parent happens to be a flex
    container. Explicit inline-flex makes every .btn behave the same
    regardless of tag or parent layout. */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: .92rem; border-radius: 9px; padding: 11px 20px; cursor: pointer; border: 1px solid transparent; transition: transform .05s ease, filter .15s ease; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-weight: 600; font-size: .92rem; border-radius: 9px; padding: 11px 20px; cursor: pointer;
+  border: 1px solid transparent; text-decoration: none;
+  transition: transform .05s ease, filter .15s ease;
+}
 .btn:active { transform: translateY(1px); }
 .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-.btn-primary { background: var(--accent); color: #fff; }
+/* A flat single-color fill reads as a wireframe placeholder next to the
+   photo/video treatment everywhere else on the page — a subtle top-to-
+   bottom gradient plus a soft inner highlight gives it the same sense of
+   physical depth (a raised, pressable object) that a top-tier landing page
+   CTA needs, without changing the underlying brand color. */
+.btn-primary {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 100%, white 14%), var(--accent) 60%, var(--accent-deep));
+  color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
 .btn-primary:hover { filter: brightness(1.06); }
 .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
 .btn-ghost { background: transparent; color: var(--ink-soft); border-color: var(--line-strong); }

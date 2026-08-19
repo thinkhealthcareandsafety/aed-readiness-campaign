@@ -135,7 +135,7 @@ export default function Landing() {
               ))}
             </ul>
             <a href="#audit" className="btn btn-primary landing-cta">
-              Start your free audit
+              Start your audit & spin
               <ArrowIcon />
             </a>
           </div>
@@ -170,7 +170,7 @@ export default function Landing() {
             clear action list in about five minutes.
           </p>
           <a href="#audit" className="btn btn-primary landing-cta landing-cta-lg">
-            Start your free audit
+            Get my PREPARED score
             <ArrowIcon />
           </a>
         </div>
