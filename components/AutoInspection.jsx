@@ -11,6 +11,44 @@ const ITEM_ICON = {
 };
 
 const VIDEO_FRAME_COUNT = 12;
+// A phone camera photo easily runs 8-12MP (several MB); Gemini only needs
+// enough resolution to read a printed label, and every extra megabyte is
+// slower to upload on hotel wifi, slower for Gemini to process, and more
+// likely to brush up against the request timeout — all three of which get
+// worse exactly when many people are auto-scanning at once, not better.
+const MAX_IMAGE_EDGE = 1600;
+
+function constrainedSize(width, height, maxEdge) {
+  if (width <= maxEdge && height <= maxEdge) return [width, height];
+  const scale = maxEdge / Math.max(width, height);
+  return [Math.round(width * scale), Math.round(height * scale)];
+}
+
+async function downscaleImage(file, maxEdge = MAX_IMAGE_EDGE, quality = 0.85) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error("Could not read that photo"));
+    });
+    const [w, h] = constrainedSize(img.naturalWidth, img.naturalHeight, maxEdge);
+    if (w === img.naturalWidth && h === img.naturalHeight && file.size < 1.5 * 1024 * 1024) {
+      return file; // already small enough — skip the re-encode
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+    return blob || file; // fall back to the original rather than block the capture
+  } catch {
+    return file; // downscaling is an optimization, not a requirement — never let it block a capture
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 // Extracts VIDEO_FRAME_COUNT JPEG frames, evenly spaced across the clip's
 // duration, from a recorded video File — the browser-side replacement for
@@ -29,9 +67,10 @@ async function extractFrames(videoFile) {
       video.onerror = () => reject(new Error("Could not read video"));
     });
 
+    const [canvasW, canvasH] = constrainedSize(video.videoWidth, video.videoHeight, MAX_IMAGE_EDGE);
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = canvasW;
+    canvas.height = canvasH;
     const ctx = canvas.getContext("2d");
 
     const duration = video.duration || 0;
@@ -76,7 +115,7 @@ export default function AutoInspection({ onComplete, onCancel }) {
   async function handleCapture(item, file) {
     setStatus(item.id, { status: "analyzing" });
     try {
-      const blobs = item.mediaType === "video" ? await extractFrames(file) : [file];
+      const blobs = item.mediaType === "video" ? await extractFrames(file) : [await downscaleImage(file)];
       if (!blobs.length) throw new Error("Could not read that clip — please try again.");
       const data = await uploadItem(item.id, blobs);
       // data.status is Gemini's own field (ready/fault/unclear — only
