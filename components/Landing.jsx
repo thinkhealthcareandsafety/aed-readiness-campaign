@@ -103,9 +103,10 @@ export default function Landing() {
 
       <section className="landing-gift" ref={giftReveal.ref}>
         <div className={`landing-section-inner landing-gift-inner ${giftReveal.className}`}>
-          <div className="landing-gift-media-wrap">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static bundled photo, no next/image needed */}
-            <img src="/images/hero-hotel-hallway.jpg" alt="" className="landing-gift-media" />
+          <div className="landing-gift-media-wrap landing-gift-media-wrap-portrait">
+            <video className="landing-gift-media" autoPlay muted loop playsInline preload="auto">
+              <source src="/videos/aed-kit-gift-reveal.mp4" type="video/mp4" />
+            </video>
           </div>
           <div className="landing-gift-copy">
             <span className="landing-ribbon">Limited-time offer</span>

@@ -183,6 +183,10 @@ button { font-family: inherit; }
   box-shadow: 0 8px 18px rgba(217, 118, 28, 0.35);
 }
 .landing-gift-media-wrap { position: relative; border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); background: #000; line-height: 0; }
+/* The gift-reveal clip is a 9:16 portrait recording — left at full grid-column
+   width it would tower over the copy column, so it's capped and centered
+   like a phone-mockup card instead of stretched edge-to-edge. */
+.landing-gift-media-wrap-portrait { max-width: 320px; margin: 0 auto; }
 .landing-gift-media-wrap::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); pointer-events: none; }
 .landing-gift-media { width: 100%; height: auto; display: block; object-fit: cover; transition: transform .7s cubic-bezier(.2, .8, .2, 1); }
 .landing-gift-media-wrap:hover .landing-gift-media { transform: scale(1.035); }
