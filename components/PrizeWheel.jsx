@@ -24,15 +24,12 @@ function makeConfetti(count) {
   }));
 }
 
-// Renders the wheel as plain colored pie slices with NO text or icons drawn
-// inside them — anything drawn inside a slice ends up sideways or upside
-// down once the wheel actually rotates to its landing angle, which is
-// exactly the kind of "looked fine in the mockup, broken the moment it
-// spins" bug worth designing around rather than patching later. The color
-// legend below the wheel (and the big reveal line once it stops) is where
-// the actual prize name lives instead.
+function sliceMidDeg(index) {
+  return index * SLICE_DEG - 90 + SLICE_DEG / 2; // -90 so slice 0 starts at 12 o'clock
+}
+
 function slicePath(index) {
-  const startDeg = index * SLICE_DEG - 90; // -90 so slice 0 starts at 12 o'clock
+  const startDeg = index * SLICE_DEG - 90;
   const endDeg = startDeg + SLICE_DEG;
   const cx = 100;
   const cy = 100;
@@ -44,6 +41,27 @@ function slicePath(index) {
   const [x1, y1] = toXY(startDeg);
   const [x2, y2] = toXY(endDeg);
   return `M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 0 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`;
+}
+
+// A short (1-2 word) label laid out radially inside its slice, from the hub
+// outward — read it the way a real physical prize wheel is read: right-side
+// up near the top of the wheel, upside-down near the bottom (rotate() is
+// applied once to the whole wheel group at landing time, so nothing here
+// needs to un-rotate itself — the legend below stays the authoritative,
+// always-upright source of the actual prize name).
+function sliceLabelTransform(index) {
+  return `rotate(${sliceMidDeg(index)} 100 100)`;
+}
+
+// Small marquee bulbs evenly spaced around the rim — the classic
+// "wheel of fortune" cabinet detail. Every 3rd bulb chases lit while
+// spinning; count chosen so it divides evenly by slice count for a tidy
+// bulb-per-slice-boundary alignment.
+const BULB_COUNT = 20;
+function bulbXY(i) {
+  const deg = (360 / BULB_COUNT) * i - 90;
+  const rad = (deg * Math.PI) / 180;
+  return [100 + 92 * Math.cos(rad), 100 + 92 * Math.sin(rad)];
 }
 
 // The prize (which slice actually wins) was already decided server-side at
@@ -154,7 +172,32 @@ export default function PrizeWheel({ prize, onDone }) {
             {PRIZES.map((p, i) => (
               <path key={`${p.id}-sheen`} d={slicePath(i)} fill={`url(#slice-${p.id})`} />
             ))}
+            {PRIZES.map((p, i) => (
+              <g key={`${p.id}-label`} transform={sliceLabelTransform(i)}>
+                <text x="132" y="100" textAnchor="middle" dominantBaseline="central" className="prize-wheel-slice-icon">
+                  {p.icon}
+                </text>
+                <text x="168" y="100" textAnchor="middle" dominantBaseline="central" className="prize-wheel-slice-label">
+                  {p.shortLabel || p.label}
+                </text>
+              </g>
+            ))}
             <circle cx="100" cy="100" r="90" fill="none" stroke="var(--paper-raised)" strokeWidth="4" />
+            <g className="prize-wheel-bulbs">
+              {Array.from({ length: BULB_COUNT }, (_, i) => {
+                const [bx, by] = bulbXY(i);
+                return (
+                  <circle
+                    key={i}
+                    cx={bx.toFixed(2)}
+                    cy={by.toFixed(2)}
+                    r="2.6"
+                    className="prize-wheel-bulb"
+                    style={{ animationDelay: `${(i / BULB_COUNT) * 1.1}s` }}
+                  />
+                );
+              })}
+            </g>
             <circle cx="100" cy="100" r="16" fill="url(#hubShine)" stroke="var(--line-strong)" strokeWidth="1.5" />
           </svg>
         </div>
@@ -163,6 +206,7 @@ export default function PrizeWheel({ prize, onDone }) {
           {PRIZES.map((p) => (
             <li key={p.id} className={p.id === prize && revealed ? "won" : undefined}>
               <span className="swatch" style={{ background: p.color }} />
+              <span className="prize-wheel-legend-icon" aria-hidden="true">{p.icon}</span>
               {p.label}
             </li>
           ))}

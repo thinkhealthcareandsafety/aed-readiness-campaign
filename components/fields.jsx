@@ -59,9 +59,9 @@ export function CheckboxList({ value, onToggle, items, disabledKeys }) {
   );
 }
 
-export function IconRadioGrid({ name, value, onChange, items, wide }) {
+export function IconRadioGrid({ name, value, onChange, items, wide, pair }) {
   return (
-    <div className={`icon-grid${wide ? " wide" : ""}`}>
+    <div className={`icon-grid${wide ? " wide" : ""}${pair ? " pair" : ""}`}>
       {items.map((opt) => (
         <label key={opt.value} className={`icon-card${value === opt.value ? " selected" : ""}`}>
           <input

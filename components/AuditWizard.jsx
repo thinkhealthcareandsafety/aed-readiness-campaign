@@ -720,6 +720,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             value={val}
             onChange={(v) => setRadioAnswer(question, v)}
             wide={question.options.length <= 2}
+            pair={question.options.length === 2 && !question.options.some((o) => o.sub)}
             items={question.options.map((o) => ({
               value: o.value,
               label: o.label,
