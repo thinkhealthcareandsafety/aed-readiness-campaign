@@ -1,7 +1,9 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
-import { insertSubmission, listSubmissions, getFormSchema } from "@/lib/db";
+import { insertSubmission, listSubmissions, getFormSchema, getSubmissionByEmail } from "@/lib/db";
 import { scoreSubmission, extractIdentity, validateAnswers, resolveDerivedAnswers, expandUnitQuestions } from "@/lib/genericScoring";
 import { isAdminAuthed } from "@/lib/adminAuth";
+import { PRIZES } from "@/lib/prizes";
 
 export async function POST(request) {
   let body;
@@ -34,8 +36,24 @@ export async function POST(request) {
 
   const scored = scoreSubmission(schema, answers);
   const identity = extractIdentity(schema, answers);
-  const id = insertSubmission({ answers, scored, identity });
-  return NextResponse.json({ id }, { status: 201 });
+
+  // The real one-entry-per-email boundary — app/api/submissions/check-email
+  // is only a courtesy early-warning the client can skip entirely, so this
+  // is the check that actually matters. No await happens between this read
+  // and the insert below, so there's no race window within a single
+  // request; the email column's UNIQUE index (lib/db.js) is the
+  // defense-in-depth backstop beyond that.
+  if (getSubmissionByEmail(identity.email)) {
+    return NextResponse.json({ error: "This email has already completed an audit." }, { status: 409 });
+  }
+
+  // Decided once, here, server-side, and never re-rollable — there is no
+  // separate "spin" endpoint. The client only ever plays back whichever
+  // prize this response actually contains.
+  const prize = PRIZES[crypto.randomInt(PRIZES.length)].id;
+
+  const id = insertSubmission({ answers, scored, identity, prize });
+  return NextResponse.json({ id, prize }, { status: 201 });
 }
 
 export async function GET() {

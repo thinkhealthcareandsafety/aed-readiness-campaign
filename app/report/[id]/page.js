@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSubmission, getFormSchema } from "@/lib/db";
 import { scoreSubmission, expandUnitQuestions } from "@/lib/genericScoring";
 import { barColor } from "@/lib/scoreColor";
+import { prizeLabel } from "@/lib/prizes";
 import PrintButton from "./PrintButton";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,7 @@ export default async function ReportPage({ params }) {
   const hotelName = submission.hotel;
   const name = `${submission.first_name} ${submission.last_name}`.trim();
   const hasAED = submission.has_aed !== "no";
+  const wonPrizeLabel = prizeLabel(submission.prize);
 
   const preparedRows = scored.sections.filter((s) => !s.unscored && !s.isSupplementary);
   const supplementaryRows = scored.sections.filter((s) => !s.unscored && s.isSupplementary);
@@ -81,6 +83,12 @@ export default async function ReportPage({ params }) {
         </div>
         <PrintButton />
       </div>
+
+      {wonPrizeLabel && (
+        <div className="callout ready no-print" style={{ marginTop: 20 }}>
+          🎁 Prize won: <b>{wonPrizeLabel}</b> — our team will follow up about {submission.prize === "aedsmartx" ? "your subscription" : "delivery"}.
+        </div>
+      )}
 
       {!hasAED && (
         <div className="callout" style={{ marginTop: 24 }}>

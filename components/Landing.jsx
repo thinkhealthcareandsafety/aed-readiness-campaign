@@ -1,19 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { PRIZES } from "@/lib/prizes";
 
 // IntersectionObserver-driven scroll reveal: a section starts slightly
 // lowered and faded, then settles into place the first time it crosses into
 // view. `threshold` is low (0.12) so long sections (e.g. the gift grid)
 // don't wait for their whole bulk to clear the viewport before animating.
+// Returns a tuple, not { elementRef, className } — the react-hooks/refs
+// lint rule traces a ref through an object property returned from a custom
+// hook and flags *any* access to that property at the JSX usage site, even
+// though `ref={x.elementRef}` is exactly as safe as `ref={x}`. Destructuring
+// into plain local variables at each call site (`const [fooRef, fooClass] =
+// useReveal()`) keeps the ref itself a directly-traceable local rather than
+// a property access, which the rule is fine with.
 function useReveal() {
-  const ref = useRef(null);
+  const elementRef = useRef(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const el = ref.current;
+    const el = elementRef.current;
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      // Reduced-motion can only be read client-side, so this is an
+      // unavoidable one-time client-only correction, not state syncing
+      // that should've been derived during render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
       setVisible(true);
       return;
     }
@@ -30,7 +42,7 @@ function useReveal() {
     return () => observer.disconnect();
   }, []);
 
-  return { ref, className: `reveal${visible ? " reveal-in" : ""}` };
+  return [elementRef, `reveal${visible ? " reveal-in" : ""}`];
 }
 
 const TRUST_ITEMS = [
@@ -59,10 +71,10 @@ const WHY_CARDS = [
 ];
 
 export default function Landing() {
-  const trustReveal = useReveal();
-  const giftReveal = useReveal();
-  const whyReveal = useReveal();
-  const closeReveal = useReveal();
+  const [trustRef, trustClass] = useReveal();
+  const [giftRef, giftClass] = useReveal();
+  const [whyRef, whyClass] = useReveal();
+  const [closeRef, closeClass] = useReveal();
 
   return (
     <>
@@ -90,8 +102,8 @@ export default function Landing() {
         </a>
       </section>
 
-      <div className="landing-trust-bar" ref={trustReveal.ref}>
-        <div className={`landing-trust-bar-inner ${trustReveal.className}`}>
+      <div className="landing-trust-bar" ref={trustRef}>
+        <div className={`landing-trust-bar-inner ${trustClass}`}>
           {TRUST_ITEMS.map(({ icon: Icon, label }) => (
             <div className="landing-trust-item" key={label}>
               <Icon />
@@ -101,33 +113,26 @@ export default function Landing() {
         </div>
       </div>
 
-      <section className="landing-gift" ref={giftReveal.ref}>
-        <div className={`landing-section-inner landing-gift-inner ${giftReveal.className}`}>
+      <section className="landing-gift" ref={giftRef}>
+        <div className={`landing-section-inner landing-gift-inner ${giftClass}`}>
           <div className="landing-gift-media-wrap landing-gift-media-wrap-portrait">
             <video className="landing-gift-media" autoPlay muted loop playsInline preload="auto">
               <source src="/videos/aed-kit-gift-reveal.mp4" type="video/mp4" />
             </video>
           </div>
           <div className="landing-gift-copy">
-            <span className="landing-ribbon">Limited-time offer</span>
-            <h2 className="landing-h2 left">Complete your audit, claim your free AED kit</h2>
-            <p>
-              Every property that finishes the readiness check qualifies for a free welcome kit — while stock
-              lasts.
-            </p>
+            <span className="landing-ribbon">Spin to win</span>
+            <h2 className="landing-h2 left">Finish your audit, spin the wheel</h2>
+            <p>Every completed audit gets one spin — you&rsquo;ll walk away with one of these:</p>
             <ul className="landing-gift-list">
-              <li>
-                <span className="check">&#10003;</span> Replacement electrode pads
-              </li>
-              <li>
-                <span className="check">&#10003;</span> AED battery pack
-              </li>
-              <li>
-                <span className="check">&#10003;</span> Folding rescue stretcher
-              </li>
-              <li>
-                <span className="check">&#10003;</span> First-aid kit
-              </li>
+              {PRIZES.map((p) => (
+                <li key={p.id}>
+                  <span className="check" style={{ background: p.color }}>
+                    &#10003;
+                  </span>{" "}
+                  {p.label}
+                </li>
+              ))}
             </ul>
             <a href="#audit" className="btn btn-primary landing-cta">
               Start your free audit
@@ -137,8 +142,8 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="landing-why" ref={whyReveal.ref}>
-        <div className={`landing-section-inner ${whyReveal.className}`}>
+      <section className="landing-why" ref={whyRef}>
+        <div className={`landing-section-inner ${whyClass}`}>
           <span className="landing-eyebrow dark">Why it matters</span>
           <h2 className="landing-h2">What a five-minute check catches</h2>
           <div className="landing-card-grid">
@@ -157,8 +162,8 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="landing-close" ref={closeReveal.ref}>
-        <div className={`landing-section-inner ${closeReveal.className}`}>
+      <section className="landing-close" ref={closeRef}>
+        <div className={`landing-section-inner ${closeClass}`}>
           <h2 className="landing-h2">Ready to see where you stand?</h2>
           <p className="landing-close-sub">
             Answer a few questions or let AI scan your unit — either way, you&rsquo;ll have a PREPARED score and a

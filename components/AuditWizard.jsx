@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, LinearScale } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
-import { FieldReferencePhoto, PaediatricReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
+import { FieldReferencePhoto, PaediatricReferencePhoto, CabinetReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
 import { HotelSelect } from "@/components/HotelSelect";
 import Landing from "@/components/Landing";
 import LiveScore from "@/components/LiveScore";
+import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, scoreSubmission } from "@/lib/genericScoring";
 
@@ -71,7 +72,13 @@ export default function AuditWizard({ schema }) {
   }
   const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // The prize the server already decided at submission time (see
+  // POST /api/submissions) — set once, on success, and never recomputed
+  // client-side. Its presence is what triggers the <PrizeWheel> overlay.
+  const [wonPrize, setWonPrize] = useState(null);
+  const [submittedId, setSubmittedId] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [draftRestored, setDraftRestored] = useState(false);
   const [showResumeToast, setShowResumeToast] = useState(false);
@@ -261,7 +268,7 @@ export default function AuditWizard({ schema }) {
     setStepIndex((i) => Math.min(i + 1, steps.length - 1));
   }
 
-  function goNext() {
+  async function goNext() {
     if (!isReview) {
       const err = validateSection(step, answers);
       if (err) {
@@ -270,6 +277,37 @@ export default function AuditWizard({ schema }) {
         return;
       }
     }
+
+    // Early, courtesy-only duplicate-email check right as they leave step
+    // 1 — finding out now beats finding out after 13 more steps. This is
+    // NOT the real enforcement: submit() below re-checks server-side
+    // regardless, since a client could skip this call entirely.
+    if (stepIndex === 0) {
+      const emailQuestion = findQuestionByFieldRole(expandedSchema, "email");
+      const email = emailQuestion ? answers[emailQuestion.id] : null;
+      if (email) {
+        setCheckingEmail(true);
+        try {
+          const res = await fetch("/api/submissions/check-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (data?.taken) {
+            setCheckingEmail(false);
+            setError("This email has already completed an audit.");
+            scrollToQuestion(emailQuestion.id);
+            return;
+          }
+        } catch {
+          // A network hiccup here shouldn't block progress — submit() runs
+          // the authoritative check again regardless.
+        }
+        setCheckingEmail(false);
+      }
+    }
+
     setError(null);
     if (isLast) return;
     setStepIndex((i) => Math.min(i + 1, steps.length - 1));
@@ -317,16 +355,25 @@ export default function AuditWizard({ schema }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers }),
       });
-      if (!res.ok) throw new Error("Submission failed");
-      const { id } = await res.json();
+      // Read the body on failure too — a 409 duplicate-email response has a
+      // specific, actionable message ("This email has already completed an
+      // audit.") that a bare "Submission failed" would otherwise swallow.
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Submission failed");
       try {
         localStorage.removeItem(DRAFT_KEY);
       } catch {
         // best-effort cleanup only
       }
-      router.push(`/report/${id}`);
-    } catch {
-      setSubmitError("Something went wrong sending your audit. Please try again.");
+      // Navigation to /report/id is deferred until the prize reveal is
+      // dismissed (see PrizeWheel's onDone below) rather than happening
+      // immediately — data.prize is whatever the server already decided,
+      // never computed or guessed here.
+      setSubmittedId(data.id);
+      setWonPrize(data.prize);
+      setSubmitting(false);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Something went wrong sending your audit. Please try again.");
       setSubmitting(false);
     }
   }
@@ -469,8 +516,8 @@ export default function AuditWizard({ schema }) {
               </span>
             )}
             {isModeChoice ? null : !isLast ? (
-              <button className="btn btn-primary" onClick={goNext}>
-                Next
+              <button className="btn btn-primary" onClick={goNext} disabled={checkingEmail}>
+                {checkingEmail ? "Checking…" : "Next"}
               </button>
             ) : (
               <button className="btn btn-primary" onClick={submit} disabled={submitting}>
@@ -481,6 +528,9 @@ export default function AuditWizard({ schema }) {
         </div>
       )}
       </div>
+      {wonPrize && submittedId && (
+        <PrizeWheel prize={wonPrize} onDone={() => router.push(`/report/${submittedId}`)} />
+      )}
     </>
   );
 }
@@ -695,6 +745,8 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             />
           </div>
         )}
+        {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
+        {question.label.toLowerCase().includes("cabinet") && <CabinetReferencePhoto />}
         </QBlock>
       </>
     );

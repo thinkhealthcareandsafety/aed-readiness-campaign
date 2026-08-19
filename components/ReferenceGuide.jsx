@@ -13,6 +13,12 @@ const MODEL_PHOTOS = {
     serial: "/reference/frx-serial.jpg",
     battery: "/reference/frx-battery.jpg",
     pads: "/reference/frx-pads.jpg",
+    // Distinct from `battery`/`pads` above — those two are annotated shots
+    // for finding the *expiry date* specifically; these are plain shots of
+    // the compartment/connector for the separate "is it actually seated"
+    // physical-status questions, which ask something different.
+    batteryAttached: "/reference/frx-battery-attached.jpg",
+    padsAttached: "/reference/frx-pads-connected.jpg",
     paediatric: "/reference/paed-key-photo.jpg",
     paediatricLabel: "Infant/Child Key",
   },
@@ -21,6 +27,8 @@ const MODEL_PHOTOS = {
     serial: "/reference/hs1-serial.jpg",
     battery: "/reference/hs1-battery.jpg",
     pads: "/reference/hs1-pads.jpg",
+    batteryAttached: "/reference/hs1-battery-attached.jpg",
+    padsAttached: "/reference/hs1-pads-connected.jpg",
     paediatric: "/reference/paed-key-photo.jpg",
     paediatricLabel: "Infant/Child Key",
   },
@@ -147,6 +155,16 @@ export function PaediatricReferencePhoto({ models }) {
   return <ThumbRow items={items} kind="paediatric" labelKey="paediatricLabel" />;
 }
 
+// A cabinet mount isn't part of the AED unit itself — it's property-specific
+// hardware, not a brand feature — so unlike every other reference photo here
+// it isn't keyed per-model. One generic "what a good installation looks
+// like" example, honestly captioned as an example rather than any specific
+// brand's cabinet.
+const CABINET_PHOTO = { caption: "Example: mounted, visible AED cabinet", photo: "/reference/aed-cabinet-example.jpg" };
+export function CabinetReferencePhoto() {
+  return <ThumbRow items={[CABINET_PHOTO]} kind="photo" labelKey="caption" />;
+}
+
 // Maps a question to which kind of reference photo helps it, purely from its
 // label/type — works for AED (1), (2), and any (3)+ clone without needing
 // per-unit special-casing.
@@ -155,6 +173,8 @@ export function referenceKindFor(question) {
   if (question.type === "text" && label.includes("serial")) return "serial";
   if (question.type === "date" && label.includes("battery")) return "battery";
   if (question.type === "date" && label.includes("pad")) return "pads";
+  if (question.type === "radio" && label.includes("battery installed")) return "batteryAttached";
+  if (question.type === "radio" && label.includes("pads connected")) return "padsAttached";
   return null;
 }
 

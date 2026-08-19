@@ -235,6 +235,88 @@ button { font-family: inherit; }
 .landing-close-sub { color: var(--ink-soft); font-size: 1.02rem; max-width: 52ch; margin: 16px auto 0; line-height: 1.6; }
 .landing-close .landing-cta { margin-top: 32px; }
 
+/* ---------- Prize wheel (post-submission reveal, see PrizeWheel.jsx) ---------- */
+.prize-wheel-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: radial-gradient(120% 100% at 50% 20%, rgba(40, 46, 58, 0.78), rgba(8, 9, 12, 0.88));
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  animation: prizeWheelFade .2s ease both;
+}
+.prize-wheel-card {
+  width: 100%; max-width: 440px; max-height: 92vh; overflow-y: auto; overflow-x: hidden;
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 22px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  padding: clamp(24px, 5vw, 38px); text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  animation: prizeWheelPop .32s cubic-bezier(.2, 1.4, .4, 1) both;
+  position: relative;
+}
+.prize-wheel-card.is-revealed { animation: prizeWheelPop .32s cubic-bezier(.2, 1.4, .4, 1) both, prizeWheelCardGlow 1.4s ease-out .1s; }
+.prize-wheel-wrap { position: relative; width: min(250px, 64vw); aspect-ratio: 1; margin: 22px 0; flex-shrink: 0; }
+.prize-wheel-glow {
+  position: absolute; inset: -18%; border-radius: 50%; z-index: 0;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 68%);
+  opacity: .35; filter: blur(14px);
+}
+.prize-wheel-wrap.is-spinning .prize-wheel-glow { animation: prizeWheelGlowPulse 1s ease-in-out infinite; }
+.prize-wheel-svg {
+  position: relative; z-index: 1; width: 100%; height: 100%; display: block;
+  transition-property: transform; transition-timing-function: cubic-bezier(.13, .78, .1, 1);
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
+}
+.prize-wheel-pointer {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 3;
+  width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent;
+  border-top: 20px solid var(--accent-deep);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
+}
+.prize-wheel-wrap.is-spinning .prize-wheel-pointer { animation: prizeWheelPointerTick .13s ease-in-out infinite; }
+.prize-wheel-legend { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; width: 100%; text-align: left; }
+.prize-wheel-legend li { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--ink-soft); padding: 3px 8px; border-radius: 6px; transition: background .25s ease, color .25s ease, transform .25s ease; }
+.prize-wheel-legend li.won { color: var(--ink); font-weight: 700; background: var(--accent-tint); transform: scale(1.03); }
+.prize-wheel-legend .swatch { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(255,255,255,0.5) inset; }
+.prize-wheel-reveal { min-height: 96px; display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0; transform: scale(.85) translateY(6px); transition: none; margin-top: 10px; }
+.prize-wheel-reveal.show { opacity: 1; transform: none; transition: opacity .4s cubic-bezier(.2, 1.4, .4, 1), transform .4s cubic-bezier(.2, 1.4, .4, 1); }
+.prize-wheel-reveal p { margin: 0; font-size: 1.05rem; }
+.prize-wheel-headline { font-size: 1.28rem !important; font-weight: 700; }
+.prize-wheel-headline b { color: var(--accent-deep); }
+.prize-wheel-note { font-size: .85rem !important; color: var(--ink-soft); }
+.prize-wheel-cta { animation: prizeWheelCtaPulse 1.8s ease-in-out .6s 2; }
+
+.prize-wheel-confetti { position: fixed; inset: 0; z-index: 51; pointer-events: none; overflow: hidden; }
+.confetto {
+  position: absolute; top: -5%; border-radius: 2px; opacity: 0;
+  animation-name: prizeWheelConfetti; animation-timing-function: cubic-bezier(.15, .6, .4, 1); animation-fill-mode: both;
+}
+
+@keyframes prizeWheelFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes prizeWheelPop { from { opacity: 0; transform: scale(.9) translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes prizeWheelCardGlow {
+  0% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.04) inset; }
+  35% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 3px var(--accent), 0 0 42px 6px var(--accent); }
+  100% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.04) inset; }
+}
+@keyframes prizeWheelGlowPulse { 0%, 100% { opacity: .3; transform: scale(1); } 50% { opacity: .55; transform: scale(1.08); } }
+@keyframes prizeWheelPointerTick {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50% { transform: translateX(-50%) rotate(9deg); }
+}
+@keyframes prizeWheelCtaPulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  50% { box-shadow: 0 0 0 10px transparent; }
+}
+@keyframes prizeWheelConfetti {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(var(--drift), 105vh) rotate(var(--rotate)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prize-wheel-overlay, .prize-wheel-card, .prize-wheel-cta, .confetto,
+  .prize-wheel-wrap.is-spinning .prize-wheel-glow, .prize-wheel-wrap.is-spinning .prize-wheel-pointer,
+  .prize-wheel-card.is-revealed { animation: none; }
+  .prize-wheel-confetti { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-scroll-cue { animation: none; }
   .reveal, .landing-card, .landing-cta, .landing-cta-arrow, .landing-gift-media { transition: none; }
