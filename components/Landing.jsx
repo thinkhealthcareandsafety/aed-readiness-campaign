@@ -59,10 +59,6 @@ function useReveal() {
   return [elementRef, `reveal${visible ? " reveal-in" : ""}`];
 }
 
-function easeInOutCubic(t) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
 // A plain `href="#audit"` (or CSS `scroll-behavior: smooth`) jumps there in
 // whatever duration the browser feels like — often under half a second for
 // this page's length, which defeats the point of a long scrolling page: the
@@ -78,15 +74,28 @@ function scrollToAuditSlowly(e) {
     target.scrollIntoView();
     return;
   }
-  const startY = window.scrollY;
-  const targetY = target.getBoundingClientRect().top + startY;
-  const distance = targetY - startY;
-  const duration = Math.min(2600, Math.max(1200, Math.abs(distance) * 0.9));
   const startTime = performance.now();
+  const maxDuration = Math.min(2600, Math.max(1200, Math.abs(target.getBoundingClientRect().top) * 0.9));
   function step(now) {
-    const t = Math.min(1, (now - startTime) / duration);
-    window.scrollTo(0, startY + distance * easeInOutCubic(t));
-    if (t < 1) requestAnimationFrame(step);
+    const remaining = target.getBoundingClientRect().top;
+    // Snap the last couple of pixels via scrollIntoView instead of letting
+    // the chase below asymptote forever, and bail out on the same snap if
+    // this is taking too long for any reason.
+    if (Math.abs(remaining) < 2 || now - startTime > maxDuration + 400) {
+      target.scrollIntoView({ block: "start" });
+      return;
+    }
+    // Moves a fraction of whatever distance is left *right now* every
+    // frame — recomputed live from the DOM instead of committing to a
+    // fixed total distance measured once at click time. A mobile browser's
+    // address bar collapsing mid-scroll shifts the whole page's layout,
+    // which left the previous fixed-distance version landing short of the
+    // form (visible in the client's screenshot: the closing section still
+    // showing above the topbar after the "scroll" finished). Chasing the
+    // live position self-corrects for that instead of aiming at a target
+    // that's since moved.
+    window.scrollBy(0, remaining * 0.08);
+    requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
