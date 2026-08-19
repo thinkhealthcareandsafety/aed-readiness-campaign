@@ -59,6 +59,38 @@ function useReveal() {
   return [elementRef, `reveal${visible ? " reveal-in" : ""}`];
 }
 
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+// A plain `href="#audit"` (or CSS `scroll-behavior: smooth`) jumps there in
+// whatever duration the browser feels like — often under half a second for
+// this page's length, which defeats the point of a long scrolling page: the
+// visitor never actually sees the gift/why sections go by, just the hero
+// and then the form. This animates the same scroll deliberately slower so
+// the middle of the page registers as something they scrolled *past*, not
+// content that only exists if they scroll back up for it later.
+function scrollToAuditSlowly(e) {
+  const target = document.getElementById("audit");
+  if (!target) return;
+  e.preventDefault();
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    target.scrollIntoView();
+    return;
+  }
+  const startY = window.scrollY;
+  const targetY = target.getBoundingClientRect().top + startY;
+  const distance = targetY - startY;
+  const duration = Math.min(2600, Math.max(1200, Math.abs(distance) * 0.9));
+  const startTime = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - startTime) / duration);
+    window.scrollTo(0, startY + distance * easeInOutCubic(t));
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 const TRUST_ITEMS = [
   { icon: ClockIcon, label: "~5 minutes" },
   { icon: ChecklistIcon, label: "12 readiness checks" },
@@ -104,12 +136,12 @@ export default function Landing() {
             A free readiness check for your property&rsquo;s AED — battery, pads, training, and signage —
             scored against the PREPARED standard, with a full report at the end.
           </p>
-          <a href="#audit" className="btn btn-primary landing-cta landing-cta-lg">
+          <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-cta landing-cta-lg">
             Start your free audit
             <ArrowIcon />
           </a>
         </div>
-        <a href="#audit" className="landing-scroll-cue" aria-label="Scroll down to start the audit">
+        <a href="#audit" onClick={scrollToAuditSlowly} className="landing-scroll-cue" aria-label="Scroll down to start the audit">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M4 9l8 8 8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -163,10 +195,6 @@ export default function Landing() {
                 </li>
               ))}
             </ul>
-            <a href="#audit" className="btn btn-primary landing-cta">
-              Start your audit & spin
-              <ArrowIcon />
-            </a>
           </div>
         </div>
       </section>
@@ -203,10 +231,6 @@ export default function Landing() {
             <li>Report ready the moment you finish</li>
             <li>One spin of the prize wheel when you&rsquo;re done</li>
           </ul>
-          <a href="#audit" className="btn btn-primary landing-cta landing-cta-lg">
-            Get my PREPARED score
-            <ArrowIcon />
-          </a>
         </div>
       </section>
     </>
