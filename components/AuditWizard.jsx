@@ -6,6 +6,7 @@ import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, Icon
 import { OptionImage } from "@/components/OptionImage";
 import { FieldReferencePhoto, PaediatricReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
+import { HotelSelect } from "@/components/HotelSelect";
 import Landing from "@/components/Landing";
 import LiveScore from "@/components/LiveScore";
 import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
@@ -288,7 +289,7 @@ export default function AuditWizard({ schema }) {
       // if the same field is flashed twice in a row.
       void el.offsetWidth;
       el.classList.add("q-flash");
-      const input = el.querySelector("input, select, textarea");
+      const input = el.querySelector("input, select, textarea, .hotel-select-trigger");
       input?.focus?.({ preventScroll: true });
     });
   }
@@ -601,14 +602,29 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   if (question.type === "select") {
     const val = answers[question.id]?.value || "";
     const selectedOpt = question.options.find((o) => o.value === val);
+    // The hotel list is ~160 free-text names, not a handful of fixed
+    // choices — a plain <select> can't show a brand logo next to an
+    // <option> (no such thing exists in HTML), so this one field gets a
+    // custom searchable combobox instead. Every other "select" question
+    // (AED count, training headcount, etc.) stays a native select.
+    const isHotelSelect = question.fieldRole === "hotel";
     return (
       <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint}>
-        <Select
-          value={val}
-          onChange={(v) => setRadioAnswer(question, v)}
-          options={question.options.map((o) => ({ value: o.value, label: o.label }))}
-          placeholder="Select..."
-        />
+        {isHotelSelect ? (
+          <HotelSelect
+            value={val}
+            onChange={(v) => setRadioAnswer(question, v)}
+            options={question.options.map((o) => ({ value: o.value, label: o.label }))}
+            placeholder="Select..."
+          />
+        ) : (
+          <Select
+            value={val}
+            onChange={(v) => setRadioAnswer(question, v)}
+            options={question.options.map((o) => ({ value: o.value, label: o.label }))}
+            placeholder="Select..."
+          />
+        )}
         {selectedOpt?.allowFreeText && (
           <div style={{ marginTop: 10 }}>
             <TextInput
