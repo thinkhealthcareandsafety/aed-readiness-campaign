@@ -3,6 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { PRIZES } from "@/lib/prizes";
 
+// Recognizable, real hotel-brand marks the property picker already resolves
+// hotels against (see lib/hotelBrands.js / public/hotel-logos/) — shown here
+// only as "this tool already knows your brand's properties", never
+// rephrased as a customer/usage claim ("trusted by...") the campaign can't
+// actually back up.
+const BRAND_STRIP = [
+  { logo: "/hotel-logos/marriott.png", name: "Marriott" },
+  { logo: "/hotel-logos/sheraton.png", name: "Sheraton" },
+  { logo: "/hotel-logos/westin.png", name: "Westin" },
+  { logo: "/hotel-logos/courtyard.png", name: "Courtyard" },
+  { logo: "/hotel-logos/aloft.png", name: "Aloft" },
+  { logo: "/hotel-logos/renaissance.png", name: "Renaissance" },
+];
+
 // IntersectionObserver-driven scroll reveal: a section starts slightly
 // lowered and faded, then settles into place the first time it crosses into
 // view. `threshold` is low (0.12) so long sections (e.g. the gift grid)
@@ -85,15 +99,17 @@ export default function Landing() {
         <div className="landing-hero-overlay" />
         <div className="landing-hero-inner">
           <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
-          <h1 className="landing-h1">Is your AED ready to save a life right now?</h1>
+          <h1 className="landing-h1">If a guest collapses at your property right now, does your AED actually work?</h1>
           <p className="landing-lead">
-            A free readiness check for your property&rsquo;s AED — battery, pads, training, and signage —
-            scored against the PREPARED standard, with a full report at the end.
+            Survival from sudden cardiac arrest falls roughly 10% for every minute defibrillation is delayed
+            (American Heart Association). A free 5-minute check — battery, pads, training, and signage — scored
+            against the PREPARED standard, with a full report at the end.
           </p>
           <a href="#audit" className="btn btn-primary landing-cta landing-cta-lg">
             Start your free audit
             <ArrowIcon />
           </a>
+          <span className="landing-cta-subtext">Free &middot; No login &middot; About 5 minutes</span>
         </div>
         <a href="#audit" className="landing-scroll-cue" aria-label="Scroll down to start the audit">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -110,6 +126,15 @@ export default function Landing() {
               <span>{label}</span>
             </div>
           ))}
+        </div>
+        <div className="landing-brand-strip">
+          <span className="landing-brand-strip-label">Set up for your brand</span>
+          <div className="landing-brand-strip-logos">
+            {BRAND_STRIP.map((b) => (
+              // eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed
+              <img key={b.name} src={b.logo} alt={b.name} title={b.name} />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -142,6 +167,14 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="landing-stat">
+        <p className="landing-stat-number">-10%</p>
+        <p className="landing-stat-body">
+          survival, per minute defibrillation is delayed after cardiac arrest — American Heart Association. An AED
+          that&rsquo;s dead, expired, or missing its pads costs exactly that time.
+        </p>
+      </section>
+
       <section className="landing-why" ref={whyRef}>
         <div className={`landing-section-inner ${whyClass}`}>
           <span className="landing-eyebrow dark">Why it matters</span>
@@ -169,6 +202,11 @@ export default function Landing() {
             Answer a few questions or let AI scan your unit — either way, you&rsquo;ll have a PREPARED score and a
             clear action list in about five minutes.
           </p>
+          <ul className="landing-close-reassure">
+            <li>No cost, no obligation</li>
+            <li>Report ready the moment you finish</li>
+            <li>One spin of the prize wheel when you&rsquo;re done</li>
+          </ul>
           <a href="#audit" className="btn btn-primary landing-cta landing-cta-lg">
             Get my PREPARED score
             <ArrowIcon />
