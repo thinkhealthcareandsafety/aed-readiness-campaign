@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, LinearScale } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
@@ -73,11 +73,13 @@ export default function AuditWizard({ schema }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [showResumeToast, setShowResumeToast] = useState(false);
   const [autoScanActive, setAutoScanActive] = useState(false);
   // Question id -> the AI verdict that filled it, so the field can show a
   // small "auto-detected" badge without ever hiding the normal editable
   // input underneath it (a bad read must always stay correctable).
   const [aiFilled, setAiFilled] = useState({});
+  const headingRef = useRef(null);
 
   // Runs once on mount, client-side only (localStorage doesn't exist during
   // server rendering) — restores a prior in-progress draft, if any. This
@@ -93,9 +95,20 @@ export default function AuditWizard({ schema }) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above: intentional one-time client-only hydration, not a prop/state sync
       if (draft.answers) setAnswersRaw(draft.answers);
       if (typeof draft.stepIndex === "number") setStepIndex(draft.stepIndex);
+      // A restored draft otherwise looks identical to a fresh form with a
+      // couple of fields pre-filled by coincidence — nothing tells the
+      // responder their earlier progress actually came back, so a reload
+      // mid-form can read as data loss even though it isn't.
+      if (draft.answers && Object.keys(draft.answers).length > 0) setShowResumeToast(true);
     }
     setDraftRestored(true);
   }, []);
+
+  useEffect(() => {
+    if (!showResumeToast) return;
+    const t = setTimeout(() => setShowResumeToast(false), 6000);
+    return () => clearTimeout(t);
+  }, [showResumeToast]);
 
   // Mirrors current progress into localStorage on every change, so a reload
   // resumes here instead of at step 1. Gated on draftRestored so the initial
@@ -114,8 +127,13 @@ export default function AuditWizard({ schema }) {
   // Without this, the browser keeps whatever scroll position you were at —
   // on mobile that's usually the bottom of the previous (longer) step, right
   // by the Next button, leaving the new step's questions off-screen above.
+  // Moving focus to the new heading alongside the scroll matters just as
+  // much for anyone not looking at the screen: without it, a step change is
+  // silent to a screen reader and keyboard focus is left stranded on the
+  // (now relocated) Next button from the previous step.
   useEffect(() => {
     window.scrollTo(0, 0);
+    headingRef.current?.focus({ preventScroll: true });
   }, [stepIndex]);
 
   const expandedSchema = useMemo(() => expandUnitQuestions(schema, answers), [schema, answers]);
@@ -246,7 +264,8 @@ export default function AuditWizard({ schema }) {
     if (!isReview) {
       const err = validateSection(step, answers);
       if (err) {
-        setError(err);
+        setError(err.message);
+        scrollToQuestion(err.questionId);
         return;
       }
     }
@@ -254,9 +273,38 @@ export default function AuditWizard({ schema }) {
     if (isLast) return;
     setStepIndex((i) => Math.min(i + 1, steps.length - 1));
   }
+
+  // Long steps (some run to 6-7 questions) made the single footer error
+  // message easy to lose track of — this brings the actual offending field
+  // into view and gives it a brief highlight so there's no hunting for it.
+  function scrollToQuestion(questionId) {
+    if (!questionId) return;
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`q-field-${questionId}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.remove("q-flash");
+      // Force a reflow so re-adding the class restarts the animation even
+      // if the same field is flashed twice in a row.
+      void el.offsetWidth;
+      el.classList.add("q-flash");
+      const input = el.querySelector("input, select, textarea");
+      input?.focus?.({ preventScroll: true });
+    });
+  }
   function goBack() {
     setError(null);
     setStepIndex((i) => Math.max(i - 1, 0));
+  }
+
+  // Step dots for already-completed steps are clickable — same permissive
+  // "no re-validation" model goBack already uses, just a shortcut past
+  // repeated Back clicks instead of a new navigation rule.
+  function jumpToStep(i) {
+    if (i >= stepIndex) return;
+    setError(null);
+    setAutoScanActive(false);
+    setStepIndex(i);
   }
 
   async function submit() {
@@ -306,16 +354,42 @@ export default function AuditWizard({ schema }) {
         </div>
         <div className="step-dots">
           {steps.map((s, i) => (
-            <div key={s.id} className={`dot-item${i < stepIndex ? " done" : ""}${i === stepIndex ? " current" : ""}`} />
+            <button
+              key={s.id}
+              type="button"
+              className={`dot-item${i < stepIndex ? " done" : ""}${i === stepIndex ? " current" : ""}`}
+              onClick={() => jumpToStep(i)}
+              disabled={i >= stepIndex}
+              aria-current={i === stepIndex ? "step" : undefined}
+              aria-label={`${i < stepIndex ? "Go back to" : i === stepIndex ? "Current step:" : "Step"} ${i + 1}, ${s.title}`}
+            />
           ))}
         </div>
       </div>
 
       <div className="wizard-main">
+        {showResumeToast && (
+          <div className="callout structure resume-toast">
+            <span>Welcome back — resuming right where you left off.</span>
+            <button
+              type="button"
+              className="resume-toast-close"
+              onClick={() => setShowResumeToast(false)}
+              aria-label="Dismiss"
+            >
+              &times;
+            </button>
+          </div>
+        )}
         <div className="wizard-card" key={step.id} style={{ animation: "stepFade .28s ease both" }}>
           <div className="section-eyebrow">
             <span className="letter">{step.letter}</span>
-            <h2 className="section-title" style={{ marginBottom: 0 }}>
+            {/* tabIndex=-1 + programmatic focus on every step change (see the
+                stepIndex effect above) — not reachable via Tab, only ever
+                focused by that effect, so a screen reader announces the new
+                step instead of leaving focus stranded on the previous
+                step's (now relocated) Next button. */}
+            <h2 ref={headingRef} className="section-title" tabIndex={-1} style={{ marginBottom: 0 }}>
               {step.title}
             </h2>
           </div>
@@ -356,19 +430,20 @@ export default function AuditWizard({ schema }) {
             )
           ) : (
             step.questions.map((q) => (
-              <QuestionBlock
-                key={q.id}
-                question={q}
-                aiInfo={aiFilled[q.id]}
-                answers={answers}
-                setAnswer={setAnswer}
-                setRadioAnswer={setRadioAnswer}
-                setCheckboxAnswer={setCheckboxAnswer}
-                setQuantityAnswer={setQuantityAnswer}
-                setFreeText={setFreeText}
-                selectedAedModels={selectedAedModels}
-                aedModelSequence={aedModelSequence}
-              />
+              <div key={q.id} id={`q-field-${q.id}`}>
+                <QuestionBlock
+                  question={q}
+                  aiInfo={aiFilled[q.id]}
+                  answers={answers}
+                  setAnswer={setAnswer}
+                  setRadioAnswer={setRadioAnswer}
+                  setCheckboxAnswer={setCheckboxAnswer}
+                  setQuantityAnswer={setQuantityAnswer}
+                  setFreeText={setFreeText}
+                  selectedAedModels={selectedAedModels}
+                  aedModelSequence={aedModelSequence}
+                />
+              </div>
             ))
           )}
         </div>
@@ -380,8 +455,18 @@ export default function AuditWizard({ schema }) {
             <button className="btn btn-ghost" onClick={goBack} disabled={stepIndex === 0 || submitting}>
               Back
             </button>
-            {error && <span className="error-msg">{error}</span>}
-            {submitError && <span className="error-msg">{submitError}</span>}
+            {error && (
+              <span className="error-msg" role="alert" title={error}>
+                <WarningIcon />
+                <span>{error}</span>
+              </span>
+            )}
+            {submitError && (
+              <span className="error-msg" role="alert" title={submitError}>
+                <WarningIcon />
+                <span>{submitError}</span>
+              </span>
+            )}
             {isModeChoice ? null : !isLast ? (
               <button className="btn btn-primary" onClick={goNext}>
                 Next
@@ -407,6 +492,21 @@ export default function AuditWizard({ schema }) {
 // (yet) cover that unit — e.g. the responder hasn't finished the AED Status
 // step, or navigated back and shrank their reported count — so a badge still
 // shows something useful instead of silently disappearing.
+function WarningIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M10 2.5 18 17H2L10 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M10 8v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="10" cy="14.2" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
 // Traffic-light urgency for an auto-detected expiry tier (battery/pad expiry
 // status), matching the gt2y/1to2y/gt6m/within6m/expired values from
 // computeExpiryTierValue in genericScoring.js: plenty of runway is green,

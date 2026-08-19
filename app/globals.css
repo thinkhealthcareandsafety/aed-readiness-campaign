@@ -265,9 +265,14 @@ button { font-family: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .live-score, .live-score-gain { animation: none; transition: none; }
+  .q-flash, .resume-toast { animation: none; }
 }
 
-.wizard-main { flex: 1; display: flex; justify-content: center; padding: 32px clamp(16px, 4vw, 40px) 140px; }
+/* flex-direction: column so the resume-draft toast (see AuditWizard.jsx)
+   stacks above the card instead of sitting beside it — align-items: center
+   keeps the same horizontal-centering .wizard-card relied on when it was
+   the only child of a row flex container. */
+.wizard-main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px clamp(16px, 4vw, 40px) 140px; }
 .wizard-card {
   width: 100%; max-width: 760px; background: var(--paper-raised); border: 1px solid var(--line);
   border-radius: 20px; padding: clamp(24px, 4vw, 40px); box-shadow: var(--shadow);
@@ -276,7 +281,10 @@ button { font-family: inherit; }
 .section-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .section-eyebrow .letter { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--structure); line-height: 1; }
 .section-eyebrow .pts { margin-left: auto; font-family: var(--font-mono); font-size: .85rem; background: var(--structure); color: var(--paper-raised); padding: 3px 10px; border-radius: 999px; }
-.section-title { font-size: 1.5rem; margin-bottom: 4px; }
+/* tabIndex=-1 in AuditWizard.jsx means this is only ever focused
+   programmatically on a step change, never via Tab — no default ring to
+   suppress for a keyboard user, so it's safe to drop here. */
+.section-title { font-size: 1.5rem; margin-bottom: 4px; outline: none; }
 .section-note { color: var(--ink-soft); font-size: .92rem; max-width: 62ch; margin-bottom: 24px; }
 
 /* ---------- Field + its reference photo, side by side ----------
@@ -369,6 +377,11 @@ button { font-family: inherit; }
 }
 .option:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(28,36,48,0.08); }
 .option.selected { border-color: var(--accent); background: var(--accent-tint); box-shadow: 0 6px 16px rgba(28,36,48,0.08); }
+/* The real <input> sits inside this label at native size (line below) — a
+   keyboard user tabbing through needs the whole card to light up, not just
+   the small circle, so the ring is keyed off the input's focus state via
+   :has() rather than styled on the input itself. */
+.option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .option.disabled { opacity: .4; cursor: not-allowed; }
 .option.disabled:hover { transform: none; box-shadow: none; border-color: var(--line-strong); }
 .option input { accent-color: var(--accent-deep); width: 17px; height: 17px; flex-shrink: 0; }
@@ -388,11 +401,12 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .scale .dots { display: flex; gap: 2px; flex: 1; justify-content: space-between; }
 .scale label {
   display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .78rem; font-weight: 600;
-  color: var(--ink-soft); padding: 8px 6px; border-radius: 10px; cursor: pointer;
+  color: var(--ink-soft); padding: 10px 6px; border-radius: 10px; cursor: pointer; min-height: 44px; justify-content: center;
   transition: background-color .15s ease, color .15s ease;
 }
 .scale label:hover { background: var(--accent-tint); color: var(--accent-deep); }
 .scale label.selected { background: var(--accent-tint); color: var(--accent-deep); }
+.scale label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .scale input { accent-color: var(--accent-deep); width: 22px; height: 22px; cursor: pointer; }
 
 /* ---------- Illustrated image-card grids (AED models, status lamp, paediatric) ---------- */
@@ -418,6 +432,13 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 }
 .icon-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(28,36,48,0.10); border-color: var(--accent); }
 .icon-card.selected { border-color: var(--accent); background: var(--accent-tint); box-shadow: 0 10px 24px rgba(28,36,48,0.10); }
+/* This card's <input> is deliberately opacity:0/pointer-events:none (see
+   below) so mouse clicks land on the artwork instead of a 1px hit target —
+   but that also means it has NO visible presence at all by default, so a
+   keyboard user tabbing through an icon grid previously got zero indication
+   of which card was focused. :has() keys the ring off the hidden input's
+   own focus state to fix that without touching the input's own styling. */
+.icon-card:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
 .icon-card.disabled { opacity: .4; cursor: not-allowed; }
 .icon-card.disabled:hover { transform: none; box-shadow: none; border-color: var(--line-strong); }
 .icon-card input { position: absolute; opacity: 0; pointer-events: none; }
@@ -445,10 +466,38 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .step-dots { display: flex; align-items: center; gap: 5px; margin-top: 12px; flex-wrap: wrap; }
 .step-dots .dot-item {
   height: 6px; flex: 1; min-width: 10px; border-radius: 999px; background: var(--line);
-  transition: background .25s ease, flex-grow .25s ease;
+  transition: background .25s ease, flex-grow .25s ease, opacity .15s ease;
+  padding: 0; border: none; /* dots are <button>s now (jump back to a completed step) — reset UA button chrome */
 }
-.step-dots .dot-item.done { background: var(--structure); }
+.step-dots .dot-item.done { background: var(--structure); cursor: pointer; }
+.step-dots .dot-item.done:hover { opacity: .75; }
 .step-dots .dot-item.current { background: var(--accent); flex-grow: 2.2; }
+.step-dots .dot-item:disabled { cursor: default; }
+.step-dots .dot-item:focus-visible { outline: 2px solid var(--structure); outline-offset: 2px; }
+
+/* ---------- Field-level validation flash ----------
+   Fired by scrollToQuestion in AuditWizard.jsx after a failed Next: the
+   invalid field scrolls into view and briefly outlines itself, so on a step
+   with several questions the responder doesn't have to hunt for which one
+   the footer error is actually about. */
+@keyframes qFieldFlash {
+  0%, 100% { box-shadow: none; }
+  15%, 55% { box-shadow: 0 0 0 3px var(--notready-tint), 0 0 0 4px var(--notready); }
+}
+.q-flash { animation: qFieldFlash 1.6s ease; border-radius: 12px; }
+
+/* ---------- Resume-draft banner ---------- */
+.resume-toast {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; max-width: 760px;
+  margin: 0 auto 16px; animation: resumeToastIn .3s ease both;
+}
+.resume-toast-close {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent;
+  color: inherit; opacity: .6; cursor: pointer; font-size: 1rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+}
+.resume-toast-close:hover { opacity: 1; }
+.resume-toast-close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+@keyframes resumeToastIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ---------- Step transition ---------- */
 .step-enter { animation: stepFade .28s ease both; }
@@ -466,7 +515,12 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   padding: 14px clamp(16px, 4vw, 40px); display: flex; justify-content: center;
 }
 .wizard-footer .inner { width: 100%; max-width: 720px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.error-msg { color: var(--notready); font-size: .85rem; }
+.error-msg {
+  display: inline-flex; align-items: center; gap: 6px; color: var(--notready); font-size: .85rem; font-weight: 600;
+  min-width: 0;
+}
+.error-msg svg { width: 15px; height: 15px; flex-shrink: 0; }
+.error-msg span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* display:inline-flex (rather than relying on the UA default) matters here
    because .btn is used on both <button> and <a> — an <a> defaults to
@@ -476,6 +530,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
    regardless of tag or parent layout. */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: .92rem; border-radius: 9px; padding: 11px 20px; cursor: pointer; border: 1px solid transparent; transition: transform .05s ease, filter .15s ease; }
 .btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { filter: brightness(1.06); }
 .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
@@ -606,6 +661,7 @@ table.admin-table tr:hover td { background: var(--structure-tint); }
 .icon-btn:hover { border-color: var(--accent); color: var(--accent-deep); }
 .icon-btn.danger:hover { border-color: var(--notready); color: var(--notready); }
 .icon-btn:disabled { opacity: .3; cursor: not-allowed; }
+.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .b-add-btn { align-self: flex-start; font-size: .82rem; font-weight: 600; color: var(--structure); background: var(--structure-tint); border: 1px dashed var(--structure); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
 .b-add-btn:hover { filter: brightness(1.05); }

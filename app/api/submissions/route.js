@@ -29,7 +29,7 @@ export async function POST(request) {
   const answers = resolveDerivedAnswers(schema, rawAnswers);
   const validationError = validateAnswers(schema, answers);
   if (validationError) {
-    return NextResponse.json({ error: validationError }, { status: 400 });
+    return NextResponse.json({ error: validationError.message }, { status: 400 });
   }
 
   const scored = scoreSubmission(schema, answers);
