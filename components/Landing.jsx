@@ -99,17 +99,15 @@ export default function Landing() {
         <div className="landing-hero-overlay" />
         <div className="landing-hero-inner">
           <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
-          <h1 className="landing-h1">If a guest collapses at your property right now, does your AED actually work?</h1>
+          <h1 className="landing-h1">Is your AED ready to save a life right now?</h1>
           <p className="landing-lead">
-            Survival from sudden cardiac arrest falls roughly 10% for every minute defibrillation is delayed
-            (American Heart Association). A free 5-minute check — battery, pads, training, and signage — scored
-            against the PREPARED standard, with a full report at the end.
+            A free readiness check for your property&rsquo;s AED — battery, pads, training, and signage —
+            scored against the PREPARED standard, with a full report at the end.
           </p>
           <a href="#audit" className="btn btn-primary landing-cta landing-cta-lg">
             Start your free audit
             <ArrowIcon />
           </a>
-          <span className="landing-cta-subtext">Free &middot; No login &middot; About 5 minutes</span>
         </div>
         <a href="#audit" className="landing-scroll-cue" aria-label="Scroll down to start the audit">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -165,14 +163,6 @@ export default function Landing() {
             </a>
           </div>
         </div>
-      </section>
-
-      <section className="landing-stat">
-        <p className="landing-stat-number">-10%</p>
-        <p className="landing-stat-body">
-          survival, per minute defibrillation is delayed after cardiac arrest — American Heart Association. An AED
-          that&rsquo;s dead, expired, or missing its pads costs exactly that time.
-        </p>
       </section>
 
       <section className="landing-why" ref={whyRef}>
