@@ -127,11 +127,18 @@ export default function Landing() {
         </div>
         <div className="landing-brand-strip">
           <span className="landing-brand-strip-label">Set up for your brand</span>
-          <div className="landing-brand-strip-logos">
-            {BRAND_STRIP.map((b) => (
-              // eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed
-              <img key={b.name} src={b.logo} alt={b.name} title={b.name} />
-            ))}
+          <span className="sr-only">{BRAND_STRIP.map((b) => b.name).join(", ")}, and other hotel brands</span>
+          <div className="landing-brand-strip-track">
+            {/* The logo row is duplicated back-to-back and the animation
+               translates exactly one copy's width (-50%) before looping —
+               that's what makes the loop seamless with pure CSS instead of
+               needing JS to detect scroll position and jump/reset it. */}
+            <div className="landing-brand-strip-logos" aria-hidden="true">
+              {[...BRAND_STRIP, ...BRAND_STRIP].map((b, i) => (
+                // eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed
+                <img key={`${b.name}-${i}`} src={b.logo} alt="" title={b.name} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
