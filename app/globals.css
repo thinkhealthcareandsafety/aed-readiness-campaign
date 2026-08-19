@@ -181,7 +181,6 @@ button { font-family: inherit; }
   max-width: 1040px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 22px;
   display: flex; align-items: center; gap: clamp(14px, 3vw, 28px);
 }
-.landing-brand-strip-label { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); white-space: nowrap; flex-shrink: 0; }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;

@@ -126,7 +126,6 @@ export default function Landing() {
           ))}
         </div>
         <div className="landing-brand-strip">
-          <span className="landing-brand-strip-label">Set up for your brand</span>
           <span className="sr-only">{BRAND_STRIP.map((b) => b.name).join(", ")}, and other hotel brands</span>
           <div className="landing-brand-strip-track">
             {/* The logo row is duplicated back-to-back and the animation
