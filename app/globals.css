@@ -175,10 +175,14 @@ button { font-family: inherit; }
 
 /* Brand recognition, not a customer/usage claim — see the comment on
    BRAND_STRIP in Landing.jsx for why the copy says "set up for" rather than
-   "trusted by". Grayscale-by-default + color-on-hover keeps this reading as
-   a quiet credibility cue, not a second competing CTA. */
+   "trusted by". Each mark sits on its own solid-white chip rather than
+   directly on the page background — these are dark brand wordmarks, and a
+   dark theme's near-black background was making a grayscale, half-opacity
+   version of them nearly invisible (the client's actual complaint). A
+   guaranteed-white backdrop keeps every logo legible regardless of theme,
+   the same way a real press/partner logo strip is built. */
 .landing-brand-strip {
-  max-width: 1040px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 22px;
+  max-width: 1040px; margin: 0 auto; padding: 4px clamp(16px, 4vw, 40px) 26px;
   display: flex; align-items: center; gap: clamp(14px, 3vw, 28px);
 }
 .sr-only {
@@ -195,15 +199,18 @@ button { font-family: inherit; }
   -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 .landing-brand-strip-logos {
-  display: flex; align-items: center; gap: clamp(28px, 4vw, 48px); width: max-content;
+  display: flex; align-items: center; gap: clamp(16px, 2.4vw, 24px); width: max-content;
   animation: landingBrandScroll 26s linear infinite;
 }
 .landing-brand-strip-track:hover .landing-brand-strip-logos { animation-play-state: paused; }
-.landing-brand-strip-logos img {
-  height: 20px; width: auto; max-width: 84px; object-fit: contain; flex-shrink: 0;
-  filter: grayscale(1) opacity(.55); transition: filter .2s ease;
+.landing-brand-chip {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  height: 52px; padding: 0 20px; border-radius: 12px; background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.08);
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1), box-shadow .2s ease;
 }
-.landing-brand-strip-logos img:hover { filter: grayscale(0) opacity(1); }
+.landing-brand-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12); }
+.landing-brand-chip img { height: 26px; width: auto; max-width: 108px; object-fit: contain; }
 @keyframes landingBrandScroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
