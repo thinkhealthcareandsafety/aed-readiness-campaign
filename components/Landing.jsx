@@ -175,10 +175,8 @@ export default function Landing() {
                needing JS to detect scroll position and jump/reset it. */}
             <div className="landing-brand-strip-logos" aria-hidden="true">
               {[...BRAND_STRIP, ...BRAND_STRIP].map((b, i) => (
-                <span className="landing-brand-chip" key={`${b.name}-${i}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed */}
-                  <img src={b.logo} alt="" title={b.name} />
-                </span>
+                // eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed
+                <img key={`${b.name}-${i}`} src={b.logo} alt="" title={b.name} />
               ))}
             </div>
           </div>
