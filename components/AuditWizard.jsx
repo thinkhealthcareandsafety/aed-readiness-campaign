@@ -345,7 +345,7 @@ export default function AuditWizard({ schema }) {
             AED Readiness Campaign
             <small>Think Health &middot; PREPARED Score</small>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+          <div className="topbar-meta">
             {!isModeChoice && <LiveScore points={scored.total.points} max={scored.total.max} />}
             <div className="step-label">
               Step {stepIndex + 1} / {steps.length}

@@ -203,7 +203,14 @@ button { font-family: inherit; }
   .landing-h2.left { text-align: center; }
   .landing-gift-copy { text-align: center; }
   .landing-gift-copy p { margin-left: auto; margin-right: auto; }
-  .landing-gift-list { align-items: center; }
+  /* align-items: center here would center each <li> by its own width —
+     since the rows are different lengths ("AED battery pack" vs.
+     "Replacement electrode pads"), that staggers every checkmark to a
+     different x-position instead of lining them up. Centering the list as
+     one fit-content block (align-items back to the flex default of
+     stretch/flex-start for the rows) keeps every checkmark on the same
+     vertical line while the block itself still sits centered on the page. */
+  .landing-gift-list { width: fit-content; margin-left: auto; margin-right: auto; }
 }
 
 /* ---------- Landing: why-this-matters cards ---------- */
@@ -239,10 +246,20 @@ button { font-family: inherit; }
   position: sticky; top: 0; z-index: 5; background: var(--paper);
   border-bottom: 1px solid var(--line); padding: 14px clamp(16px, 4vw, 40px);
 }
-.wizard-topbar .brandrow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.wizard-topbar .brandrow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; row-gap: 8px; }
 .wizard-topbar .brand { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; }
 .wizard-topbar .brand small { display: block; font-family: var(--font-body); font-weight: 500; color: var(--ink-soft); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
 .wizard-topbar .step-label { font-size: .82rem; color: var(--ink-soft); font-family: var(--font-mono); white-space: nowrap; }
+.topbar-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-left: auto; }
+/* On a narrow phone, "AED Readiness Campaign" plus the live-score pill
+   don't fit on one row and the brand name was wrapping mid-word instead
+   ("AED Readiness" / "Campaign") — flex-wrap above lets .topbar-meta drop
+   to its own row instead, so the brand text always keeps its full width.
+   margin-left: auto on .topbar-meta keeps it pinned to the right edge
+   whether it's sharing the row with the brand or sitting alone on row two. */
+@media (max-width: 480px) {
+  .wizard-topbar .brand { flex: 1 1 100%; }
+}
 
 /* ---------- Live score badge (see LiveScore.jsx) ---------- */
 .live-score {
@@ -366,6 +383,16 @@ button { font-family: inherit; }
 .qblock .qlabel { font-weight: 600; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
 .qblock .qlabel .req { color: var(--notready); }
 .qblock .qlabel .pts-badge { margin-left: auto; font-family: var(--font-mono); font-size: .72rem; color: var(--accent-deep); border: 1px solid var(--accent); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+/* margin-left: auto right-aligns the badge on the label's own line, which
+   looks clean for a short question — but once a long label wraps onto 2+
+   lines on a narrow phone, the badge can no longer fit on either of those
+   lines and flex-wraps onto an otherwise-empty line of its own, reading as
+   a stray floating pill with a big gap above it. Below this width, letting
+   it flow inline right after the label text (wrapping together as one
+   paragraph) keeps it visually attached instead. */
+@media (max-width: 480px) {
+  .qblock .qlabel .pts-badge { margin-left: 0; }
+}
 .qhint { color: var(--ink-soft); font-size: .84rem; margin-top: 6px; }
 
 .options { display: flex; flex-direction: column; gap: 8px; }
