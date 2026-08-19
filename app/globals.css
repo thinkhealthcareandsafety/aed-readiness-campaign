@@ -172,6 +172,14 @@ button { font-family: inherit; }
 }
 .landing-trust-item { display: flex; align-items: center; gap: 9px; color: var(--ink-soft); font-size: .84rem; font-weight: 600; white-space: nowrap; }
 .landing-trust-item svg { width: 18px; height: 18px; color: var(--structure); flex-shrink: 0; }
+@media (max-width: 560px) {
+  /* Below ~560px, the flex-wrap row above collapses to one item per line
+     (each item is nowrap and the pair no longer fits side by side) — an
+     explicit 2-column grid keeps it as a tidy 2x2 block instead of a tall
+     single column of 4 stacked rows. */
+  .landing-trust-bar-inner { display: grid; grid-template-columns: 1fr 1fr; justify-content: normal; gap: 14px 20px; text-align: left; }
+  .landing-trust-item { white-space: normal; }
+}
 
 /* Brand recognition, not a customer/usage claim — see the comment on
    BRAND_STRIP in Landing.jsx for why the copy says "set up for" rather than
@@ -282,6 +290,15 @@ button { font-family: inherit; }
   gap: 10px clamp(16px, 3vw, 28px); font-size: .88rem; font-weight: 600; color: var(--ink-soft);
 }
 .landing-close-reassure li { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+@media (max-width: 560px) {
+  /* Same reasoning as the trust bar above — 3 nowrap items in a centered
+     flex-wrap row collapse to one per line on a phone; a 2-column grid
+     keeps the first two side by side, with the third centered on its own
+     row underneath rather than the whole thing reading as a tall list. */
+  .landing-close-reassure { display: grid; grid-template-columns: 1fr 1fr; justify-content: normal; gap: 14px 12px; text-align: left; }
+  .landing-close-reassure li:last-child:nth-child(odd) { grid-column: 1 / -1; justify-content: center; }
+  .landing-close-reassure li { white-space: normal; }
+}
 .landing-close-reassure li::before {
   content: "\2713"; width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%; background: var(--ready); color: #fff;
   font-size: .62rem; line-height: 16px; text-align: center;
