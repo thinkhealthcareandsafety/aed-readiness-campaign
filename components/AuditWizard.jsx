@@ -302,9 +302,6 @@ export default function AuditWizard({ schema }) {
             <div className="step-label">
               Step {stepIndex + 1} / {steps.length}
             </div>
-            <a href="/admin" className="admin-link">
-              Admin dashboard &rarr;
-            </a>
           </div>
         </div>
         <div className="step-dots">

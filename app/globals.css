@@ -243,8 +243,6 @@ button { font-family: inherit; }
 .wizard-topbar .brand { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; }
 .wizard-topbar .brand small { display: block; font-family: var(--font-body); font-weight: 500; color: var(--ink-soft); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
 .wizard-topbar .step-label { font-size: .82rem; color: var(--ink-soft); font-family: var(--font-mono); white-space: nowrap; }
-.admin-link { font-size: .72rem; color: var(--ink-soft); text-decoration: none; white-space: nowrap; opacity: .75; }
-.admin-link:hover { color: var(--accent-deep); opacity: 1; text-decoration: underline; }
 
 /* ---------- Live score badge (see LiveScore.jsx) ---------- */
 .live-score {
