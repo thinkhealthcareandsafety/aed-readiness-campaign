@@ -259,7 +259,6 @@ button { font-family: inherit; }
 }
 .prize-wheel-card.is-revealed { animation: prizeWheelPop .32s cubic-bezier(.2, 1.4, .4, 1) both, prizeWheelCardGlow 1.4s ease-out .1s; }
 .prize-wheel-wrap { position: relative; width: min(280px, 72vw); aspect-ratio: 1; margin: 26px 0; flex-shrink: 0; }
-.prize-wheel-slice-icon { font-size: 20px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35)); }
 .prize-wheel-slice-label {
   fill: #fff; font-size: 9.5px; font-weight: 800; font-family: var(--font-body);
   paint-order: stroke; stroke: rgba(0, 0, 0, 0.28); stroke-width: 2.5px; stroke-linejoin: round;
@@ -276,8 +275,19 @@ button { font-family: inherit; }
 .prize-wheel-wrap.is-spinning .prize-wheel-glow { animation: prizeWheelGlowPulse 1s ease-in-out infinite; }
 .prize-wheel-svg {
   position: relative; z-index: 1; width: 100%; height: 100%; display: block;
-  transition-property: transform; transition-timing-function: cubic-bezier(.13, .78, .1, 1);
+  transition-property: transform;
+  /* Overshoots slightly past the landing angle before settling back — a
+     plain ease-out lands "correctly" but reads as the wheel politely
+     stopping itself; real coin-op wheels have momentum and clunk a few
+     degrees past the peg before rocking back, which is the actual physical
+     cue our brains read as "it really landed here", not just "it stopped". */
+  transition-timing-function: cubic-bezier(.17, .82, .32, 1.22);
   filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
+}
+.prize-wheel-medallion-ring { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)); }
+.prize-wheel-slice-medallion.is-winner .prize-wheel-medallion-ring {
+  transform-box: fill-box; transform-origin: center;
+  animation: prizeWheelMedallionWin 1s ease-in-out .3s 3;
 }
 .prize-wheel-pointer {
   position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 3;
@@ -289,8 +299,11 @@ button { font-family: inherit; }
 .prize-wheel-legend { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; width: 100%; text-align: left; }
 .prize-wheel-legend li { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--ink-soft); padding: 3px 8px; border-radius: 6px; transition: background .25s ease, color .25s ease, transform .25s ease; }
 .prize-wheel-legend li.won { color: var(--ink); font-weight: 700; background: var(--accent-tint); transform: scale(1.03); }
-.prize-wheel-legend .swatch { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(255,255,255,0.5) inset; }
-.prize-wheel-legend-icon { font-size: .95rem; line-height: 1; }
+.prize-wheel-legend-thumb {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center;
+  justify-content: center; padding: 3px; box-shadow: 0 0 0 2px rgba(255,255,255,0.6) inset;
+}
+.prize-wheel-legend-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .prize-wheel-reveal { min-height: 96px; display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0; transform: scale(.85) translateY(6px); transition: none; margin-top: 10px; }
 .prize-wheel-reveal.show { opacity: 1; transform: none; transition: opacity .4s cubic-bezier(.2, 1.4, .4, 1), transform .4s cubic-bezier(.2, 1.4, .4, 1); }
 .prize-wheel-reveal p { margin: 0; font-size: 1.05rem; }
@@ -333,10 +346,14 @@ button { font-family: inherit; }
   0%, 100% { opacity: .5; }
   50% { opacity: 1; }
 }
+@keyframes prizeWheelMedallionWin {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)); }
+  50% { transform: scale(1.22); filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)); }
+}
 @media (prefers-reduced-motion: reduce) {
   .prize-wheel-overlay, .prize-wheel-card, .prize-wheel-cta, .confetto,
   .prize-wheel-wrap.is-spinning .prize-wheel-glow, .prize-wheel-wrap.is-spinning .prize-wheel-pointer,
-  .prize-wheel-card.is-revealed, .prize-wheel-bulb { animation: none; opacity: .7; }
+  .prize-wheel-card.is-revealed, .prize-wheel-bulb, .prize-wheel-slice-medallion.is-winner .prize-wheel-medallion-ring { animation: none; opacity: .7; }
   .prize-wheel-confetti { display: none; }
 }
 

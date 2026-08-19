@@ -173,10 +173,16 @@ export default function PrizeWheel({ prize, onDone }) {
               <path key={`${p.id}-sheen`} d={slicePath(i)} fill={`url(#slice-${p.id})`} />
             ))}
             {PRIZES.map((p, i) => (
-              <g key={`${p.id}-label`} transform={sliceLabelTransform(i)}>
-                <text x="132" y="100" textAnchor="middle" dominantBaseline="central" className="prize-wheel-slice-icon">
-                  {p.icon}
-                </text>
+              <g
+                key={`${p.id}-label`}
+                transform={sliceLabelTransform(i)}
+                className={`prize-wheel-slice-medallion${revealed && p.id === prize ? " is-winner" : ""}`}
+              >
+                {/* A plain image would blend into whichever slice color sits
+                   behind it — the white coin gives every icon the same
+                   guaranteed-contrast backdrop regardless of slice color. */}
+                <circle cx="128" cy="100" r="15" fill="#fff" className="prize-wheel-medallion-ring" />
+                <image href={p.image} x="115" y="87" width="26" height="26" />
                 <text x="168" y="100" textAnchor="middle" dominantBaseline="central" className="prize-wheel-slice-label">
                   {p.shortLabel || p.label}
                 </text>
@@ -205,8 +211,10 @@ export default function PrizeWheel({ prize, onDone }) {
         <ul className="prize-wheel-legend">
           {PRIZES.map((p) => (
             <li key={p.id} className={p.id === prize && revealed ? "won" : undefined}>
-              <span className="swatch" style={{ background: p.color }} />
-              <span className="prize-wheel-legend-icon" aria-hidden="true">{p.icon}</span>
+              <span className="prize-wheel-legend-thumb" style={{ background: p.color }}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- small static icon inside an SVG-adjacent legend, not page content */}
+                <img src={p.image} alt="" />
+              </span>
               {p.label}
             </li>
           ))}
