@@ -70,6 +70,7 @@ function bulbXY(i) {
 // here for a client to influence.
 export default function PrizeWheel({ prize, onDone }) {
   const [angle, setAngle] = useState(0);
+  const [started, setStarted] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -78,6 +79,21 @@ export default function PrizeWheel({ prize, onDone }) {
   const confetti = useMemo(() => makeConfetti(36), []);
 
   useEffect(() => {
+    // Read once on mount, independent of whether/when the visitor actually
+    // presses "Spin to win" — prefers-reduced-motion can only be read
+    // client-side (no DOM/matchMedia during SSR), so this is an unavoidable
+    // one-time client-only correction, not state that should've been
+    // derived during render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
+    setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+
+  useEffect(() => {
+    // Waits for the visitor to press "Spin to win" (see the button in the
+    // JSX below) rather than auto-spinning the instant this component
+    // mounts — landing on a payoff nobody asked to see yet doesn't feel
+    // like winning anything, it just feels like a page finished loading.
+    if (!started) return;
     // No "already started" ref guard here — React's dev-only Strict Mode
     // double-invokes this effect (mount -> cleanup -> mount again) precisely
     // so that a *correct* cleanup-and-reschedule survives it. A guard that
@@ -87,12 +103,6 @@ export default function PrizeWheel({ prize, onDone }) {
     // replacement — so `revealed` silently never becomes true in dev. The
     // effect below is written to be safely re-run instead (each run
     // schedules its own timer and its own cleanup cancels exactly that one).
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // prefers-reduced-motion can only be read client-side (no DOM/matchMedia
-    // during SSR), so this is an unavoidable one-time client-only
-    // correction — not state that should've been derived during render.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
-    setReducedMotion(reduced);
     // Lands the middle of the winning slice under the fixed 12-o'clock
     // pointer: slice i occupies [i*72, (i+1)*72) starting from the top, so
     // rotating the wheel by 360 - (i*72 + 36) degrees brings its center to
@@ -101,9 +111,13 @@ export default function PrizeWheel({ prize, onDone }) {
     // animated transition at all — see the transitionDuration below, which
     // is set to 0ms in that case rather than just skipping the extra spins).
     const landingDeg = 360 - (winIndex * SLICE_DEG + SLICE_DEG / 2);
-    const target = reduced ? landingDeg : 5 * 360 + landingDeg;
+    const target = reducedMotion ? landingDeg : 5 * 360 + landingDeg;
 
-    if (reduced) {
+    if (reducedMotion) {
+      // Jumping straight to the final state in response to the visitor's
+      // own "Spin to win" click (this effect only runs once `started`
+      // flips true) — not state that could've been derived during render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
       setAngle(target);
       setRevealed(true);
       return;
@@ -115,8 +129,8 @@ export default function PrizeWheel({ prize, onDone }) {
       cancelAnimationFrame(raf);
       clearTimeout(t);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once for this prize; winIndex is derived from the prize prop, which never changes for a mounted instance
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- winIndex is derived from the prize prop, which never changes for a mounted instance
+  }, [started, reducedMotion]);
 
   return (
     <div className="prize-wheel-overlay" role="dialog" aria-modal="true" aria-label="Prize reveal">
@@ -140,13 +154,13 @@ export default function PrizeWheel({ prize, onDone }) {
           ))}
         </div>
       )}
-      <div className={`prize-wheel-card${revealed ? " is-revealed" : " is-spinning"}`}>
+      <div className={`prize-wheel-card${revealed ? " is-revealed" : started ? " is-spinning" : ""}`}>
         <span className="landing-eyebrow dark">
-          {revealed ? "Congratulations!" : "Spinning the wheel…"}
+          {revealed ? "Congratulations!" : started ? "Spinning the wheel…" : "Your audit is in"}
         </span>
-        <h2 className="landing-h2">Your audit is in</h2>
+        <h2 className="landing-h2">{started ? "Your audit is in" : "One spin, one prize"}</h2>
 
-        <div className={`prize-wheel-wrap${revealed ? "" : " is-spinning"}`}>
+        <div className={`prize-wheel-wrap${started && !revealed ? " is-spinning" : ""}`}>
           <div className="prize-wheel-glow" aria-hidden="true" />
           <div className="prize-wheel-pointer" aria-hidden="true" />
           <svg
@@ -219,6 +233,12 @@ export default function PrizeWheel({ prize, onDone }) {
             </li>
           ))}
         </ul>
+
+        {!started && (
+          <button type="button" className="btn btn-primary prize-wheel-spin-cta" onClick={() => setStarted(true)}>
+            🎡 Spin to Win!
+          </button>
+        )}
 
         <div className={`prize-wheel-reveal${revealed ? " show" : ""}`} aria-live="polite">
           {revealed && (
