@@ -6,6 +6,7 @@ import { aggregateSubmissions } from "@/lib/genericScoring";
 import { barColor } from "@/lib/scoreColor";
 import ScoreTrendChart from "@/components/ScoreTrendChart";
 import LogoutButton from "./LogoutButton";
+import DeleteSubmissionButton from "./DeleteSubmissionButton";
 
 export const dynamic = "force-dynamic";
 
@@ -163,6 +164,7 @@ export default async function AdminPage() {
               <th>PREPARED</th>
               <th>Total</th>
               <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -185,11 +187,14 @@ export default async function AdminPage() {
                 <td>
                   <Link href={`/report/${r.id}`}>View report &rarr;</Link>
                 </td>
+                <td>
+                  <DeleteSubmissionButton id={r.id} label={`${r.first_name} ${r.last_name}`.trim() || r.hotel} />
+                </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9} style={{ textAlign: "center", color: "var(--ink-soft)", padding: "28px 12px" }}>
+                <td colSpan={10} style={{ textAlign: "center", color: "var(--ink-soft)", padding: "28px 12px" }}>
                   No submissions yet.
                 </td>
               </tr>
