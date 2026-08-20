@@ -138,6 +138,12 @@ export default function Landing() {
           <source src="/videos/aed-kit-reveal.mp4" type="video/mp4" />
         </video>
         <div className="landing-hero-overlay" />
+        {/* The stock clip has a small AI-generator watermark baked into its
+           bottom-right corner (a light sparkle glyph) — it's in the source
+           pixels, not something CSS can select, so it's covered with a
+           patch matching the overlay's own dark corner color instead of
+           re-exporting/re-cropping the video. */}
+        <div className="landing-hero-watermark-patch" aria-hidden="true" />
         <div className="landing-hero-inner">
           <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
           <h1 className="landing-h1">Is your AED ready to save a life right now?</h1>
@@ -189,6 +195,10 @@ export default function Landing() {
             <video className="landing-gift-media" autoPlay muted loop playsInline preload="auto">
               <source src="/videos/aed-kit-gift-reveal.mp4" type="video/mp4" />
             </video>
+            {/* Same baked-in AI-generator watermark as the hero clip, same
+               fix — a patch matching this clip's own light background tone
+               instead of the hero's dark one. */}
+            <div className="landing-gift-watermark-patch" aria-hidden="true" />
           </div>
           <div className="landing-gift-copy">
             <span className="landing-ribbon">Spin to win</span>
