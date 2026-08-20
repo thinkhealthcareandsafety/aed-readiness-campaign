@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { questionMax } from "@/lib/genericScoring";
 
 const QUESTION_TYPES = [
@@ -36,8 +36,20 @@ async function api(url, options) {
 }
 
 function TextEditable({ value, onCommit, placeholder, type = "text", className = "" }) {
-  const [v, setV] = useState(value || "");
-  useEffect(() => setV(value ?? ""), [value]);
+  const [v, setV] = useState(value ?? "");
+  // Resyncs the local edit buffer when `value` changes from outside (e.g.
+  // after a save round-trips through the parent's refresh()) — done during
+  // render by comparing against a mirrored "last seen prop" state, per
+  // React's own guidance, instead of a useEffect: an effect-based resync
+  // renders once with the stale buffer, commits it to the DOM, then fires
+  // the effect and re-renders with the correct value, so a keystroke can
+  // land on the wrong (about-to-be-overwritten) frame. This lands on the
+  // corrected value in the same render, no extra pass, no visible flash.
+  const [prevValue, setPrevValue] = useState(value ?? "");
+  if ((value ?? "") !== prevValue) {
+    setPrevValue(value ?? "");
+    setV(value ?? "");
+  }
   return (
     <input
       type={type}
@@ -57,7 +69,12 @@ function TextEditable({ value, onCommit, placeholder, type = "text", className =
 
 function NumberEditable({ value, onCommit, className = "", placeholder }) {
   const [v, setV] = useState(value ?? "");
-  useEffect(() => setV(value ?? ""), [value]);
+  // Same render-time resync as TextEditable above, same reasoning.
+  const [prevValue, setPrevValue] = useState(value ?? "");
+  if ((value ?? "") !== prevValue) {
+    setPrevValue(value ?? "");
+    setV(value ?? "");
+  }
   return (
     <input
       type="number"
