@@ -474,10 +474,26 @@ button { font-family: inherit; }
 }
 .wizard-topbar {
   position: sticky; top: 0; z-index: 5;
-  background: color-mix(in srgb, var(--paper) 75%, transparent);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  /* 75% opaque + 14px blur looked fine on a wide desktop viewport, but on a
+     phone the topbar is proportionally much taller relative to how much a
+     step scrolls — content sliding underneath stayed legible enough to
+     visually collide with the topbar's own text (the brand name overlapping
+     the scrolled-past question, both readable at once). More opacity and a
+     heavier blur keeps the frosted feel without it doubling as a second,
+     competing layer of text. */
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
   border-bottom: 1px solid var(--line); padding: 14px clamp(16px, 4vw, 40px);
+}
+/* Even heavier blur still left scrolled-past text legible enough to visibly
+   collide with the topbar's own — a phone's topbar takes up proportionally
+   more of the viewport, so there's far less room for that to read as subtle
+   texture instead of a second, competing layer of words. Solid on mobile,
+   glass on desktop: the collision risk is highest exactly where the
+   aesthetic upside is smallest. */
+@media (max-width: 640px) {
+  .wizard-topbar { background: var(--paper); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 .wizard-topbar .brandrow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; row-gap: 8px; }
 .wizard-topbar .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; }
