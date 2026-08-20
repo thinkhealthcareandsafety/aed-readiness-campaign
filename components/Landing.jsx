@@ -139,7 +139,9 @@ export default function Landing() {
         </video>
         <div className="landing-hero-overlay" />
         <div className="landing-hero-inner">
-          <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, no next/image needed */}
+          <img src="/brand/thinkhealth-logo.png" alt="Think Health" className="landing-hero-logo" />
+          <span className="landing-eyebrow">AED Readiness Campaign</span>
           <h1 className="landing-h1">Is your AED ready to save a life right now?</h1>
           <p className="landing-lead">
             A free readiness check for your property&rsquo;s AED — battery, pads, training, and signage —

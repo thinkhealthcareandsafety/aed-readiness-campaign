@@ -390,8 +390,12 @@ export default function AuditWizard({ schema }) {
       <div className="wizard-topbar">
         <div className="brandrow">
           <div className="brand">
-            AED Readiness Campaign
-            <small>Think Health &middot; PREPARED Score</small>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, no next/image needed */}
+            <img src="/brand/thinkhealth-logo.png" alt="Think Health" className="brand-logo" />
+            <span>
+              AED Readiness Campaign
+              <small>Think Health &middot; PREPARED Score</small>
+            </span>
           </div>
           <div className="topbar-meta">
             {!isModeChoice && <LiveScore points={scored.total.points} max={scored.total.max} />}
