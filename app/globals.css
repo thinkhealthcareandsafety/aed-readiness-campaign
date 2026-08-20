@@ -461,9 +461,22 @@ button { font-family: inherit; }
 }
 
 /* ---------- Wizard shell ---------- */
-.wizard-page { min-height: 100vh; display: flex; flex-direction: column; }
+/* A flat --paper fill read as plain/boring behind the card — two soft,
+   large, off-center tints (barely-there accent/structure color, not a
+   pattern or texture) give the page some ambient depth without competing
+   with the actual form content sitting on top of it. */
+.wizard-page {
+  min-height: 100vh; display: flex; flex-direction: column;
+  background:
+    radial-gradient(1100px 560px at 12% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%),
+    radial-gradient(900px 520px at 100% 4%, color-mix(in srgb, var(--structure) 9%, transparent), transparent 58%),
+    var(--paper);
+}
 .wizard-topbar {
-  position: sticky; top: 0; z-index: 5; background: var(--paper);
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--paper) 75%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
   border-bottom: 1px solid var(--line); padding: 14px clamp(16px, 4vw, 40px);
 }
 .wizard-topbar .brandrow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; row-gap: 8px; }
@@ -513,7 +526,8 @@ button { font-family: inherit; }
 .wizard-main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px clamp(16px, 4vw, 40px) 140px; }
 .wizard-card {
   width: 100%; max-width: 760px; background: var(--paper-raised); border: 1px solid var(--line);
-  border-radius: 20px; padding: clamp(24px, 4vw, 40px); box-shadow: var(--shadow);
+  border-radius: 20px; padding: clamp(24px, 4vw, 40px);
+  box-shadow: var(--shadow), 0 40px 70px -32px color-mix(in srgb, var(--ink) 16%, transparent);
 }
 
 .section-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
