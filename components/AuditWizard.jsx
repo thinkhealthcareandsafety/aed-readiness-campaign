@@ -13,7 +13,7 @@ import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
 import { listHotelCities, sortHotelOptionsByCity } from "@/lib/hotelCities";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
-import { aedAgeWarning, MONTH_NAMES } from "@/lib/aedSerialDate";
+import { aedAgeWarning, isValidAedSerialFormat, aedSerialFormatHint, MONTH_NAMES } from "@/lib/aedSerialDate";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
 
@@ -306,7 +306,7 @@ export default function AuditWizard({ schema, detectedCity }) {
 
   async function goNext() {
     if (!isReview) {
-      const err = validateSection(step, answers);
+      const err = validateSection(step, answers, expandedSchema);
       if (err) {
         setError(err.message);
         scrollToQuestion(err.questionId);
@@ -670,9 +670,17 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   const refKind = referenceKindFor(question);
   const refModels = refKind ? referenceModelsFor(question, aedModelSequence || [], selectedAedModels) : null;
   const isSerialField = refKind === "serial";
-  const ageWarning = isSerialField
-    ? aedAgeWarning(unitModelFor(question, aedModelSequence || []), answers[question.id])
-    : null;
+  const serialUnitModel = isSerialField ? unitModelFor(question, aedModelSequence || []) : null;
+  const ageWarning = isSerialField ? aedAgeWarning(serialUnitModel, answers[question.id]) : null;
+  const serialValue = answers[question.id];
+  // Only flagged once the field has something in it — an empty required
+  // field is already caught by validateSection on Next, and flashing a
+  // format error before the responder has typed anything would just be
+  // noise. Only checked for the three brands with a verified format (see
+  // lib/aedSerialDate.js); other models show no hint and are never blocked.
+  const serialFormatHint = isSerialField ? aedSerialFormatHint(serialUnitModel) : null;
+  const serialFormatInvalid =
+    isSerialField && serialValue && serialUnitModel && !isValidAedSerialFormat(serialUnitModel, serialValue);
   // The field itself always stays a normal, editable input underneath this
   // — a bad AI read is never silently trusted, only pre-filled for review.
   const aiBadge = aiInfo ? (
@@ -694,6 +702,11 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               onChange={(v) => setAnswer(question.id, v)}
             />
             {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
+            {serialFormatInvalid && (
+              <div className="callout warn" style={{ marginTop: 10 }}>
+                {`This doesn't match this model's usual serial format: ${serialFormatHint}. Double-check it against the label.`}
+              </div>
+            )}
             {ageWarning && (
               // Built as one JS template literal, not multi-line JSX text —
               // JSX collapses a text run that wraps across source lines by
