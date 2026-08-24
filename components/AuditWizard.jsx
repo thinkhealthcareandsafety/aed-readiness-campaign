@@ -11,6 +11,7 @@ import Landing from "@/components/Landing";
 import LiveScore from "@/components/LiveScore";
 import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
+import { listHotelCities, sortHotelOptionsByCity } from "@/lib/hotelCities";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
 import { aedAgeWarning, MONTH_NAMES } from "@/lib/aedSerialDate";
 
@@ -27,6 +28,27 @@ const MODE_CHOICE_STEP = {
   note: "Photograph your AED and let AI read the details, or answer each question yourself.",
   questions: [],
 };
+
+// Small override control shown above the hotel picker: "Showing: {city} ▾"
+// — the picker itself already sorts that city's hotels to the top, this
+// just lets the responder pick a different one (e.g. auditing a property
+// outside their own city).
+function CityPill({ cities, selected, onChange }) {
+  if (!cities.length) return null;
+  return (
+    <label className="city-pill">
+      <span className="city-pill-label">Showing:</span>
+      <select value={selected || ""} onChange={(e) => onChange(e.target.value || null)}>
+        {!selected && <option value="">All cities</option>}
+        {cities.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 function findQuestionByFieldRole(schema, role) {
   for (const s of schema.sections) {
@@ -57,8 +79,12 @@ function loadDraft() {
   }
 }
 
-export default function AuditWizard({ schema }) {
+export default function AuditWizard({ schema, detectedCity }) {
   const router = useRouter();
+  // Starts at the server-detected (IP-geolocated, or "Pune" on localhost)
+  // city; the picker lets the responder override it if they're auditing a
+  // property outside their own city.
+  const [selectedCity, setSelectedCity] = useState(detectedCity || null);
   const [answers, setAnswersRaw] = useState({});
   // Every update is re-resolved so date-derived questions (e.g. expiry tier
   // from an expiry date) always reflect the latest date, no matter which
@@ -521,6 +547,8 @@ export default function AuditWizard({ schema }) {
                       setAnswer={setAnswer}
                       setRadioAnswer={setRadioAnswer}
                       setCheckboxAnswer={setCheckboxAnswer}
+                      selectedCity={selectedCity}
+                      onCityChange={setSelectedCity}
                       setQuantityAnswer={setQuantityAnswer}
                       setFreeText={setFreeText}
                       selectedAedModels={selectedAedModels}
@@ -635,7 +663,7 @@ function unitModelFor(question, sequence) {
   return sequence[unit - 1] || null;
 }
 
-function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence }) {
+function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence, selectedCity, onCityChange }) {
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
   const name = `q${question.id}`;
@@ -731,12 +759,22 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
     return (
       <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint}>
         {isHotelSelect ? (
-          <HotelSelect
-            value={val}
-            onChange={(v) => setRadioAnswer(question, v)}
-            options={question.options.map((o) => ({ value: o.value, label: o.label }))}
-            placeholder="Select..."
-          />
+          <>
+            <CityPill
+              cities={listHotelCities()}
+              selected={selectedCity}
+              onChange={onCityChange}
+            />
+            <HotelSelect
+              value={val}
+              onChange={(v) => setRadioAnswer(question, v)}
+              options={sortHotelOptionsByCity(
+                question.options.map((o) => ({ value: o.value, label: o.label })),
+                selectedCity
+              )}
+              placeholder="Select..."
+            />
+          </>
         ) : isTabSelect ? (
           <TabSelect
             value={val}

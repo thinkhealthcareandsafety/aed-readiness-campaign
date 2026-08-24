@@ -708,6 +708,15 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
    A native <select> can't render anything inside an <option> but plain
    text, so the ~160-hotel field (see HotelSelect.jsx) gets a custom
    listbox instead — this is the only "select" question that does. */
+.city-pill {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px;
+  font-size: .85rem; color: var(--ink-soft);
+}
+.city-pill select {
+  font: inherit; color: var(--accent); background: var(--accent-tint);
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px 10px; cursor: pointer;
+}
+
 .hotel-select { position: relative; }
 .hotel-select-trigger {
   width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
