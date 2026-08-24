@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, LinearScale } from "@/components/fields";
+import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, TabSelect, LinearScale } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
 import { FieldReferencePhoto, PaediatricReferencePhoto, CabinetReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
@@ -181,6 +181,15 @@ export default function AuditWizard({ schema }) {
     setAnswers((a) => ({ ...a, [questionId]: value }));
   }
 
+  // The deselect-on-reclick decision (letting a respondent back out of a
+  // single-choice answer instead of being stuck with the first thing they
+  // tapped) is made by the field component itself — RadioGroup/IconRadioGrid
+  // pass "" explicitly when the click landed on the already-selected
+  // option, the real value otherwise. Redoing that comparison here too,
+  // against freshly-updated state inside a functional setState updater,
+  // was the actual bug: a genuine new selection fires both onClick and
+  // onChange, and the second call would see the first call's own update
+  // and immediately undo it.
   function setRadioAnswer(question, value) {
     setAnswers((a) => ({ ...a, [question.id]: { value, freeText: a[question.id]?.freeText || "" } }));
   }
@@ -662,6 +671,11 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
     // custom searchable combobox instead. Every other "select" question
     // (AED count, training headcount, etc.) stays a native select.
     const isHotelSelect = question.fieldRole === "hotel";
+    // Short fixed lists (training headcount, etc.) scan faster as tabs than
+    // as a dropdown that has to be opened first — a longer list like the
+    // 10-option AED count still gets the native select rather than a tab
+    // row wrapping across two or three lines.
+    const isTabSelect = !isHotelSelect && question.options.length <= 6;
     return (
       <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint}>
         {isHotelSelect ? (
@@ -670,6 +684,12 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             onChange={(v) => setRadioAnswer(question, v)}
             options={question.options.map((o) => ({ value: o.value, label: o.label }))}
             placeholder="Select..."
+          />
+        ) : isTabSelect ? (
+          <TabSelect
+            value={val}
+            onChange={(v) => setRadioAnswer(question, v)}
+            options={question.options.map((o) => ({ value: o.value, label: o.label }))}
           />
         ) : (
           <Select

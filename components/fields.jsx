@@ -27,6 +27,15 @@ export function RadioGroup({ name, value, onChange, options, row }) {
             value={opt.value}
             checked={value === opt.value}
             onChange={() => onChange(opt.value)}
+            // A native radio only fires onChange when its checked state
+            // actually flips, which is exactly what makes it safe to detect
+            // "this click didn't change anything" here: e.target.checked at
+            // click time reflects the state *before* this click, so true
+            // means the click landed on the already-selected option (the
+            // change event won't fire for that case) — deselect. false
+            // means a real selection is happening and onChange is about to
+            // fire on its own; don't double up on it here.
+            onClick={(e) => { if (e.target.checked) onChange(""); }}
           />
           <span>
             <span className="opt-text">{opt.label}</span>
@@ -70,6 +79,8 @@ export function IconRadioGrid({ name, value, onChange, items, wide, pair }) {
             value={opt.value}
             checked={value === opt.value}
             onChange={() => onChange(opt.value)}
+            // See the matching comment in RadioGroup above — same reasoning.
+            onClick={(e) => { if (e.target.checked) onChange(""); }}
           />
           <span className="icon-card-check" aria-hidden="true">
             ✓
@@ -167,6 +178,35 @@ export function TextInput({ type = "text", value, onChange, placeholder }) {
   );
 }
 
+// A short, fixed list of options (5-6 or fewer) reads faster as a row of
+// tappable tabs than as a native dropdown a respondent has to open, scan,
+// then close — one extra interaction for something that could've been
+// scannable at a glance. Kept separate from Select (used for longer lists
+// like the 10-option AED count, where tabs would wrap awkwardly) rather
+// than replacing it outright.
+export function TabSelect({ value, onChange, options }) {
+  return (
+    <div className="tab-select" role="radiogroup">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={value === o.value}
+          className={`tab-select-btn${value === o.value ? " selected" : ""}`}
+          // Same deselect-on-reclick behavior as every other single-choice
+          // control on this form (see setRadioAnswer in AuditWizard.jsx) —
+          // a plain button doesn't have the native-radio "checked state
+          // must change" restriction, so this needs no separate onClick.
+          onClick={() => onChange(value === o.value ? "" : o.value)}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Select({ value, onChange, options, placeholder }) {
   return (
     <select value={value || ""} onChange={(e) => onChange(e.target.value)}>
@@ -191,7 +231,15 @@ export function LinearScale({ value, onChange, min = 1, max = 5, minLabel, maxLa
       <div className="dots">
         {nums.map((n) => (
           <label key={n} className={value === n ? "selected" : undefined}>
-            <input type="radio" checked={value === n} onChange={() => onChange(n)} />
+            <input
+              type="radio"
+              checked={value === n}
+              onChange={() => onChange(n)}
+              // See the matching comment on RadioGroup in this same file —
+              // e.target.checked at click time reflects state *before* this
+              // click, so true means re-clicking the already-selected dot.
+              onClick={(e) => { if (e.target.checked) onChange(null); }}
+            />
             <span>{n}</span>
           </label>
         ))}

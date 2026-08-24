@@ -680,6 +680,18 @@ input[type="text"], input[type="email"], input[type="tel"], input[type="date"], 
 }
 input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
 
+/* ---------- Tab select (short fixed lists — see TabSelect in fields.jsx) ---------- */
+.tab-select { display: flex; flex-wrap: wrap; gap: 8px; }
+.tab-select-btn {
+  flex: 1 1 auto; min-width: 64px; font-family: inherit; font-size: .92rem; font-weight: 600;
+  color: var(--ink-soft); background: var(--paper-raised); border: 1.5px solid var(--line-strong);
+  border-radius: 10px; padding: 11px 14px; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease, transform .12s cubic-bezier(.2,.8,.2,1);
+}
+.tab-select-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+.tab-select-btn.selected { border-color: var(--accent); background: var(--accent-tint); color: var(--accent-deep); }
+.tab-select-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* ---------- Hotel select (searchable combobox with brand logos) ----------
    A native <select> can't render anything inside an <option> but plain
    text, so the ~160-hotel field (see HotelSelect.jsx) gets a custom
