@@ -630,6 +630,18 @@ button { font-family: inherit; }
 @keyframes refLightboxFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes refLightboxPop { from { opacity: 0; transform: scale(.96) translateY(6px); } to { opacity: 1; transform: none; } }
 
+/* Marks the start of a new physical unit's questions within a section that
+   asks about several — "Battery (1)", "Pads (1)", "Battery (2)"... — so
+   which brand "(2)" actually refers to is visible right above the fields
+   instead of only inferable from a small reference-photo thumbnail further
+   down the page. */
+.unit-banner {
+  display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: .85rem;
+  color: var(--structure); background: var(--structure-tint); border-radius: 999px;
+  padding: 6px 14px; margin: 22px 0 14px;
+}
+.unit-banner::before { content: "⚕"; font-size: .9em; }
+
 .qblock { margin-bottom: 26px; }
 .qblock .qlabel { font-weight: 600; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
 .qblock .qlabel .req { color: var(--notready); }

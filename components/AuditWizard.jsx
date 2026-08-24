@@ -11,15 +11,15 @@ import Landing from "@/components/Landing";
 import LiveScore from "@/components/LiveScore";
 import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
-import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, scoreSubmission } from "@/lib/genericScoring";
+import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
 import { aedAgeWarning, MONTH_NAMES } from "@/lib/aedSerialDate";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
 
-// Only ever inserted right before the first gated equipment section (i.e.
-// only when the responder has already confirmed they have an AED — see
-// modeChoiceInsertIndex below), so auto-scan is never offered when there's
-// nothing to point a camera at.
+// Only ever inserted right after the AED Status (registration) section —
+// i.e. only when the responder has already confirmed they have an AED and
+// registered it — see modeChoiceInsertIndex below, so auto-scan is never
+// offered when there's nothing registered yet to point a camera at.
 const MODE_CHOICE_STEP = {
   id: "__mode_choice",
   letter: "✦",
@@ -152,18 +152,21 @@ export default function AuditWizard({ schema }) {
   const scored = useMemo(() => scoreSubmission(expandedSchema, answers), [expandedSchema, answers]);
   const selectedAedModels = useMemo(() => getSelectedAedModels(schema, answers), [schema, answers]);
   const aedModelSequence = useMemo(() => getAedModelSequence(schema, answers), [schema, answers]);
+  const modelLabelByValue = useMemo(() => getModelLabelMap(schema), [schema]);
   const visibleSections = useMemo(
     () => expandedSchema.sections.filter((s) => isSectionVisible(s, answers)),
     [expandedSchema, answers]
   );
-  // The mode-choice screen only makes sense once there's an AED to point a
-  // camera at, so it's inserted right before whichever visible section is
-  // the first one gated on the has_aed_gate answer ("AED Status", the first
-  // equipment section) — never shown at all when the responder said no.
-  const modeChoiceInsertIndex = useMemo(
-    () => visibleSections.findIndex((s) => s.visibleIfValue != null),
-    [visibleSections]
-  );
+  // The mode-choice screen only makes sense once the responder has actually
+  // registered which AEDs they have (count, model, serial — the "AED
+  // Status" section, always the first one gated on has_aed_gate), so it's
+  // inserted right *after* that section instead of before it: register the
+  // devices first, then decide how to inspect them. Never shown at all when
+  // the responder said no to having an AED in the first place.
+  const modeChoiceInsertIndex = useMemo(() => {
+    const firstGated = visibleSections.findIndex((s) => s.visibleIfValue != null);
+    return firstGated === -1 ? -1 : firstGated + 1;
+  }, [visibleSections]);
   const steps = useMemo(() => {
     if (modeChoiceInsertIndex === -1) return [...visibleSections, REVIEW_STEP];
     return [
@@ -254,10 +257,7 @@ export default function AuditWizard({ schema }) {
       const q = findQuestionByFieldRole(expandedSchema, item.id);
       if (!q) continue;
 
-      if (item.id === "serial_number_1") {
-        if (!result.serial_number) continue;
-        setAnswer(q.id, result.serial_number);
-      } else if (item.id === "battery_expiry_date_1" || item.id === "pads_expiry_date_1") {
+      if (item.id === "battery_expiry_date_1" || item.id === "pads_expiry_date_1") {
         if (!result.expiry_date) continue;
         // A month-only read ("YYYY-MM") needs a day for the <input type=date>
         // — default to the 1st; it's a starting point the responder reviews
@@ -491,22 +491,45 @@ export default function AuditWizard({ schema }) {
               </div>
             )
           ) : (
-            step.questions.map((q) => (
-              <div key={q.id} id={`q-field-${q.id}`}>
-                <QuestionBlock
-                  question={q}
-                  aiInfo={aiFilled[q.id]}
-                  answers={answers}
-                  setAnswer={setAnswer}
-                  setRadioAnswer={setRadioAnswer}
-                  setCheckboxAnswer={setCheckboxAnswer}
-                  setQuantityAnswer={setQuantityAnswer}
-                  setFreeText={setFreeText}
-                  selectedAedModels={selectedAedModels}
-                  aedModelSequence={aedModelSequence}
-                />
-              </div>
-            ))
+            // A section like Expiry Status asks about "Battery (1)", "Pads
+            // (1)", "Battery (2)", "Pads (2)"... back to back — with two
+            // different brands reported, nothing on screen said which
+            // physical unit "(2)" actually was without scrolling down to
+            // spot the small reference-photo thumbnail. lastUnitRef tracks
+            // the unit number as the loop walks through, purely to detect
+            // "this question starts a new unit" — a plain local, not React
+            // state, since it only needs to last for this one render pass.
+            (() => {
+              let lastUnit = null;
+              return step.questions.map((q) => {
+                const unit = unitNumberFromLabel(q.label);
+                const isNewUnit = unit != null && unit !== lastUnit;
+                if (unit != null) lastUnit = unit;
+                const unitModel = isNewUnit ? aedModelSequence[unit - 1] : null;
+                const unitModelLabel = unitModel ? modelLabelByValue[unitModel] : null;
+                return (
+                  <div key={q.id} id={`q-field-${q.id}`}>
+                    {isNewUnit && (
+                      <div className="unit-banner">
+                        AED ({unit}){unitModelLabel ? ` — ${unitModelLabel}` : ""}
+                      </div>
+                    )}
+                    <QuestionBlock
+                      question={q}
+                      aiInfo={aiFilled[q.id]}
+                      answers={answers}
+                      setAnswer={setAnswer}
+                      setRadioAnswer={setRadioAnswer}
+                      setCheckboxAnswer={setCheckboxAnswer}
+                      setQuantityAnswer={setQuantityAnswer}
+                      setFreeText={setFreeText}
+                      selectedAedModels={selectedAedModels}
+                      aedModelSequence={aedModelSequence}
+                    />
+                  </div>
+                );
+              });
+            })()
           )}
         </div>
       </div>
