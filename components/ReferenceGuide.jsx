@@ -173,8 +173,12 @@ export function referenceKindFor(question) {
   if (question.type === "text" && label.includes("serial")) return "serial";
   if (question.type === "date" && label.includes("battery")) return "battery";
   if (question.type === "date" && label.includes("pad")) return "pads";
-  if (question.type === "radio" && label.includes("battery installed")) return "batteryAttached";
-  if (question.type === "radio" && label.includes("pads connected")) return "padsAttached";
+  // Word-presence checks, not exact-phrase substring matches — per-unit
+  // labels now insert "(1)"/"(2)" between the words ("battery (1) installed
+  // correctly?"), which would break a literal "battery installed" substring
+  // check.
+  if (question.type === "radio" && label.includes("battery") && label.includes("installed")) return "batteryAttached";
+  if (question.type === "radio" && label.includes("pads") && label.includes("connected")) return "padsAttached";
   return null;
 }
 
