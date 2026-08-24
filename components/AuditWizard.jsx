@@ -12,6 +12,7 @@ import LiveScore from "@/components/LiveScore";
 import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, scoreSubmission } from "@/lib/genericScoring";
+import { aedAgeWarning, MONTH_NAMES } from "@/lib/aedSerialDate";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
 
@@ -600,12 +601,27 @@ function referenceModelsFor(question, sequence, fallbackModels) {
   return model ? [model] : fallbackModels;
 }
 
+// Unlike referenceModelsFor above, this deliberately has no fallback to
+// "every selected model" — decoding a serial number only makes sense
+// against the one specific unit it was typed in for. If that unit's model
+// can't be resolved yet (e.g. the model quantity question isn't answered
+// yet), the honest answer is "don't know", not "guess against all of them".
+function unitModelFor(question, sequence) {
+  const unit = unitNumberFromLabel(question.label);
+  if (unit == null) return null;
+  return sequence[unit - 1] || null;
+}
+
 function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence }) {
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
   const name = `q${question.id}`;
   const refKind = referenceKindFor(question);
   const refModels = refKind ? referenceModelsFor(question, aedModelSequence || [], selectedAedModels) : null;
+  const isSerialField = refKind === "serial";
+  const ageWarning = isSerialField
+    ? aedAgeWarning(unitModelFor(question, aedModelSequence || []), answers[question.id])
+    : null;
   // The field itself always stays a normal, editable input underneath this
   // — a bad AI read is never silently trusted, only pre-filled for review.
   const aiBadge = aiInfo ? (
@@ -627,6 +643,19 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               onChange={(v) => setAnswer(question.id, v)}
             />
             {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
+            {ageWarning && (
+              // Built as one JS template literal, not multi-line JSX text —
+              // JSX collapses a text run that wraps across source lines by
+              // trimming *each* line's leading/trailing whitespace before
+              // rejoining, which silently ate the space right after
+              // {ageWarning.ageYears} when it was plain JSX text starting a
+              // new line ("9" + "years" with no space between). A single
+              // template-literal expression is immune to that since it's
+              // one JS string, not JSX-text-with-line-wraps.
+              <div className="callout warn" style={{ marginTop: 10 }}>
+                {`This unit's serial number decodes to ${MONTH_NAMES[ageWarning.month - 1]} ${ageWarning.year} — about ${ageWarning.ageYears} years old. AEDs don't have a fixed expiry date the way batteries and pads do, but manufacturers generally cite an 8-15 year service life — worth confirming with the manufacturer whether this unit still has support/parts available.`}
+              </div>
+            )}
           </div>
         </QBlock>
       </>
