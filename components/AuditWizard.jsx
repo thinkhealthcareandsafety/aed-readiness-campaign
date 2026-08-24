@@ -652,8 +652,8 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               // new line ("9" + "years" with no space between). A single
               // template-literal expression is immune to that since it's
               // one JS string, not JSX-text-with-line-wraps.
-              <div className="callout warn" style={{ marginTop: 10 }}>
-                {`This unit's serial number decodes to ${MONTH_NAMES[ageWarning.month - 1]} ${ageWarning.year} — about ${ageWarning.ageYears} years old. AEDs don't have a fixed expiry date the way batteries and pads do, but manufacturers generally cite an 8-15 year service life — worth confirming with the manufacturer whether this unit still has support/parts available.`}
+              <div className="callout notready" style={{ marginTop: 10 }}>
+                {`This unit's serial number decodes to ${MONTH_NAMES[ageWarning.month - 1]} ${ageWarning.year} — ${ageWarning.ageYears} years old. This AED is expired under company policy (5-year replacement cycle) and should be scheduled for replacement.`}
               </div>
             )}
           </div>
