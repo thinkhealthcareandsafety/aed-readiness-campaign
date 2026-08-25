@@ -13,7 +13,7 @@ import LiveScore from "@/components/LiveScore";
 import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import { listHotelCities, sortHotelOptionsByCity } from "@/lib/hotelCities";
-import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
+import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, reconcileLinkedSelections, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
 import { aedAgeStatus, isValidAedSerialFormat, aedSerialFormatHint, aedSerialExample } from "@/lib/aedSerialDate";
 import { COUNTRY_CODES, DEFAULT_COUNTRY_ISO, countryByIso, composePhoneValue, parsePhoneValueLenient, sanitizeLocalDigits } from "@/lib/phoneCountries";
 
@@ -118,7 +118,8 @@ export default function AuditWizard({ schema, detectedCity }) {
   function setAnswers(updater) {
     setAnswersRaw((a) => {
       const next = typeof updater === "function" ? updater(a) : updater;
-      return resolveDerivedAnswers(expandUnitQuestions(schema, next), next);
+      const reconciled = reconcileLinkedSelections(schema, next);
+      return resolveDerivedAnswers(expandUnitQuestions(schema, reconciled), reconciled);
     });
   }
   const [stepIndex, setStepIndex] = useState(0);

@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { insertSubmission, listSubmissions, getFormSchema, getSubmissionByEmail } from "@/lib/db";
-import { scoreSubmission, extractIdentity, validateAnswers, resolveDerivedAnswers, expandUnitQuestions } from "@/lib/genericScoring";
+import { scoreSubmission, extractIdentity, validateAnswers, resolveDerivedAnswers, expandUnitQuestions, reconcileLinkedSelections } from "@/lib/genericScoring";
 import { isAdminAuthed } from "@/lib/adminAuth";
 import { PRIZES } from "@/lib/prizes";
 
@@ -24,11 +24,17 @@ export async function POST(request) {
   // since those unit blocks only ever existed as the wizard's in-memory
   // clones and were never re-derived server-side.
   const baseSchema = getFormSchema();
-  const schema = expandUnitQuestions(baseSchema, rawAnswers);
+  // Same self-heal as the wizard's own setAnswers: a stale client (an old
+  // localStorage draft from before this existed, or a client that skipped
+  // the UI entirely) could submit a quantity/checkbox answer that's over
+  // its own linked question's limit — trim it back down here too, not just
+  // client-side, before it drives how many unit blocks get expanded below.
+  const reconciledAnswers = reconcileLinkedSelections(baseSchema, rawAnswers);
+  const schema = expandUnitQuestions(baseSchema, reconciledAnswers);
   // Recompute date-derived answers (e.g. expiry tier) server-side too, so a
   // stale or tampered client value can never override the date that was
   // actually entered.
-  const answers = resolveDerivedAnswers(schema, rawAnswers);
+  const answers = resolveDerivedAnswers(schema, reconciledAnswers);
   const validationError = validateAnswers(schema, answers);
   if (validationError) {
     return NextResponse.json({ error: validationError.message }, { status: 400 });
