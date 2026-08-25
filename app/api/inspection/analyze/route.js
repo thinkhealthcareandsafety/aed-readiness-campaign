@@ -21,6 +21,12 @@ export async function POST(request) {
   if (typeof itemId !== "string" || !getChecklistItem(itemId)) {
     return NextResponse.json({ error: "Unknown checklist item" }, { status: 400 });
   }
+  // Which physical unit's own selected AED model to use for prompt
+  // guidance — optional (falls back to generic guidance in
+  // lib/inspectionChecklist.js) so an older/direct client without this
+  // field still works, just without brand-specific accuracy.
+  const aedModelRaw = formData.get("aedModel");
+  const aedModel = typeof aedModelRaw === "string" && aedModelRaw ? aedModelRaw : null;
 
   const files = formData.getAll("file").filter((f) => typeof f !== "string");
   if (!files.length) return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -35,7 +41,7 @@ export async function POST(request) {
 
   let result;
   try {
-    result = await analyzeChecklistItem(itemId, media);
+    result = await analyzeChecklistItem(itemId, media, aedModel);
   } catch (err) {
     const message = err instanceof Error ? err.message : "AI analysis failed";
     const timedOut = message.includes("exceeded");

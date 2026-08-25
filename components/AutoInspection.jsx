@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
+import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
+import LiveCamera from "@/components/LiveCamera";
 
 const ITEM_ICON = {
   battery_attached: "/icons/battery-ok.svg",
@@ -51,10 +52,9 @@ async function downscaleImage(file, maxEdge = MAX_IMAGE_EDGE, quality = 0.85) {
 }
 
 // Extracts VIDEO_FRAME_COUNT JPEG frames, evenly spaced across the clip's
-// duration, from a recorded video File — the browser-side replacement for
-// the ported service's server-side OpenCV frame extraction (see
-// lib/inspectionGemini.js). Avoids adding a native/binary dependency to a
-// Next.js API route.
+// duration, from a recorded video File/Blob — works the same whether that
+// blob came from the OS file picker or from LiveCamera's own MediaRecorder
+// capture, since both are just video files at this point.
 async function extractFrames(videoFile) {
   const url = URL.createObjectURL(videoFile);
   try {
@@ -92,9 +92,18 @@ async function extractFrames(videoFile) {
   }
 }
 
-async function uploadItem(itemId, blobs) {
+// This component only ever mounts after a client-side interaction (see
+// autoScanActive in AuditWizard.jsx), never during the server-rendered
+// initial HTML — but guarding the `navigator` reference costs nothing and
+// avoids a ReferenceError if that ever stops being true.
+function hasCamera() {
+  return typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+}
+
+async function uploadItem(itemId, aedModel, blobs) {
   const form = new FormData();
   form.append("itemId", itemId);
+  if (aedModel) form.append("aedModel", aedModel);
   blobs.forEach((blob, i) => form.append("file", blob, `${itemId}_${i}.jpg`));
   const res = await fetch("/api/inspection/analyze", { method: "POST", body: form });
   const data = await res.json().catch(() => ({}));
@@ -102,31 +111,53 @@ async function uploadItem(itemId, blobs) {
   return data;
 }
 
-export default function AutoInspection({ onComplete, onCancel }) {
-  const [results, setResults] = useState({});
-  const doneCount = CHECKLIST_ITEMS.filter((i) => ["pass", "fail"].includes(results[i.id]?.status)).length;
-  const allDone = doneCount === CHECKLIST_ITEMS.length;
-  const pct = Math.round((doneCount / CHECKLIST_ITEMS.length) * 100);
+// One task = one concept (CHECKLIST_ITEMS entry) for one physical unit.
+// resultKey is also the exact fieldRole the answer gets written back onto
+// (see fieldRoleFor in lib/inspectionChecklist.js and
+// handleAutoInspectionComplete in components/AuditWizard.jsx) — using the
+// same string for both means no separate mapping table to keep in sync.
+function buildTasks(unitCount, modelSequence) {
+  const tasks = [];
+  for (let unit = 1; unit <= Math.max(1, unitCount); unit++) {
+    for (const item of CHECKLIST_ITEMS) {
+      tasks.push({ unit, model: modelSequence[unit - 1] || null, item, resultKey: fieldRoleFor(item.id, unit) });
+    }
+  }
+  return tasks;
+}
 
-  function setStatus(itemId, patch) {
-    setResults((r) => ({ ...r, [itemId]: { ...r[itemId], ...patch } }));
+export default function AutoInspection({ unitCount, modelSequence, modelLabelMap, onComplete, onCancel }) {
+  const [results, setResults] = useState({});
+  const tasks = buildTasks(unitCount || 1, modelSequence || []);
+  const doneCount = tasks.filter((t) => ["pass", "fail"].includes(results[t.resultKey]?.status)).length;
+  const allDone = doneCount === tasks.length;
+  const pct = Math.round((doneCount / tasks.length) * 100);
+
+  function setStatus(resultKey, patch) {
+    setResults((r) => ({ ...r, [resultKey]: { ...r[resultKey], ...patch } }));
   }
 
-  async function handleCapture(item, file) {
-    setStatus(item.id, { status: "analyzing" });
+  async function handleCapture(task, file) {
+    setStatus(task.resultKey, { status: "analyzing" });
     try {
-      const blobs = item.mediaType === "video" ? await extractFrames(file) : [await downscaleImage(file)];
+      const blobs = task.item.mediaType === "video" ? await extractFrames(file) : [await downscaleImage(file)];
       if (!blobs.length) throw new Error("Could not read that clip — please try again.");
-      const data = await uploadItem(item.id, blobs);
+      const data = await uploadItem(task.item.id, task.model, blobs);
       // data.status is Gemini's own field (ready/fault/unclear — only
       // meaningful for the readiness-indicator item), separate from this
       // card's pending/analyzing/pass/fail/error status below. Rename it on
       // the way in so the spread can't silently clobber ours with null.
       const { status: readinessStatus, ...rest } = data;
-      setStatus(item.id, { ...rest, readinessStatus, status: data.passed ? "pass" : "fail" });
+      setStatus(task.resultKey, { ...rest, readinessStatus, status: data.passed ? "pass" : "fail" });
     } catch (err) {
-      setStatus(item.id, { status: "error", notes: err instanceof Error ? err.message : "Analysis failed" });
+      setStatus(task.resultKey, { status: "error", notes: err instanceof Error ? err.message : "Analysis failed" });
     }
+  }
+
+  const byUnit = new Map();
+  for (const t of tasks) {
+    if (!byUnit.has(t.unit)) byUnit.set(t.unit, []);
+    byUnit.get(t.unit).push(t);
   }
 
   return (
@@ -135,7 +166,7 @@ export default function AutoInspection({ onComplete, onCancel }) {
         <div className="inspect-progress-row">
           <span>Items scanned</span>
           <span className="tabular">
-            {doneCount}/{CHECKLIST_ITEMS.length}
+            {doneCount}/{tasks.length}
           </span>
         </div>
         <div className="inspect-progress-track">
@@ -143,29 +174,46 @@ export default function AutoInspection({ onComplete, onCancel }) {
         </div>
       </div>
 
-      <div className="inspect-grid">
-        {CHECKLIST_ITEMS.map((item) => (
-          <InspectItemCard key={item.id} item={item} result={results[item.id]} onCapture={handleCapture} />
-        ))}
-      </div>
+      {[...byUnit.entries()].map(([unit, unitTasks]) => (
+        <div key={unit} className="inspect-unit-group">
+          {byUnit.size > 1 && (
+            <div className="unit-banner">
+              AED ({unit}){modelLabelMap?.[unitTasks[0].model] ? ` — ${modelLabelMap[unitTasks[0].model]}` : ""}
+            </div>
+          )}
+          <div className="inspect-grid">
+            {unitTasks.map((task) => (
+              <InspectItemCard key={task.resultKey} task={task} result={results[task.resultKey]} onCapture={handleCapture} />
+            ))}
+          </div>
+        </div>
+      ))}
 
       <div className="inspect-actions">
         <button type="button" className="btn btn-ghost" onClick={onCancel}>
           Back to manual
         </button>
         <button type="button" className="btn btn-primary" disabled={!allDone} onClick={() => onComplete(results)}>
-          {allDone ? "Use these results" : `Scan ${CHECKLIST_ITEMS.length - doneCount} more item(s)`}
+          {allDone ? "Use these results" : `Scan ${tasks.length - doneCount} more item(s)`}
         </button>
       </div>
     </div>
   );
 }
 
-function InspectItemCard({ item, result, onCapture }) {
+function InspectItemCard({ task, result, onCapture }) {
+  const { item } = task;
   const inputRef = useRef(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [useUploadFallback, setUseUploadFallback] = useState(false);
   const status = result?.status || "pending";
   const busy = status === "analyzing";
   const icon = ITEM_ICON[item.id];
+
+  function handleBlobCaptured(blob) {
+    setShowCamera(false);
+    onCapture(task, blob);
+  }
 
   return (
     <div className={`inspect-card inspect-card-${status}`}>
@@ -199,21 +247,58 @@ function InspectItemCard({ item, result, onCapture }) {
         </p>
       )}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept={item.mediaType === "video" ? "video/*" : "image/*"}
-        capture="environment"
-        className="inspect-file-input"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = "";
-          if (file) onCapture(item, file);
-        }}
-      />
-      <button type="button" className="btn btn-ghost inspect-card-btn" disabled={busy} onClick={() => inputRef.current?.click()}>
-        {busy ? "Analysing…" : status === "pending" ? (item.mediaType === "video" ? "Record video" : "Capture photo") : "Retake"}
-      </button>
+      {showCamera ? (
+        <LiveCamera
+          mediaType={item.mediaType}
+          onCapture={handleBlobCaptured}
+          onCancel={() => setShowCamera(false)}
+        />
+      ) : (
+        <>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={item.mediaType === "video" ? "video/*" : "image/*"}
+            capture="environment"
+            className="inspect-file-input"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) onCapture(task, file);
+            }}
+          />
+          <div className="inspect-card-btn-row">
+            <button
+              type="button"
+              className="btn btn-ghost inspect-card-btn"
+              disabled={busy}
+              onClick={() => {
+                // getUserMedia needs a real (or localhost) secure context —
+                // if it's simply not present, skip straight to the file
+                // picker instead of showing a live-camera panel that can
+                // only ever show its own error state.
+                if (hasCamera()) setShowCamera(true);
+                else inputRef.current?.click();
+              }}
+            >
+              {busy ? "Analysing…" : status === "pending" ? (item.mediaType === "video" ? "Record video" : "Take live photo") : "Retake"}
+            </button>
+            {hasCamera() && !useUploadFallback && (
+              <button
+                type="button"
+                className="inspect-card-upload-link"
+                disabled={busy}
+                onClick={() => {
+                  setUseUploadFallback(true);
+                  inputRef.current?.click();
+                }}
+              >
+                or upload a file instead
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

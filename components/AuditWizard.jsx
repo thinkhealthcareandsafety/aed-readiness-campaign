@@ -11,7 +11,7 @@ import { logoForHotel } from "@/lib/hotelBrands";
 import Landing from "@/components/Landing";
 import LiveScore from "@/components/LiveScore";
 import PrizeWheel from "@/components/PrizeWheel";
-import { CHECKLIST_ITEMS } from "@/lib/inspectionChecklist";
+import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import { listHotelCities, sortHotelOptionsByCity } from "@/lib/hotelCities";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
 import { aedAgeWarning, isValidAedSerialFormat, aedSerialFormatHint, MONTH_NAMES } from "@/lib/aedSerialDate";
@@ -278,27 +278,34 @@ export default function AuditWizard({ schema, detectedCity }) {
   // wizard can't tell an AI-filled answer from a typed one downstream.
   function handleAutoInspectionComplete(results) {
     const aiInfoUpdates = {};
-    for (const item of CHECKLIST_ITEMS) {
-      const result = results[item.id];
-      if (!result || (result.status !== "pass" && result.status !== "fail")) continue;
-      const q = findQuestionByFieldRole(expandedSchema, item.id);
-      if (!q) continue;
+    // One (concept, unit) pair per reported physical AED — mirrors
+    // buildTasks() in components/AutoInspection.jsx exactly, so every
+    // result key it produced (fieldRoleFor(item.id, unit)) is looked up
+    // here the same way, whether there's 1 unit or 5.
+    for (let unit = 1; unit <= Math.max(1, aedModelSequence.length); unit++) {
+      for (const item of CHECKLIST_ITEMS) {
+        const fieldRole = fieldRoleFor(item.id, unit);
+        const result = results[fieldRole];
+        if (!result || (result.status !== "pass" && result.status !== "fail")) continue;
+        const q = findQuestionByFieldRole(expandedSchema, fieldRole);
+        if (!q) continue;
 
-      if (item.id === "battery_expiry_date_1" || item.id === "pads_expiry_date_1") {
-        if (!result.expiry_date) continue;
-        // A month-only read ("YYYY-MM") needs a day for the <input type=date>
-        // — default to the 1st; it's a starting point the responder reviews
-        // and can correct, not a claim about the real expiry day.
-        setAnswer(q.id, result.expiry_date.length === 7 ? `${result.expiry_date}-01` : result.expiry_date);
-      } else if (item.id === "battery_attached" || item.id === "pads_connected" || item.id === "aed_cabinet_ok") {
-        setRadioAnswer(q, result.passed ? "yes" : "no");
-      } else if (item.id === "readiness_indicator") {
-        if (result.readinessStatus !== "ready" && result.readinessStatus !== "fault") continue; // "unclear" — leave for manual
-        setRadioAnswer(q, result.readinessStatus === "ready" ? "green" : "red");
-      } else {
-        continue;
+        if (item.id === "battery_expiry_date" || item.id === "pads_expiry_date") {
+          if (!result.expiry_date) continue;
+          // A month-only read ("YYYY-MM") needs a day for the <input type=date>
+          // — default to the 1st; it's a starting point the responder reviews
+          // and can correct, not a claim about the real expiry day.
+          setAnswer(q.id, result.expiry_date.length === 7 ? `${result.expiry_date}-01` : result.expiry_date);
+        } else if (item.id === "battery_attached" || item.id === "pads_connected" || item.id === "aed_cabinet_ok") {
+          setRadioAnswer(q, result.passed ? "yes" : "no");
+        } else if (item.id === "readiness_indicator") {
+          if (result.readinessStatus !== "ready" && result.readinessStatus !== "fault") continue; // "unclear" — leave for manual
+          setRadioAnswer(q, result.readinessStatus === "ready" ? "green" : "red");
+        } else {
+          continue;
+        }
+        aiInfoUpdates[q.id] = result;
       }
-      aiInfoUpdates[q.id] = result;
     }
     setAiFilled((prev) => ({ ...prev, ...aiInfoUpdates }));
     setAutoScanActive(false);
@@ -511,7 +518,13 @@ export default function AuditWizard({ schema, detectedCity }) {
             </div>
           ) : isModeChoice ? (
             autoScanActive ? (
-              <AutoInspection onComplete={handleAutoInspectionComplete} onCancel={() => setAutoScanActive(false)} />
+              <AutoInspection
+                unitCount={aedModelSequence.length}
+                modelSequence={aedModelSequence}
+                modelLabelMap={modelLabelByValue}
+                onComplete={handleAutoInspectionComplete}
+                onCancel={() => setAutoScanActive(false)}
+              />
             ) : (
               <div className="mode-choice-grid">
                 <button
