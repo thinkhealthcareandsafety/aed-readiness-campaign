@@ -714,9 +714,10 @@ function WarningIcon() {
 }
 
 // Traffic-light urgency for an auto-detected expiry tier (battery/pad expiry
-// status), matching the gt2y/1to2y/gt6m/within6m/expired values from
-// computeExpiryTierValue in genericScoring.js: plenty of runway is green,
-// under a year is a yellow heads-up, already expired is red.
+// status), matching the gt2y/1to2y/gt6m/within6m/within1m/within1w/expired
+// values from computeExpiryTierValue in genericScoring.js: plenty of runway
+// is green, under a year (including the two finer near-term tiers) is a
+// yellow heads-up, already expired is red.
 // The DB-seeded note for "Expiry Status" originally read "Scored on AED
 // (1). AED (2) is optional inventory only." — accurate back when a second
 // AED was only a maybe, but expandUnitQuestions now scores every unit the
@@ -731,7 +732,7 @@ function expiryStatusNote(unitCount) {
 
 function expiryTierClass(tierValue) {
   if (tierValue === "expired") return "notready";
-  if (tierValue === "gt6m" || tierValue === "within6m") return "warn";
+  if (tierValue === "gt6m" || tierValue === "within6m" || tierValue === "within1m" || tierValue === "within1w") return "warn";
   return "ready"; // gt2y, 1to2y
 }
 

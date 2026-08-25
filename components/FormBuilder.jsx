@@ -455,7 +455,7 @@ function QuestionCard({ question, isFirst, isLast, siblingQuestions, dateQuestio
               </label>
             )}
             {question.type === "radio" && (
-              <label title="Instead of letting the respondent pick, auto-detect the answer from a date field (e.g. expiry status from an expiry date). Option values must match: expired, within6m, gt6m, 1to2y, gt2y.">
+              <label title="Instead of letting the respondent pick, auto-detect the answer from a date field (e.g. expiry status from an expiry date). Option values must match: expired, within1w, within1m, within6m, gt6m, 1to2y, gt2y.">
                 Auto-detect from date:
                 <select
                   value={question.derivedFromDateQuestionId || ""}
