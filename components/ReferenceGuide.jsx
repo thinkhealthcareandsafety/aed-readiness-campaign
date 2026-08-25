@@ -19,8 +19,6 @@ const MODEL_PHOTOS = {
     // physical-status questions, which ask something different.
     batteryAttached: "/reference/frx-battery-attached.jpg",
     padsAttached: "/reference/frx-pads-connected.jpg",
-    paediatric: "/reference/paed-key-photo.jpg",
-    paediatricLabel: "Infant/Child Key",
   },
   hs1: {
     brand: "Philips HeartStart HS1",
@@ -29,15 +27,11 @@ const MODEL_PHOTOS = {
     pads: "/reference/hs1-pads.jpg",
     batteryAttached: "/reference/hs1-battery-attached.jpg",
     padsAttached: "/reference/hs1-pads-connected.jpg",
-    paediatric: "/reference/paed-key-photo.jpg",
-    paediatricLabel: "Infant/Child Key",
   },
   zollPlus: {
     brand: "ZOLL AED Plus",
     serial: "/reference/zollplus-serial.jpg",
     pads: "/reference/zollplus-pads.jpg",
-    paediatric: "/reference/paed-pads-zoll-photo.jpg",
-    paediatricLabel: "ZOLL Pedi-padz II",
   },
   defibtech: {
     brand: "Defibtech",
@@ -102,9 +96,9 @@ export function ImageLightbox({ item, kind, labelKey, onClose }) {
 }
 
 // Renders the small "Yours:" pill row and owns the click-to-preview state
-// for it. Used both for the per-field serial/battery/pad photos and the
-// paediatric photo — `labelKey` picks which field on each MODEL_PHOTOS entry
-// is the caption ("brand" vs "paediatricLabel").
+// for it. `labelKey` picks which field on each item is the caption ("brand"
+// for the per-field serial/battery/pad photos, "caption" for the generic
+// cabinet/readiness examples).
 function ThumbRow({ items, kind, labelKey = "brand" }) {
   const [preview, setPreview] = useState(null);
   if (items.length === 0) return null;
@@ -148,15 +142,6 @@ function ThumbRow({ items, kind, labelKey = "brand" }) {
 export function FieldReferencePhoto({ models, kind }) {
   const items = modelsWithPhoto(models, kind);
   return <ThumbRow items={items} kind={kind} />;
-}
-
-export function PaediatricReferencePhoto({ models }) {
-  const items = models
-    .map((m) => MODEL_PHOTOS[m])
-    .filter((m) => m && m.paediatric)
-    // de-dupe identical paediatric photos shared across models (FRx/HS1 both use the key)
-    .filter((m, i, arr) => arr.findIndex((x) => x.paediatric === m.paediatric) === i);
-  return <ThumbRow items={items} kind="paediatric" labelKey="paediatricLabel" />;
 }
 
 // A cabinet mount isn't part of the AED unit itself — it's property-specific

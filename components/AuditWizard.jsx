@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, TabSelect, LinearScale, qblockLabelId } from "@/components/fields";
 import { OptionImage, isPhotoUrl } from "@/components/OptionImage";
-import { FieldReferencePhoto, PaediatricReferencePhoto, ImageLightbox, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
+import { FieldReferencePhoto, ImageLightbox, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
 import { HotelSelect } from "@/components/HotelSelect";
 import { logoForHotel } from "@/lib/hotelBrands";
@@ -564,7 +564,6 @@ export default function AuditWizard({ schema, detectedCity }) {
           <p className="section-note">
             {step.title === "Expiry Status" ? expiryStatusNote(aedModelSequence.length) : step.note}
           </p>
-          {step.title === "Paediatric Readiness" && <PaediatricReferencePhoto models={selectedAedModels} />}
 
           {isReview ? (
             <div className="callout ready">
@@ -839,10 +838,11 @@ const IDENTITY_PLACEHOLDERS = {
 // "activate the wrapped control" click, by spec, regardless of where else
 // the click bubbles.
 function ZoomableOptionArt({ src, alt, onZoom }) {
+  const photo = isPhotoUrl(src);
   return (
-    <span className="icon-card-art-zoomable">
+    <span className={`icon-card-art-zoomable${photo ? "" : " is-icon-art"}`}>
       <OptionImage src={src} alt={alt} />
-      {isPhotoUrl(src) && (
+      {photo && (
         <button
           type="button"
           className="icon-card-zoom-btn"

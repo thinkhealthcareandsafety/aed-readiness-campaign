@@ -1,6 +1,8 @@
 <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
-  <rect x="30" y="24" width="60" height="52" rx="10" fill="#ffffff" stroke="#c7ccd3"/>
-  <rect x="42" y="38" width="36" height="16" rx="8" fill="#e3e5e8"/>
-  <circle cx="52" cy="46" r="9" fill="#2f5d5a"/>
-  <text x="60" y="70" text-anchor="middle" font-family="ui-sans-serif, system-ui" font-size="9" font-weight="700" fill="#586170">ADULT / CHILD</text>
+  <rect x="18" y="14" width="84" height="72" rx="12" fill="#586170" opacity=".18"/>
+  <rect x="26" y="22" width="68" height="56" rx="9" fill="#ffffff" stroke="#c7ccd3"/>
+  <rect x="36" y="41" width="46" height="21" rx="10.5" fill="#2e8b57"/>
+  <circle cx="71" cy="51.5" r="12.5" fill="#ffffff" stroke="#2e8b57" stroke-width="1.6"/>
+  <circle cx="84" cy="68" r="10" fill="#2e8b57"/>
+  <path d="M79.6 68.2 l3 3 l6.4 -7.2" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

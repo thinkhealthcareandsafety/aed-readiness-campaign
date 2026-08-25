@@ -899,6 +899,15 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
    in AuditWizard.jsx. Dark semi-transparent badge (not the accent orange
    used elsewhere) so it stays legible over any photo, light or dark. */
 .icon-card-art-zoomable { position: relative; width: 100%; height: 100%; }
+/* A flat SVG pictogram (no real photo exists yet) left a mostly-empty
+   120px-tall box next to full-bleed photo options in the same grid — a
+   contained circular badge behind it reads as a deliberate icon instead of
+   a leftover placeholder. */
+.icon-card-art-zoomable.is-icon-art {
+  width: 78px; height: 78px; margin: 0 auto; border-radius: 50%;
+  background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  display: flex; align-items: center; justify-content: center; padding: 12px;
+}
 .icon-card-zoom-btn {
   position: absolute; right: 8px; bottom: 8px; width: 30px; height: 30px; border-radius: 50%;
   background: rgba(20, 24, 30, 0.72); color: #fff; border: none; padding: 0;
