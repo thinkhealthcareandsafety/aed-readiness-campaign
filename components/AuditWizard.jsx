@@ -217,6 +217,15 @@ export default function AuditWizard({ schema, detectedCity }) {
       }),
     [expandedSchema, answers, aedModelSequence]
   );
+  // The training-headcount question shows a combined recency+headcount
+  // status message (see trainingStatusMessage) once both questions in this
+  // section are answered — pulled up here rather than looked up inside
+  // QuestionBlock since that component only ever sees its own question, not
+  // the schema needed to find a sibling one by fieldRole.
+  const trainingRecencyValue = useMemo(() => {
+    const q = findQuestionByFieldRole(expandedSchema, "training_recency");
+    return q ? answers[q.id]?.value || null : null;
+  }, [expandedSchema, answers]);
   const modelLabelByValue = useMemo(() => getModelLabelMap(schema), [schema]);
   const visibleSections = useMemo(
     () => expandedSchema.sections.filter((s) => isSectionVisible(s, answers)),
@@ -643,6 +652,7 @@ export default function AuditWizard({ schema, detectedCity }) {
                       setFreeText={setFreeText}
                       selectedAedModels={selectedAedModels}
                       aedModelSequence={aedModelSequence}
+                      trainingRecencyValue={trainingRecencyValue}
                     />
                   </div>
                 );
@@ -773,6 +783,46 @@ function expiryStatusMessage(questionLabel, tierValue) {
   return table[tierValue] || null;
 }
 
+// Client-provided compliance copy, same as the expiry messages above —
+// combines the two AED Responder Training questions (last-trained recency
+// and how many people were in that session) into one status message,
+// shown once both are answered. The client's own text only ever varies two
+// ways within a recency tier: "0-15 trained" gets the low-headcount
+// warning, every other headcount bucket (15-30 through 100+) gets the same
+// "enough trained responders" line — so this is a 4-tier x 2-bucket table,
+// not 4x5, with "100+" folded into the same bucket as "50-100" since the
+// client's wording didn't change from 15-30 up.
+const TRAINING_STATUS_MESSAGES = {
+  "12": {
+    low: "Congratulations for conducting the training but you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation.",
+    ok: "Congratulations for conducting the training! We Hope you have enough trained Responders. We advise to maintain 20% people Trained in your Organisation.",
+  },
+  "12-24": {
+    low: "Looks like you have not trained in last one year. Also you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation.",
+    ok: "Looks like you have not trained in last one year. We Hope you have enough trained Responders. We advise to maintain 20% people Trained in your Organisation.",
+  },
+  "24-36": {
+    low: "Looks like you have not trained in last two years. Also you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation. Immediate Training Advised",
+    ok: "Looks like you have not trained in last two years. We Hope you have enough trained Responders. We advise to maintain 20% people Trained in your Organisation. Immediate Training Advised",
+  },
+  over36: {
+    low: "Looks like you have not trained in last three years. Also you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation. Immediate Training Advised",
+    ok: "Looks like you have not trained in last three years. We Hope you have enough trained Responders. We advise to maintain 20% people Trained in your Organisation. Immediate Training Advised",
+  },
+};
+
+function trainingStatusMessage(recencyValue, headcountValue) {
+  const table = TRAINING_STATUS_MESSAGES[recencyValue];
+  if (!table) return null;
+  return headcountValue === "0-15" ? table.low : table.ok;
+}
+
+function trainingStatusClass(recencyValue, headcountValue) {
+  if (recencyValue === "24-36" || recencyValue === "over36") return "notready"; // "Immediate Training Advised"
+  if (headcountValue === "0-15") return "warn";
+  return "ready";
+}
+
 function referenceModelsFor(question, sequence, fallbackModels) {
   const unit = unitNumberFromLabel(question.label);
   if (unit == null) return fallbackModels;
@@ -863,7 +913,7 @@ function ZoomableOptionArt({ src, alt, onZoom }) {
   );
 }
 
-function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence, selectedCity, onCityChange }) {
+function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence, selectedCity, onCityChange, trainingRecencyValue }) {
   // A photo option (battery-attached, cabinet, etc.) is now the reference
   // photo itself — tapping the small zoom badge on its corner opens this
   // instead of a separate, always-visible "Your reference photo" row
@@ -1061,6 +1111,11 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               onChange={(v) => setFreeText(question, null, v)}
               placeholder="Please specify"
             />
+          </div>
+        )}
+        {question.fieldRole === "training_headcount" && val && trainingRecencyValue && (
+          <div className={`callout ${trainingStatusClass(trainingRecencyValue, val)}`} style={{ marginTop: 10 }}>
+            {trainingStatusMessage(trainingRecencyValue, val)}
           </div>
         )}
       </QBlock>
