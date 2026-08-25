@@ -780,13 +780,13 @@ function aedAgeMessage(status) {
   };
 }
 
-// Worked examples shown as input placeholders before the responder has
-// typed anything — same idea as the serial-number example above, just for
-// the identity fields on step 1.
+// Placeholder examples are only worth showing where a field actually has a
+// format a responder could get wrong (email, phone, serial number) — that's
+// the real enterprise-form convention (Stripe's "you@example.com", etc.),
+// not a blanket "every field gets an e.g.". A plain name field has no
+// format to get wrong, so an example there is just noise, not a guardrail.
 const IDENTITY_PLACEHOLDERS = {
-  first_name: "e.g. Priya",
-  last_name: "e.g. Sharma",
-  email: "e.g. priya.sharma@example.com",
+  email: "you@example.com",
 };
 
 function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence, selectedCity, onCityChange }) {
