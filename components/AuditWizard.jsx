@@ -785,36 +785,51 @@ function expiryStatusMessage(questionLabel, tierValue) {
 
 // Client-provided compliance copy, same as the expiry messages above —
 // combines the two AED Responder Training questions (last-trained recency
-// and how many people were in that session) into one status message,
-// shown once both are answered. The client's own text only ever varies two
-// ways within a recency tier: "0-15 trained" gets the low-headcount
-// warning, every other headcount bucket (15-30 through 100+) gets the same
-// "enough trained responders" line — so this is a 4-tier x 2-bucket table,
-// not 4x5, with "100+" folded into the same bucket as "50-100" since the
-// client's wording didn't change from 15-30 up.
-const TRAINING_STATUS_MESSAGES = {
-  "12": {
-    low: "Congratulations for conducting the training but you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation.",
-    ok: "Congratulations for conducting the training! We Hope you have enough trained Responders. We advise to maintain 20% people Trained in your Organisation.",
-  },
-  "12-24": {
-    low: "Looks like you have not trained in last one year. Also you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation.",
-    ok: "Looks like you have not trained in last one year. We Hope you have enough trained Responders. We advise to maintain 20% people Trained in your Organisation.",
-  },
-  "24-36": {
-    low: "Looks like you have not trained in last two years. Also you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation. Immediate Training Advised",
-    ok: "Looks like you have not trained in last two years. We Hope you have enough trained Responders. We advise to maintain 20% people Trained in your Organisation. Immediate Training Advised",
-  },
-  over36: {
-    low: "Looks like you have not trained in last three years. Also you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation. Immediate Training Advised",
-    ok: "Looks like you have not trained in last three years. We Hope you have enough trained Responders. We advise to maintain 20% people Trained in your Organisation. Immediate Training Advised",
-  },
+// and how many people were in that session) into one status message, shown
+// once both are answered. The client's own text used the exact same
+// "enough trained Responders" line for every headcount from 15-30 up
+// through 100+ — reviewed live and flagged as reading like the headcount
+// answer didn't matter at all. Composed per (recency x headcount) instead
+// of a flat "low vs ok" split, so every headcount bucket says something
+// distinct while keeping the client's own sentence structure and the
+// exact wording he gave for the recency framing and the 0-15 warning case.
+const TRAINING_RECENCY_INTRO = {
+  "12": null,
+  "12-24": "Looks like you have not trained in last one year.",
+  "24-36": "Looks like you have not trained in last two years.",
+  over36: "Looks like you have not trained in last three years.",
+};
+const TRAINING_RECENCY_SUFFIX = {
+  "12": "",
+  "12-24": "",
+  "24-36": " Immediate Training Advised",
+  over36: " Immediate Training Advised",
+};
+const TRAINING_HEADCOUNT_PHRASE = {
+  "15-30": "You have a modest number of trained responders.",
+  "30-50": "You have a good number of trained responders.",
+  "50-100": "You have a strong number of trained responders.",
+  "100+": "You have an excellent number of trained responders.",
 };
 
 function trainingStatusMessage(recencyValue, headcountValue) {
-  const table = TRAINING_STATUS_MESSAGES[recencyValue];
-  if (!table) return null;
-  return headcountValue === "0-15" ? table.low : table.ok;
+  const intro = TRAINING_RECENCY_INTRO[recencyValue];
+  const suffix = TRAINING_RECENCY_SUFFIX[recencyValue];
+  if (intro === undefined || suffix === undefined) return null;
+
+  if (headcountValue === "0-15") {
+    if (recencyValue === "12") {
+      return `Congratulations for conducting the training but you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation.${suffix}`;
+    }
+    return `${intro} Also you got a low number of Trained responders! We advise to maintain 20% people Trained in your Organisation.${suffix}`;
+  }
+
+  const headcountPhrase = TRAINING_HEADCOUNT_PHRASE[headcountValue];
+  if (!headcountPhrase) return null;
+  if (recencyValue === "12") {
+    return `Congratulations for conducting the training! ${headcountPhrase} We advise to maintain 20% people Trained in your Organisation.`;
+  }
+  return `${intro} ${headcountPhrase} We advise to maintain 20% people Trained in your Organisation.${suffix}`;
 }
 
 function trainingStatusClass(recencyValue, headcountValue) {
