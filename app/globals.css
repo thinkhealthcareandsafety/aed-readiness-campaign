@@ -331,28 +331,33 @@ button { font-family: inherit; }
   display: flex; align-items: center; justify-content: center; padding: 20px;
   animation: prizeWheelFade .2s ease both;
 }
+/* Styled as a physical prize ticket/casino wheel, not a themed app panel —
+   fixed cream + gold regardless of the site's light/dark theme, same
+   reasoning as the fixed jewel-tone slice colors in lib/prizes.js. */
 .prize-wheel-card {
   width: 100%; max-width: 440px; max-height: 92vh; overflow-y: auto; overflow-x: hidden;
-  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 22px;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  background: linear-gradient(180deg, #fbf6e8, #f4ecd7); border: 1px solid #d9be82; border-radius: 22px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.5) inset;
   padding: clamp(24px, 5vw, 38px); text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   animation: prizeWheelPop .32s cubic-bezier(.2, 1.4, .4, 1) both;
   position: relative;
 }
+.prize-wheel-card .landing-eyebrow { color: #a8762b; }
+.prize-wheel-card .landing-h2 { color: #6b4e18; }
 .prize-wheel-card.is-revealed { animation: prizeWheelPop .32s cubic-bezier(.2, 1.4, .4, 1) both, prizeWheelCardGlow 1.4s ease-out .1s; }
 .prize-wheel-wrap { position: relative; width: min(280px, 72vw); aspect-ratio: 1; margin: 26px 0; flex-shrink: 0; }
 .prize-wheel-slice-label {
-  fill: #fff; font-size: 9.5px; font-weight: 800; font-family: var(--font-body);
-  paint-order: stroke; stroke: rgba(0, 0, 0, 0.28); stroke-width: 2.5px; stroke-linejoin: round;
-  letter-spacing: .01em;
+  font-size: 9.5px; font-weight: 800; font-family: var(--font-body); text-transform: uppercase;
+  paint-order: stroke; stroke: rgba(0, 0, 0, 0.4); stroke-width: 2.5px; stroke-linejoin: round;
+  letter-spacing: .04em;
 }
-.prize-wheel-bulb { fill: #fff8e6; stroke: var(--accent-deep); stroke-width: .6; opacity: .55; }
+.prize-wheel-bulb { fill: #fdeeb8; stroke: #8a6329; stroke-width: .7; opacity: .7; }
 .prize-wheel-wrap.is-spinning .prize-wheel-bulb { animation: prizeWheelBulbChase 1.1s linear infinite; }
 .prize-wheel-wrap:not(.is-spinning) .prize-wheel-bulb { animation: prizeWheelBulbGlow 1.6s ease-in-out infinite; }
 .prize-wheel-glow {
   position: absolute; inset: -18%; border-radius: 50%; z-index: 0;
-  background: radial-gradient(circle, var(--accent) 0%, transparent 68%);
+  background: radial-gradient(circle, #e6c069 0%, transparent 68%);
   opacity: .35; filter: blur(14px);
 }
 .prize-wheel-wrap.is-spinning .prize-wheel-glow { animation: prizeWheelGlowPulse 1s ease-in-out infinite; }
@@ -372,27 +377,36 @@ button { font-family: inherit; }
   transform-box: fill-box; transform-origin: center;
   animation: prizeWheelMedallionWin 1s ease-in-out .3s 3;
 }
+/* A gold kite/diamond, not a plain triangle — the pointed bottom tip is
+   the part that actually indicates the winning slice, the rounded top is
+   pure ornament (matches a real coin-op wheel's cast-metal pointer). */
 .prize-wheel-pointer {
-  position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 3;
-  width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent;
-  border-top: 20px solid var(--accent-deep);
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%); z-index: 3;
+  width: 22px; height: 30px;
+  background: linear-gradient(135deg, #fdeeb8, #c9972f 55%, #8a6329);
+  clip-path: polygon(50% 100%, 100% 40%, 78% 0%, 22% 0%, 0% 40%);
+  border-radius: 3px 3px 0 0;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
 }
 .prize-wheel-wrap.is-spinning .prize-wheel-pointer { animation: prizeWheelPointerTick .13s ease-in-out infinite; }
-.prize-wheel-legend { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; width: 100%; text-align: left; }
-.prize-wheel-legend li { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--ink-soft); padding: 3px 8px; border-radius: 6px; transition: background .25s ease, color .25s ease, transform .25s ease; }
-.prize-wheel-legend li.won { color: var(--ink); font-weight: 700; background: var(--accent-tint); transform: scale(1.03); }
+.prize-wheel-legend {
+  list-style: none; margin: 4px 0 0; padding: 0; width: 100%; text-align: left;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px;
+}
+.prize-wheel-legend li { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: #6b5c3f; padding: 3px 8px; border-radius: 6px; transition: background .25s ease, color .25s ease, transform .25s ease; }
+.prize-wheel-legend li.won { color: #4a3410; font-weight: 700; background: #f0e2b8; transform: scale(1.03); }
 .prize-wheel-legend-thumb {
   width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center;
-  justify-content: center; padding: 3px; box-shadow: 0 0 0 2px rgba(255,255,255,0.6) inset;
+  justify-content: center; padding: 3px; box-shadow: 0 0 0 2px #c9972f inset;
 }
 .prize-wheel-legend-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .prize-wheel-reveal { min-height: 96px; display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0; transform: scale(.85) translateY(6px); transition: none; margin-top: 10px; }
 .prize-wheel-reveal.show { opacity: 1; transform: none; transition: opacity .4s cubic-bezier(.2, 1.4, .4, 1), transform .4s cubic-bezier(.2, 1.4, .4, 1); }
-.prize-wheel-reveal p { margin: 0; font-size: 1.05rem; }
+.prize-wheel-reveal p { margin: 0; font-size: 1.05rem; color: #4a3410; }
 .prize-wheel-headline { font-size: 1.28rem !important; font-weight: 700; }
-.prize-wheel-headline b { color: var(--accent-deep); }
-.prize-wheel-note { font-size: .85rem !important; color: var(--ink-soft); }
+.prize-wheel-headline b { color: #a8762b; }
+.prize-wheel-note { font-size: .85rem !important; color: #6b5c3f; }
+@media (max-width: 380px) { .prize-wheel-legend { grid-template-columns: 1fr; } }
 .prize-wheel-cta { animation: prizeWheelCtaPulse 1.8s ease-in-out .6s 2; }
 /* The one action this whole card exists to prompt — sized and animated to
    be unmissable rather than blending in with the legend above it, since an
@@ -400,8 +414,9 @@ button { font-family: inherit; }
    fires the moment the component mounts); this makes spinning a deliberate
    action the visitor takes instead. */
 .prize-wheel-spin-cta {
-  margin-top: 18px; padding: 16px 36px; font-size: 1.08rem; border-radius: 14px;
-  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent-deep) 45%, transparent), 0 2px 6px rgba(0, 0, 0, 0.15);
+  margin-top: 18px; padding: 16px 36px; font-size: 1.08rem; font-weight: 700; border-radius: 14px;
+  background: linear-gradient(135deg, #e6c069, #b8862f); border: 1px solid #8a6329; color: #3a2a12;
+  box-shadow: 0 10px 26px rgba(138, 99, 41, 0.45), 0 2px 6px rgba(0, 0, 0, 0.15);
   animation: prizeWheelSpinCtaPulse 1.6s ease-in-out infinite;
 }
 .prize-wheel-spin-cta:hover { animation-play-state: paused; }
@@ -415,9 +430,9 @@ button { font-family: inherit; }
 @keyframes prizeWheelFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes prizeWheelPop { from { opacity: 0; transform: scale(.9) translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes prizeWheelCardGlow {
-  0% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.04) inset; }
-  35% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 3px var(--accent), 0 0 42px 6px var(--accent); }
-  100% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.04) inset; }
+  0% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.5) inset; }
+  35% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 0 3px #e6c069, 0 0 42px 6px #e6c069; }
+  100% { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.5) inset; }
 }
 @keyframes prizeWheelGlowPulse { 0%, 100% { opacity: .3; transform: scale(1); } 50% { opacity: .55; transform: scale(1.08); } }
 @keyframes prizeWheelPointerTick {
@@ -446,7 +461,7 @@ button { font-family: inherit; }
 }
 @keyframes prizeWheelMedallionWin {
   0%, 100% { transform: scale(1); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)); }
-  50% { transform: scale(1.22); filter: drop-shadow(0 0 8px var(--accent)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)); }
+  50% { transform: scale(1.22); filter: drop-shadow(0 0 8px #e6c069) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .prize-wheel-overlay, .prize-wheel-card, .prize-wheel-cta, .prize-wheel-spin-cta, .confetto,

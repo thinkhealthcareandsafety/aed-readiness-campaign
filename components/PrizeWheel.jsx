@@ -10,7 +10,7 @@ const SPIN_MS = 3800;
 // name/legend highlight do that), so it's fine to generate its randomness
 // on the client with Math.random() — nothing here needs to be
 // cryptographically fair or server-verifiable, unlike the prize pick itself.
-const CONFETTI_COLORS = ["var(--accent)", "var(--structure)", "var(--ready)", "var(--warn)", "var(--accent-deep)"];
+const CONFETTI_COLORS = ["#e6c069", "#2f5d42", "#7a1f2e", "#1f3557", "#c9972f"];
 function makeConfetti(count) {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
@@ -170,18 +170,25 @@ export default function PrizeWheel({ prize, onDone }) {
           >
             <defs>
               <radialGradient id="hubShine" cx="35%" cy="30%" r="75%">
-                <stop offset="0%" stopColor="var(--paper-raised)" />
-                <stop offset="100%" stopColor="var(--structure-tint)" />
+                <stop offset="0%" stopColor="#fff3d1" />
+                <stop offset="55%" stopColor="#d9a944" />
+                <stop offset="100%" stopColor="#8a6329" />
               </radialGradient>
+              <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#fdeeb8" />
+                <stop offset="45%" stopColor="#c9972f" />
+                <stop offset="55%" stopColor="#8a6329" />
+                <stop offset="100%" stopColor="#e6c069" />
+              </linearGradient>
               {PRIZES.map((p) => (
                 <radialGradient key={p.id} id={`slice-${p.id}`} cx="50%" cy="50%" r="75%">
-                  <stop offset="0%" stopColor="white" stopOpacity="0.34" />
+                  <stop offset="0%" stopColor="white" stopOpacity="0.22" />
                   <stop offset="55%" stopColor="white" stopOpacity="0" />
                 </radialGradient>
               ))}
             </defs>
             {PRIZES.map((p, i) => (
-              <path key={p.id} d={slicePath(i)} fill={p.color} stroke="var(--paper-raised)" strokeWidth="1.5" />
+              <path key={p.id} d={slicePath(i)} fill={p.color} stroke="#c9972f" strokeWidth="1" />
             ))}
             {PRIZES.map((p, i) => (
               <path key={`${p.id}-sheen`} d={slicePath(i)} fill={`url(#slice-${p.id})`} />
@@ -193,16 +200,26 @@ export default function PrizeWheel({ prize, onDone }) {
                 className={`prize-wheel-slice-medallion${revealed && p.id === prize ? " is-winner" : ""}`}
               >
                 {/* A plain image would blend into whichever slice color sits
-                   behind it — the white coin gives every icon the same
-                   guaranteed-contrast backdrop regardless of slice color. */}
-                <circle cx="128" cy="100" r="15" fill="#fff" className="prize-wheel-medallion-ring" />
+                   behind it — the cream, gold-rimmed coin gives every icon
+                   the same guaranteed-contrast backdrop regardless of slice
+                   color, styled to match the wheel's gold-rim theme instead
+                   of a plain flat white dot. */}
+                <circle cx="128" cy="100" r="15" fill="#f7ecd3" stroke="#c9972f" strokeWidth="1.5" className="prize-wheel-medallion-ring" />
                 <image href={p.image} x="115" y="87" width="26" height="26" />
-                <text x="168" y="100" textAnchor="middle" dominantBaseline="central" className="prize-wheel-slice-label">
+                <text
+                  x="168"
+                  y="100"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="prize-wheel-slice-label"
+                  style={{ fill: p.textColor }}
+                >
                   {p.shortLabel || p.label}
                 </text>
               </g>
             ))}
-            <circle cx="100" cy="100" r="90" fill="none" stroke="var(--paper-raised)" strokeWidth="4" />
+            <circle cx="100" cy="100" r="94" fill="none" stroke="url(#goldRim)" strokeWidth="7" />
+            <circle cx="100" cy="100" r="90" fill="none" stroke="#3a2a12" strokeWidth="1.5" opacity="0.5" />
             <g className="prize-wheel-bulbs">
               {Array.from({ length: BULB_COUNT }, (_, i) => {
                 const [bx, by] = bulbXY(i);
@@ -211,14 +228,15 @@ export default function PrizeWheel({ prize, onDone }) {
                     key={i}
                     cx={bx.toFixed(2)}
                     cy={by.toFixed(2)}
-                    r="2.6"
+                    r="3.4"
                     className="prize-wheel-bulb"
                     style={{ animationDelay: `${(i / BULB_COUNT) * 1.1}s` }}
                   />
                 );
               })}
             </g>
-            <circle cx="100" cy="100" r="16" fill="url(#hubShine)" stroke="var(--line-strong)" strokeWidth="1.5" />
+            <circle cx="100" cy="100" r="18" fill="url(#hubShine)" stroke="#5c4322" strokeWidth="1.5" />
+            <circle cx="100" cy="100" r="6" fill="#5c4322" opacity="0.55" />
           </svg>
         </div>
 
