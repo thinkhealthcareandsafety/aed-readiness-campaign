@@ -440,13 +440,6 @@ export default function AuditWizard({ schema, detectedCity }) {
               <small>Think Health &middot; PREPARED Score</small>
             </span>
           </div>
-          {hotelBrand && (
-            <div className="hotel-badge">
-              {/* eslint-disable-next-line @next/next/no-img-element -- static bundled brand mark, no next/image needed */}
-              <img src={hotelBrand.logo} alt="" className="hotel-badge-logo" />
-              <span className="hotel-badge-name">{identity.hotel}</span>
-            </div>
-          )}
           <div className="topbar-meta">
             {!isModeChoice && <LiveScore points={scored.total.points} max={scored.total.max} />}
             <div className="step-label">
@@ -454,6 +447,16 @@ export default function AuditWizard({ schema, detectedCity }) {
             </div>
           </div>
         </div>
+        {hotelBrand && (
+          <div className="hotel-card">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static bundled brand mark, no next/image needed */}
+            <img src={hotelBrand.logo} alt="" className="hotel-card-logo" />
+            <div className="hotel-card-text">
+              <span className="hotel-card-eyebrow">Auditing for</span>
+              <span className="hotel-card-name">{identity.hotel}</span>
+            </div>
+          </div>
+        )}
         <div className="step-dots">
           {steps.map((s, i) => (
             <button

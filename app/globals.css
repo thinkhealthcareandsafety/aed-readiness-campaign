@@ -500,15 +500,31 @@ button { font-family: inherit; }
 .wizard-topbar .brand-logo { height: 28px; width: auto; flex-shrink: 0; }
 .wizard-topbar .brand small { display: block; font-family: var(--font-body); font-weight: 500; color: var(--ink-soft); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
 .wizard-topbar .step-label { font-size: .82rem; color: var(--ink-soft); font-family: var(--font-mono); white-space: nowrap; }
-.hotel-badge {
-  display: flex; align-items: center; gap: 8px; min-width: 0;
-  padding: 4px 12px 4px 6px; border-radius: 999px;
-  background: var(--accent-tint); border: 1px solid var(--line);
+/* A "you're auditing for [hotel]" identity card, not just a name tucked
+   into the header — its own row gives the logo room to actually read as a
+   logo (the old inline pill squeezed it to 34x22px) and the accent rail +
+   shadow give it enough visual weight to feel like a deliberate premium
+   touch rather than a debug label. White logo tile is deliberate even in
+   dark mode: brand marks are almost always designed on white/transparent,
+   so keeping that tile white is what keeps them crisp instead of muddy. */
+.hotel-card {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 12px; padding: 10px 16px;
+  background: var(--paper-raised); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 12px; box-shadow: var(--shadow);
 }
-.hotel-badge-logo { height: 22px; width: 34px; object-fit: contain; flex-shrink: 0; background: #fff; border-radius: 6px; padding: 2px; }
-.hotel-badge-name { font-size: .82rem; font-weight: 600; color: var(--accent-deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
-@media (max-width: 640px) { .hotel-badge-name { max-width: 140px; } }
-@media (max-width: 480px) { .hotel-badge { flex: 1 1 100%; order: 3; } }
+.hotel-card-logo { height: 38px; width: 56px; object-fit: contain; flex-shrink: 0; background: #fff; border-radius: 8px; padding: 5px; border: 1px solid var(--line); }
+.hotel-card-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.hotel-card-eyebrow { font-size: .66rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.hotel-card-name {
+  font-family: var(--font-display); font-size: 1.08rem; font-weight: 700; color: var(--ink); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .hotel-card { padding: 8px 12px; gap: 10px; }
+  .hotel-card-logo { height: 32px; width: 46px; }
+  .hotel-card-name { white-space: normal; font-size: 1rem; }
+}
 
 .topbar-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-left: auto; }
 /* On a narrow phone, "AED Readiness Campaign" plus the live-score pill
