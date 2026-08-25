@@ -14,7 +14,7 @@ import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import { listHotelCities, sortHotelOptionsByCity } from "@/lib/hotelCities";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
-import { aedAgeWarning, isValidAedSerialFormat, aedSerialFormatHint, MONTH_NAMES } from "@/lib/aedSerialDate";
+import { aedAgeStatus, isValidAedSerialFormat, aedSerialFormatHint, MONTH_NAMES } from "@/lib/aedSerialDate";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
 
@@ -752,6 +752,40 @@ function unitModelFor(question, sequence) {
   return sequence[unit - 1] || null;
 }
 
+// Copy + severity styling per age tier — the tier itself comes from
+// aedAgeStatus in lib/aedSerialDate.js, computed off the actual decoded
+// age rather than a fixed calendar year, so this stays correct no matter
+// what today's date actually is (a hardcoded "if year is 2016-2020" message
+// would quietly go stale the moment the calendar moved on).
+function aedAgeMessage(status) {
+  const { year, month, ageYears, tier } = status;
+  const monthYear = `${MONTH_NAMES[month - 1]} ${year}`;
+  const ageText = `roughly ${ageYears} year${ageYears === 1 ? "" : "s"} old`;
+  if (tier === "current") {
+    return {
+      calloutClass: "ready",
+      text: `This unit's serial number decodes to ${monthYear} — ${ageText}. This AED should still be within warranty. You may proceed with the inspection.`,
+    };
+  }
+  if (tier === "borderline") {
+    return {
+      calloutClass: "warn",
+      text: `This unit's serial number decodes to ${monthYear} — right at the 5-year mark. Whether it's still under warranty depends on the exact month of purchase, not just the year — check your invoice to confirm. You may proceed with the inspection.`,
+    };
+  }
+  if (tier === "aging") {
+    return {
+      calloutClass: "warn",
+      text: `This unit's serial number decodes to ${monthYear} — ${ageText}. This AED is past warranty under company policy (5-year replacement cycle) and may not meet the latest AHA guidelines — we recommend scheduling a replacement. AEDs are typically usable for around 10 years when well maintained, so you may still proceed with the inspection.`,
+    };
+  }
+  // tier === "expired"
+  return {
+    calloutClass: "notready",
+    text: `This unit's serial number decodes to ${monthYear} — ${ageText}. This AED is well past warranty under company policy (5-year replacement cycle) and has likely exceeded its typical ~10-year service life — we strongly recommend scheduling a replacement. You may still proceed with the inspection.`,
+  };
+}
+
 function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence, selectedCity, onCityChange }) {
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
@@ -760,7 +794,8 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   const refModels = refKind ? referenceModelsFor(question, aedModelSequence || [], selectedAedModels) : null;
   const isSerialField = refKind === "serial";
   const serialUnitModel = isSerialField ? unitModelFor(question, aedModelSequence || []) : null;
-  const ageWarning = isSerialField ? aedAgeWarning(serialUnitModel, answers[question.id]) : null;
+  const ageStatus = isSerialField ? aedAgeStatus(serialUnitModel, answers[question.id]) : null;
+  const ageMessage = ageStatus ? aedAgeMessage(ageStatus) : null;
   const serialValue = answers[question.id];
   // Only flagged once the field has something in it — an empty required
   // field is already caught by validateSection on Next, and flashing a
@@ -797,17 +832,9 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
                 {`This doesn't match this model's usual serial format: ${serialFormatHint}. Double-check it against the label.`}
               </div>
             )}
-            {ageWarning && (
-              // Built as one JS template literal, not multi-line JSX text —
-              // JSX collapses a text run that wraps across source lines by
-              // trimming *each* line's leading/trailing whitespace before
-              // rejoining, which silently ate the space right after
-              // {ageWarning.ageYears} when it was plain JSX text starting a
-              // new line ("9" + "years" with no space between). A single
-              // template-literal expression is immune to that since it's
-              // one JS string, not JSX-text-with-line-wraps.
-              <div className="callout notready" style={{ marginTop: 10 }}>
-                {`This unit's serial number decodes to ${MONTH_NAMES[ageWarning.month - 1]} ${ageWarning.year} — ${ageWarning.ageYears} years old. This AED is expired under company policy (5-year replacement cycle) and should be scheduled for replacement.`}
+            {ageMessage && (
+              <div className={`callout ${ageMessage.calloutClass}`} style={{ marginTop: 10 }}>
+                {ageMessage.text}
               </div>
             )}
           </div>
