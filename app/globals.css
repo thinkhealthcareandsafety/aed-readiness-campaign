@@ -941,7 +941,15 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
    edge-to-edge treatment the main icon-card grid got. */
 .icon-grid.pair { grid-template-columns: 1fr 1fr; gap: 14px; }
 .icon-grid.pair .icon-card { min-height: 100px; padding: 0; flex-direction: row; align-items: stretch; justify-content: flex-start; gap: 0; }
-.icon-grid.pair .icon-card-art { width: 36%; min-width: 64px; max-width: 120px; height: auto; flex-shrink: 0; }
+/* height:auto here (with the parent's align-items:stretch) let the photo's
+   own intrinsic aspect ratio decide the art box's height — a portrait
+   source photo made its whole question's pair visibly taller than a
+   neighboring question whose photo happened to be landscape, even though
+   both cards only ever show "Yes"/"No". A fixed height removes the photo
+   as a variable entirely: every pair card is the same height regardless
+   of what aspect ratio the underlying photo/icon happens to be, and
+   object-fit:cover (see OptionImage.jsx) crops any photo to fit it. */
+.icon-grid.pair .icon-card-art { width: 36%; min-width: 64px; max-width: 120px; height: 100px; flex-shrink: 0; }
 .icon-grid.pair .icon-card-label {
   font-size: 1.05rem; flex: 1; min-width: 0; display: flex; align-items: center;
   justify-content: center; text-align: center; padding: 10px 10px;
