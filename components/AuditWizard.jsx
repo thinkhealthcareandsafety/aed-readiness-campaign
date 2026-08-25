@@ -64,6 +64,15 @@ function fetchWithTimeout(url, options, timeoutMs = 15000) {
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
+// Same "_1" exception, "_N" convention as fieldRoleFor in
+// lib/inspectionChecklist.js, kept local rather than imported from there
+// since that module's fieldRoleFor is scoped to auto-inspection's own
+// concept ids and deliberately excludes serial_number (see the comment at
+// the top of lib/inspectionChecklist.js).
+function serialFieldRoleFor(unit) {
+  return unit === 1 ? "serial_number_1" : `serial_number_${unit}`;
+}
+
 function findQuestionByFieldRole(schema, role) {
   for (const s of schema.sections) {
     for (const q of s.questions) {
@@ -192,6 +201,20 @@ export default function AuditWizard({ schema, detectedCity }) {
   const scored = useMemo(() => scoreSubmission(expandedSchema, answers), [expandedSchema, answers]);
   const selectedAedModels = useMemo(() => getSelectedAedModels(schema, answers), [schema, answers]);
   const aedModelSequence = useMemo(() => getAedModelSequence(schema, answers), [schema, answers]);
+  // Each unit's own serial number, already typed in during device
+  // registration (AED Status) — pulled forward so the per-unit banner in
+  // every later section (and the AI-scan view) can show "AED (2) —
+  // ZOLL AED Plus — SN X20B123456" instead of just a bare unit number, so
+  // it's unambiguous which physical machine's questions you're answering
+  // even with 2+ units of the same or different models.
+  const serialByUnit = useMemo(
+    () =>
+      aedModelSequence.map((_, i) => {
+        const q = findQuestionByFieldRole(expandedSchema, serialFieldRoleFor(i + 1));
+        return q ? answers[q.id] || null : null;
+      }),
+    [expandedSchema, answers, aedModelSequence]
+  );
   const modelLabelByValue = useMemo(() => getModelLabelMap(schema), [schema]);
   const visibleSections = useMemo(
     () => expandedSchema.sections.filter((s) => isSectionVisible(s, answers)),
@@ -553,6 +576,7 @@ export default function AuditWizard({ schema, detectedCity }) {
                 unitCount={aedModelSequence.length}
                 modelSequence={aedModelSequence}
                 modelLabelMap={modelLabelByValue}
+                serialByUnit={serialByUnit}
                 onComplete={handleAutoInspectionComplete}
                 onCancel={() => setAutoScanActive(false)}
               />
@@ -594,11 +618,15 @@ export default function AuditWizard({ schema, detectedCity }) {
                 if (unit != null) lastUnit = unit;
                 const unitModel = isNewUnit ? aedModelSequence[unit - 1] : null;
                 const unitModelLabel = unitModel ? modelLabelByValue[unitModel] : null;
+                const unitSerial = isNewUnit ? serialByUnit[unit - 1] : null;
                 return (
                   <div key={q.id} id={`q-field-${q.id}`}>
                     {isNewUnit && (
                       <div className="unit-banner">
-                        AED ({unit}){unitModelLabel ? ` — ${unitModelLabel}` : ""}
+                        <span className="unit-banner-id">
+                          AED ({unit}){unitModelLabel ? ` — ${unitModelLabel}` : ""}
+                        </span>
+                        {unitSerial && <span className="unit-banner-serial">SN {unitSerial}</span>}
                       </div>
                     )}
                     <QuestionBlock

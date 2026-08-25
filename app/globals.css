@@ -682,11 +682,22 @@ button { font-family: inherit; }
    instead of only inferable from a small reference-photo thumbnail further
    down the page. */
 .unit-banner {
-  display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: .85rem;
-  color: var(--structure); background: var(--structure-tint); border-radius: 999px;
-  padding: 6px 14px; margin: 22px 0 14px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px;
+  font-weight: 700; font-size: 1rem; color: var(--structure); background: var(--structure-tint);
+  border-radius: 10px; border-left: 4px solid var(--structure);
+  padding: 12px 16px; margin: 26px 0 16px;
 }
-.unit-banner::before { content: "⚕"; font-size: .9em; }
+.unit-banner::before { content: "⚕"; font-size: 1.1em; }
+.unit-banner-id { display: inline-flex; align-items: center; gap: 8px; }
+/* The serial number gets its own visually distinct chip — monospace (it's
+   an exact-match identifier, not prose) and on its own pale card so a
+   responder juggling 2+ units of the same model can confirm "yes, this is
+   the field I'm on" from the serial alone, not just the model name. */
+.unit-banner-serial {
+  font-family: var(--font-mono); font-size: .82rem; font-weight: 700; color: var(--ink);
+  background: var(--paper-raised); border: 1px solid var(--line-strong); border-radius: 6px;
+  padding: 3px 9px; letter-spacing: .01em;
+}
 
 .qblock { margin-bottom: 26px; }
 .qblock .qlabel { font-weight: 600; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }

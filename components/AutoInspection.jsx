@@ -126,7 +126,7 @@ function buildTasks(unitCount, modelSequence) {
   return tasks;
 }
 
-export default function AutoInspection({ unitCount, modelSequence, modelLabelMap, onComplete, onCancel }) {
+export default function AutoInspection({ unitCount, modelSequence, modelLabelMap, serialByUnit, onComplete, onCancel }) {
   const [results, setResults] = useState({});
   const tasks = buildTasks(unitCount || 1, modelSequence || []);
   const doneCount = tasks.filter((t) => ["pass", "fail"].includes(results[t.resultKey]?.status)).length;
@@ -178,7 +178,10 @@ export default function AutoInspection({ unitCount, modelSequence, modelLabelMap
         <div key={unit} className="inspect-unit-group">
           {byUnit.size > 1 && (
             <div className="unit-banner">
-              AED ({unit}){modelLabelMap?.[unitTasks[0].model] ? ` — ${modelLabelMap[unitTasks[0].model]}` : ""}
+              <span className="unit-banner-id">
+                AED ({unit}){modelLabelMap?.[unitTasks[0].model] ? ` — ${modelLabelMap[unitTasks[0].model]}` : ""}
+              </span>
+              {serialByUnit?.[unit - 1] && <span className="unit-banner-serial">SN {serialByUnit[unit - 1]}</span>}
             </div>
           )}
           <div className="inspect-grid">
