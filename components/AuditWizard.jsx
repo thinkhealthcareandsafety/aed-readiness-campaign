@@ -779,6 +779,29 @@ function aedAgeMessage(status) {
   };
 }
 
+// Worked examples shown as input placeholders before the responder has
+// typed anything — same idea as the serial-number example above, just for
+// the identity fields on step 1.
+const IDENTITY_PLACEHOLDERS = {
+  first_name: "e.g. Priya",
+  last_name: "e.g. Sharma",
+  email: "e.g. priya.sharma@example.com",
+};
+
+// The "+91" is now its own fixed prefix chip next to the input (see the
+// .tel-input-group render below), so the input itself only ever needs to
+// hold the 10 local digits — but responders paste all sorts of things
+// ("+91 98765 43210", "0 9876543210", spaces/dashes), so every keystroke
+// is normalized the same way the server already does in
+// lib/genericScoring.js isValidIndianMobile, rather than only validating
+// after the fact.
+function sanitizeIndianPhoneInput(raw) {
+  let digits = String(raw || "").replace(/\D/g, "");
+  if (digits.length > 10 && digits.startsWith("91")) digits = digits.slice(2);
+  else if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+  return digits.slice(0, 10);
+}
+
 function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence, selectedCity, onCityChange }) {
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
@@ -809,18 +832,33 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   ) : null;
 
   if (question.type === "text" || question.type === "email" || question.type === "tel") {
+    const isPhoneField = question.type === "tel" && question.fieldRole === "phone";
+    const placeholder = serialExample ? `e.g. ${serialExample}` : IDENTITY_PLACEHOLDERS[question.fieldRole] || undefined;
     return (
       <>
         {aiBadge}
         <QBlock label={question.label} required={question.required} hint={question.hint} fieldId={question.id}>
           <div className={refKind ? "field-with-ref" : undefined}>
-            <TextInput
-              type={question.type === "email" ? "email" : question.type === "tel" ? "tel" : "text"}
-              value={answers[question.id] || ""}
-              onChange={(v) => setAnswer(question.id, v)}
-              ariaLabelledby={qblockLabelId(question.id)}
-              placeholder={serialExample ? `e.g. ${serialExample}` : undefined}
-            />
+            {isPhoneField ? (
+              <div className="tel-input-group">
+                <span className="tel-prefix" aria-hidden="true">+91</span>
+                <TextInput
+                  type="tel"
+                  value={answers[question.id] || ""}
+                  onChange={(v) => setAnswer(question.id, sanitizeIndianPhoneInput(v))}
+                  ariaLabelledby={qblockLabelId(question.id)}
+                  placeholder="98765 43210"
+                />
+              </div>
+            ) : (
+              <TextInput
+                type={question.type === "email" ? "email" : "text"}
+                value={answers[question.id] || ""}
+                onChange={(v) => setAnswer(question.id, v)}
+                ariaLabelledby={qblockLabelId(question.id)}
+                placeholder={placeholder}
+              />
+            )}
             {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
             {serialFormatInvalid && (
               <div className="callout warn" style={{ marginTop: 10 }}>

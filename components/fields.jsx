@@ -183,7 +183,7 @@ export function TextInput({ type = "text", value, onChange, placeholder, ariaLab
       // mobile-keyboard/length hints so a phone field doesn't invite a
       // 20-character paste in the first place.
       inputMode={type === "tel" ? "tel" : undefined}
-      maxLength={type === "tel" ? 15 : undefined}
+      maxLength={type === "tel" ? 10 : undefined}
       autoComplete={type === "email" ? "email" : type === "tel" ? "tel" : undefined}
       onChange={(e) => onChange(e.target.value)}
     />

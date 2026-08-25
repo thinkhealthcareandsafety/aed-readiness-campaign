@@ -611,6 +611,19 @@ button { font-family: inherit; }
 .field-with-ref .ref-inline { flex: 0 0 auto; margin-top: 0; padding-top: 0; border-top: none; }
 .field-with-ref .ref-inline-item { height: 100%; }
 
+/* ---------- Phone field with fixed "+91" country-code prefix ----------
+   The whole campaign is India-only (see isValidIndianMobile in
+   lib/genericScoring.js), so this is a fixed prefix chip, not a country
+   picker — the input itself only ever holds the 10 local digits. */
+.tel-input-group { display: flex; align-items: stretch; }
+.tel-input-group .tel-prefix {
+  display: flex; align-items: center; flex-shrink: 0;
+  padding: 0 14px; font-size: 1.08rem; font-weight: 700; color: var(--ink);
+  background: var(--paper-raised); border: 1px solid var(--line-strong); border-right: none;
+  border-radius: 8px 0 0 8px;
+}
+.tel-input-group input[type="tel"] { border-radius: 0 8px 8px 0; }
+
 /* ---------- Inline per-field reference photo (Expiry / Paediatric) ----------
    Shown only for the AED model(s) the responder actually selected earlier —
    see FieldReferencePhoto / PaediatricReferencePhoto in ReferenceGuide.jsx. */
