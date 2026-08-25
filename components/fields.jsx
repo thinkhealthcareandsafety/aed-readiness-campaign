@@ -234,29 +234,36 @@ export function Select({ value, onChange, options, placeholder, ariaLabelledby }
   );
 }
 
+// A bare row of native radio dots read as the one unfinished-looking control
+// on an otherwise fully-designed form — rebuilt as the same bold segmented-
+// button control as TabSelect (same role="radiogroup" pattern, same
+// deselect-on-reclick), just numbered instead of labeled, so a self-rated
+// confidence score gets the same visual weight as every other answer here.
 export function LinearScale({ value, onChange, min = 1, max = 5, minLabel, maxLabel }) {
   const nums = [];
   for (let i = min; i <= max; i++) nums.push(i);
   return (
     <div className="scale">
-      <span className="end">{minLabel}</span>
-      <div className="dots">
+      <div className="scale-row" role="radiogroup">
         {nums.map((n) => (
-          <label key={n} className={value === n ? "selected" : undefined}>
-            <input
-              type="radio"
-              checked={value === n}
-              onChange={() => onChange(n)}
-              // See the matching comment on RadioGroup in this same file —
-              // e.target.checked at click time reflects state *before* this
-              // click, so true means re-clicking the already-selected dot.
-              onClick={(e) => { if (e.target.checked) onChange(null); }}
-            />
-            <span>{n}</span>
-          </label>
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={value === n}
+            className={`scale-btn${value === n ? " selected" : ""}`}
+            onClick={() => onChange(value === n ? null : n)}
+          >
+            {n}
+          </button>
         ))}
       </div>
-      <span className="end right">{maxLabel}</span>
+      {(minLabel || maxLabel) && (
+        <div className="scale-ends">
+          <span className="scale-end">{minLabel}</span>
+          <span className="scale-end right">{maxLabel}</span>
+        </div>
+      )}
     </div>
   );
 }

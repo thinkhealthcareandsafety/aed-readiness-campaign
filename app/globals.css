@@ -823,19 +823,23 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   .hotel-select-panel { animation: none; }
 }
 
-.scale { display: flex; align-items: center; gap: 10px; }
-.scale .end { font-size: .78rem; color: var(--ink-soft); width: 4.2em; }
-.scale .end.right { text-align: right; }
-.scale .dots { display: flex; gap: 2px; flex: 1; justify-content: space-between; }
-.scale label {
-  display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .78rem; font-weight: 600;
-  color: var(--ink-soft); padding: 10px 6px; border-radius: 10px; cursor: pointer; min-height: 44px; justify-content: center;
-  transition: background-color .15s ease, color .15s ease;
+/* ---------- Confidence scale (LinearScale in fields.jsx) ----------
+   Same bold segmented-button language as .tab-select-btn, just numbered —
+   a bare row of native radio dots was the one unstyled-looking control on
+   an otherwise fully-designed form. */
+.scale { display: flex; flex-direction: column; gap: 8px; }
+.scale-row { display: flex; gap: 8px; }
+.scale-btn {
+  flex: 1 1 0; font-family: inherit; font-size: 1.05rem; font-weight: 800;
+  color: var(--ink-soft); background: var(--paper-raised); border: 1.5px solid var(--line-strong);
+  border-radius: 12px; padding: 14px 6px; min-height: 48px; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease, transform .12s cubic-bezier(.2,.8,.2,1);
 }
-.scale label:hover { background: var(--accent-tint); color: var(--accent-deep); }
-.scale label.selected { background: var(--accent-tint); color: var(--accent-deep); }
-.scale label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-.scale input { accent-color: var(--accent-deep); width: 22px; height: 22px; cursor: pointer; }
+.scale-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+.scale-btn.selected { border-color: var(--accent); background: var(--accent-tint); color: var(--accent-deep); box-shadow: 0 4px 12px rgba(28,36,48,0.08); }
+.scale-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scale-ends { display: flex; justify-content: space-between; font-size: .8rem; font-weight: 600; color: var(--ink-soft); padding: 0 2px; }
+.scale-end.right { text-align: right; }
 
 /* ---------- Illustrated image-card grids (AED models, status lamp, paediatric) ---------- */
 .icon-grid {
