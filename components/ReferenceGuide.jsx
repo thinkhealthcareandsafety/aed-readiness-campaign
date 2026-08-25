@@ -52,7 +52,11 @@ function modelsWithPhoto(models, kind) {
 // Full-size click-to-preview overlay, shared by every thumbnail row. Kept
 // self-contained (own state, own escape/backdrop handling) so any number of
 // ThumbRows can exist on a step without coordinating through a parent.
-function ImageLightbox({ item, kind, labelKey, onClose }) {
+// Exported for reuse by the icon-card option grids in AuditWizard.jsx —
+// tapping an option's own photo (battery-attached, cabinet, etc.) opens the
+// exact same zoomed preview as the field-level reference photos, so this is
+// one shared lightbox implementation rather than two.
+export function ImageLightbox({ item, kind, labelKey, onClose }) {
   useEffect(() => {
     if (!item) return;
     function onKeyDown(e) {

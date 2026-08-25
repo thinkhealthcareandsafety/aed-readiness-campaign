@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, TabSelect, LinearScale, qblockLabelId } from "@/components/fields";
-import { OptionImage } from "@/components/OptionImage";
-import { FieldReferencePhoto, PaediatricReferencePhoto, CabinetReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
+import { OptionImage, isPhotoUrl } from "@/components/OptionImage";
+import { FieldReferencePhoto, PaediatricReferencePhoto, ImageLightbox, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
 import { HotelSelect } from "@/components/HotelSelect";
 import { logoForHotel } from "@/lib/hotelBrands";
@@ -737,6 +737,43 @@ function expiryTierClass(tierValue) {
   return "ready"; // gt2y, 1to2y
 }
 
+// Client-provided compliance copy (not our own wording) for the derived
+// expiry-status callout — battery and pads get their own message per tier
+// rather than a bare tier label, and the pads copy keeps the client's own
+// "Keep it in Packed condition to pass Pads integrity Test" line on every
+// pads tier, matching how it was given. The client only wrote out expired /
+// within-6-months / 1-2-years explicitly; within1w and within1m reuse the
+// within-6-months wording (both are genuinely "within 6 months", just more
+// urgent slices of it) and gt6m/gt2y extend the "good to go" wording with
+// an accurate time phrase rather than reusing "1-2 years" for a timeframe
+// that isn't actually 1-2 years — a mismatch here would be the same kind of
+// bug as the earlier same-year-different-tier one.
+const BATTERY_EXPIRY_MESSAGES = {
+  expired: "Battery Expiry outside Shelf Life: We Advise to Replace it immediately.",
+  within1w: "Battery Expiring within the next week — We Advise to prepare for the Replacement before the end of Expiry.",
+  within1m: "Battery Expiring within the next month — We Advise to prepare for the Replacement before the end of Expiry.",
+  within6m: "Battery Expiring Within next 6 months — We Advise to prepare for the Replacement before the end of Expiry.",
+  gt6m: "Battery Expiring in more than 6 months. This is good to go.",
+  "1to2y": "Battery Expiring in next 1-2 years. This is good to go.",
+  gt2y: "Battery Expiring in more than 2 years. This is good to go.",
+};
+
+const PADS_EXPIRY_MESSAGES = {
+  expired: "AED Electrode Pads has Expired, We Advise to Replace it immediately.",
+  within1w: "AED Electrode Pads Expiring within the next week, We Advise to prepare for the Replacement before the end of Expiry. Keep it in Packed condition to pass Pads integrity Test.",
+  within1m: "AED Electrode Pads Expiring within the next month, We Advise to prepare for the Replacement before the end of Expiry. Keep it in Packed condition to pass Pads integrity Test.",
+  within6m: "AED Electrode Pads Expiring Within next 6 months, We Advise to prepare for the Replacement before the end of Expiry. Keep it in Packed condition to pass Pads integrity Test.",
+  gt6m: "AED Electrode Pads Expiring in more than 6 months. This is good to go. Keep it in Packed condition to pass Pads integrity Test.",
+  "1to2y": "AED Electrode Pads Expiring in next 1-2 years. This is good to go. Keep it in Packed condition to pass Pads integrity Test.",
+  gt2y: "AED Electrode Pads Expiring in more than 2 years. This is good to go. Keep it in Packed condition to pass Pads integrity Test.",
+};
+
+function expiryStatusMessage(questionLabel, tierValue) {
+  const label = (questionLabel || "").toLowerCase();
+  const table = label.includes("pad") ? PADS_EXPIRY_MESSAGES : BATTERY_EXPIRY_MESSAGES;
+  return table[tierValue] || null;
+}
+
 function referenceModelsFor(question, sequence, fallbackModels) {
   const unit = unitNumberFromLabel(question.label);
   if (unit == null) return fallbackModels;
@@ -791,7 +828,48 @@ const IDENTITY_PLACEHOLDERS = {
   email: "you@example.com",
 };
 
+// An option photo (battery-attached, cabinet, etc.) now doubles as its own
+// reference photo — a small corner badge opens it full-size instead of a
+// separate, always-visible "Your reference photo" row underneath repeating
+// the exact same image. Only real photos get the badge; a flat SVG
+// pictogram has nothing worth zooming into. The badge is a real <button>,
+// not just a click handler on the image, specifically so tapping it never
+// also toggles the radio/checkbox this art sits inside — a nested
+// interactive element inside a <label> is never forwarded the label's own
+// "activate the wrapped control" click, by spec, regardless of where else
+// the click bubbles.
+function ZoomableOptionArt({ src, alt, onZoom }) {
+  return (
+    <span className="icon-card-art-zoomable">
+      <OptionImage src={src} alt={alt} />
+      {isPhotoUrl(src) && (
+        <button
+          type="button"
+          className="icon-card-zoom-btn"
+          aria-label={`View larger: ${alt}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onZoom();
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="M20 20l-4.7-4.7" />
+          </svg>
+        </button>
+      )}
+    </span>
+  );
+}
+
 function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence, selectedCity, onCityChange }) {
+  // A photo option (battery-attached, cabinet, etc.) is now the reference
+  // photo itself — tapping the small zoom badge on its corner opens this
+  // instead of a separate, always-visible "Your reference photo" row
+  // underneath duplicating the exact same image. One preview slot per
+  // question is enough since only one card can be zoomed at a time.
+  const [zoomPreview, setZoomPreview] = useState(null);
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
   const name = `q${question.id}`;
@@ -997,7 +1075,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
       <QBlock label={question.label} required={question.required} points={max || null}>
         {selectedOpt ? (
           <div className={`callout ${expiryTierClass(val)}`} style={{ margin: 0 }}>
-            <b>{selectedOpt.label}</b>
+            {expiryStatusMessage(question.label, val) || <b>{selectedOpt.label}</b>}
           </div>
         ) : (
           <div className="callout" style={{ margin: 0 }}>
@@ -1026,7 +1104,13 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               value: o.value,
               label: o.label,
               sub: o.sub,
-              art: <OptionImage src={o.imageUrl} alt={o.label} />,
+              art: (
+                <ZoomableOptionArt
+                  src={o.imageUrl}
+                  alt={o.label}
+                  onZoom={() => setZoomPreview({ photo: o.imageUrl, caption: o.label })}
+                />
+              ),
             }))}
           />
         ) : (
@@ -1047,8 +1131,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             />
           </div>
         )}
-        {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
-        {question.label.toLowerCase().includes("cabinet") && <CabinetReferencePhoto />}
+        <ImageLightbox item={zoomPreview} kind="photo" labelKey="caption" onClose={() => setZoomPreview(null)} />
         </QBlock>
       </>
     );
