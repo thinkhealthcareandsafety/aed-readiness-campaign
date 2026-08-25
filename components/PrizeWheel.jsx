@@ -193,6 +193,12 @@ export default function PrizeWheel({ prize, onDone }) {
             {PRIZES.map((p, i) => (
               <path key={`${p.id}-sheen`} d={slicePath(i)} fill={`url(#slice-${p.id})`} />
             ))}
+            {/* No in-slice text: at 5 slices, a label small enough to fit
+               the wedge (and rotated to match it — sideways or upside-down
+               for anything not near the top) was unreadable at a glance,
+               which was the actual complaint. An icon reads fine at any
+               rotation; the always-upright legend below is the one and
+               only place the prize names are spelled out. */}
             {PRIZES.map((p, i) => (
               <g
                 key={`${p.id}-label`}
@@ -204,18 +210,8 @@ export default function PrizeWheel({ prize, onDone }) {
                    the same guaranteed-contrast backdrop regardless of slice
                    color, styled to match the wheel's gold-rim theme instead
                    of a plain flat white dot. */}
-                <circle cx="128" cy="100" r="15" fill="#f7ecd3" stroke="#c9972f" strokeWidth="1.5" className="prize-wheel-medallion-ring" />
-                <image href={p.image} x="115" y="87" width="26" height="26" />
-                <text
-                  x="168"
-                  y="100"
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  className="prize-wheel-slice-label"
-                  style={{ fill: p.textColor }}
-                >
-                  {p.shortLabel || p.label}
-                </text>
+                <circle cx="158" cy="100" r="20" fill="#f7ecd3" stroke="#c9972f" strokeWidth="1.5" className="prize-wheel-medallion-ring" />
+                <image href={p.image} x="143" y="85" width="30" height="30" />
               </g>
             ))}
             <circle cx="100" cy="100" r="94" fill="none" stroke="url(#goldRim)" strokeWidth="7" />
