@@ -1159,7 +1159,13 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               key: o.value,
               label: o.label,
               sub: o.sub,
-              art: <OptionImage src={o.imageUrl} alt={o.label} />,
+              art: (
+                <ZoomableOptionArt
+                  src={o.imageUrl}
+                  alt={o.label}
+                  onZoom={() => setZoomPreview({ photo: o.imageUrl, caption: o.label })}
+                />
+              ),
             }))}
           />
         ) : (
@@ -1186,6 +1192,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               />
             </div>
           ))}
+        <ImageLightbox item={zoomPreview} kind="photo" labelKey="caption" onClose={() => setZoomPreview(null)} />
       </QBlock>
     );
   }
@@ -1206,7 +1213,13 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             key: o.value,
             label: o.label,
             sub: o.sub,
-            art: <OptionImage src={o.imageUrl} alt={o.label} />,
+            art: (
+              <ZoomableOptionArt
+                src={o.imageUrl}
+                alt={o.label}
+                onZoom={() => setZoomPreview({ photo: o.imageUrl, caption: o.label })}
+              />
+            ),
           }))}
         />
         {Number.isFinite(limit) && limit > 0 && (
@@ -1225,6 +1238,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               />
             </div>
           ))}
+        <ImageLightbox item={zoomPreview} kind="photo" labelKey="caption" onClose={() => setZoomPreview(null)} />
       </QBlock>
     );
   }
