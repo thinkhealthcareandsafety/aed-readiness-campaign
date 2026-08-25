@@ -171,7 +171,7 @@ export function IconQuantityGrid({ items, value, onChange, max }) {
   );
 }
 
-export function TextInput({ type = "text", value, onChange, placeholder, ariaLabelledby }) {
+export function TextInput({ type = "text", value, onChange, placeholder, ariaLabelledby, maxLength }) {
   return (
     <input
       type={type}
@@ -179,11 +179,11 @@ export function TextInput({ type = "text", value, onChange, placeholder, ariaLab
       placeholder={placeholder}
       aria-labelledby={ariaLabelledby}
       // Real format enforcement lives server-side (lib/genericScoring.js
-      // isValidEmail/isValidIndianMobile) — these are just the matching
-      // mobile-keyboard/length hints so a phone field doesn't invite a
-      // 20-character paste in the first place.
+      // isValidEmail, lib/phoneCountries.js isValidInternationalPhone) —
+      // this is just the matching mobile-keyboard hint so a phone field
+      // brings up a numeric keypad instead of a full keyboard.
       inputMode={type === "tel" ? "tel" : undefined}
-      maxLength={type === "tel" ? 10 : undefined}
+      maxLength={maxLength}
       autoComplete={type === "email" ? "email" : type === "tel" ? "tel" : undefined}
       onChange={(e) => onChange(e.target.value)}
     />

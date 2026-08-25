@@ -15,6 +15,7 @@ import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import { listHotelCities, sortHotelOptionsByCity } from "@/lib/hotelCities";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
 import { aedAgeStatus, isValidAedSerialFormat, aedSerialFormatHint, aedSerialExample } from "@/lib/aedSerialDate";
+import { COUNTRY_CODES, DEFAULT_COUNTRY_ISO, countryByIso, composePhoneValue, parsePhoneValueLenient, sanitizeLocalDigits } from "@/lib/phoneCountries";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
 
@@ -788,20 +789,6 @@ const IDENTITY_PLACEHOLDERS = {
   email: "e.g. priya.sharma@example.com",
 };
 
-// The "+91" is now its own fixed prefix chip next to the input (see the
-// .tel-input-group render below), so the input itself only ever needs to
-// hold the 10 local digits — but responders paste all sorts of things
-// ("+91 98765 43210", "0 9876543210", spaces/dashes), so every keystroke
-// is normalized the same way the server already does in
-// lib/genericScoring.js isValidIndianMobile, rather than only validating
-// after the fact.
-function sanitizeIndianPhoneInput(raw) {
-  let digits = String(raw || "").replace(/\D/g, "");
-  if (digits.length > 10 && digits.startsWith("91")) digits = digits.slice(2);
-  else if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
-  return digits.slice(0, 10);
-}
-
 function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, setCheckboxAnswer, setQuantityAnswer, setFreeText, selectedAedModels, aedModelSequence, selectedCity, onCityChange }) {
   const max = questionMax(question);
   const hasImages = question.options?.some((o) => o.imageUrl);
@@ -822,6 +809,16 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   const serialExample = isSerialField ? aedSerialExample(serialUnitModel) : null;
   const serialFormatInvalid =
     isSerialField && serialValue && serialUnitModel && !isValidAedSerialFormat(serialUnitModel, serialValue);
+  // Lazy-initialized once per mounted instance (this component remounts
+  // when the wizard navigates back to this step, so re-deriving from the
+  // stored answer here — rather than always defaulting to India — is what
+  // makes a previously-picked country stick on Back/Next).
+  const [phoneCountryIso, setPhoneCountryIso] = useState(() => {
+    const parsed = parsePhoneValueLenient(answers[question.id]);
+    return parsed ? parsed.country.iso : DEFAULT_COUNTRY_ISO;
+  });
+  const phoneParsed = parsePhoneValueLenient(answers[question.id]);
+  const phoneLocalDigits = phoneParsed ? phoneParsed.digits : "";
   // The field itself always stays a normal, editable input underneath this
   // — a bad AI read is never silently trusted, only pre-filled for review.
   const aiBadge = aiInfo ? (
@@ -841,13 +838,32 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
           <div className={refKind ? "field-with-ref" : undefined}>
             {isPhoneField ? (
               <div className="tel-input-group">
-                <span className="tel-prefix" aria-hidden="true">+91</span>
+                <select
+                  className="tel-country-select"
+                  aria-label="Country code"
+                  value={phoneCountryIso}
+                  onChange={(e) => {
+                    const iso = e.target.value;
+                    setPhoneCountryIso(iso);
+                    setAnswer(
+                      question.id,
+                      phoneLocalDigits ? composePhoneValue(iso, sanitizeLocalDigits(iso, phoneLocalDigits)) : ""
+                    );
+                  }}
+                >
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={c.iso} value={c.iso}>
+                      {c.name} (+{c.dial})
+                    </option>
+                  ))}
+                </select>
                 <TextInput
                   type="tel"
-                  value={answers[question.id] || ""}
-                  onChange={(v) => setAnswer(question.id, sanitizeIndianPhoneInput(v))}
+                  value={phoneLocalDigits}
+                  onChange={(v) => setAnswer(question.id, composePhoneValue(phoneCountryIso, sanitizeLocalDigits(phoneCountryIso, v)))}
                   ariaLabelledby={qblockLabelId(question.id)}
-                  placeholder="98765 43210"
+                  placeholder={phoneCountryIso === "IN" ? "98765 43210" : "Mobile number"}
+                  maxLength={countryByIso(phoneCountryIso).maxDigits}
                 />
               </div>
             ) : (

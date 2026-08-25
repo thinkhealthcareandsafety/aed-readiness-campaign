@@ -611,18 +611,21 @@ button { font-family: inherit; }
 .field-with-ref .ref-inline { flex: 0 0 auto; margin-top: 0; padding-top: 0; border-top: none; }
 .field-with-ref .ref-inline-item { height: 100%; }
 
-/* ---------- Phone field with fixed "+91" country-code prefix ----------
-   The whole campaign is India-only (see isValidIndianMobile in
-   lib/genericScoring.js), so this is a fixed prefix chip, not a country
-   picker — the input itself only ever holds the 10 local digits. */
+/* ---------- Phone field with country-code picker ----------
+   See lib/phoneCountries.js — the input itself only ever holds the local
+   digits for whichever country is selected; the dial code lives in the
+   select and gets composed into the stored answer as "+<dial><digits>". */
 .tel-input-group { display: flex; align-items: stretch; }
-.tel-input-group .tel-prefix {
-  display: flex; align-items: center; flex-shrink: 0;
-  padding: 0 14px; font-size: 1.08rem; font-weight: 700; color: var(--ink);
-  background: var(--paper-raised); border: 1px solid var(--line-strong); border-right: none;
-  border-radius: 8px 0 0 8px;
+.tel-input-group .tel-country-select {
+  flex: 0 0 auto; width: auto; max-width: 132px; font-size: .95rem; font-weight: 600;
+  color: var(--ink); background: var(--paper-raised); border: 1px solid var(--line-strong);
+  border-right: none; border-radius: 8px 0 0 8px; padding: 13px 8px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.tel-input-group input[type="tel"] { border-radius: 0 8px 8px 0; }
+.tel-input-group input[type="tel"] { flex: 1 1 auto; min-width: 0; border-radius: 0 8px 8px 0; }
+@media (max-width: 480px) {
+  .tel-input-group .tel-country-select { max-width: 96px; padding: 13px 4px; font-size: .82rem; }
+}
 
 /* ---------- Inline per-field reference photo (Expiry / Paediatric) ----------
    Shown only for the AED model(s) the responder actually selected earlier —
