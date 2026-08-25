@@ -14,7 +14,7 @@ import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import { listHotelCities, sortHotelOptionsByCity } from "@/lib/hotelCities";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
-import { aedAgeStatus, isValidAedSerialFormat, aedSerialFormatHint, MONTH_NAMES } from "@/lib/aedSerialDate";
+import { aedAgeStatus, isValidAedSerialFormat, aedSerialFormatHint, aedSerialExample } from "@/lib/aedSerialDate";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
 
@@ -758,31 +758,24 @@ function unitModelFor(question, sequence) {
 // what today's date actually is (a hardcoded "if year is 2016-2020" message
 // would quietly go stale the moment the calendar moved on).
 function aedAgeMessage(status) {
-  const { year, month, ageYears, tier } = status;
-  const monthYear = `${MONTH_NAMES[month - 1]} ${year}`;
+  const { year, ageYears, tier } = status;
   const ageText = `roughly ${ageYears} year${ageYears === 1 ? "" : "s"} old`;
-  if (tier === "current") {
+  if (tier === "current" || tier === "borderline") {
     return {
       calloutClass: "ready",
-      text: `This unit's serial number decodes to ${monthYear} — ${ageText}. This AED should still be within warranty. You may proceed with the inspection.`,
-    };
-  }
-  if (tier === "borderline") {
-    return {
-      calloutClass: "warn",
-      text: `This unit's serial number decodes to ${monthYear} — right at the 5-year mark. Whether it's still under warranty depends on the exact month of purchase, not just the year — check your invoice to confirm. You may proceed with the inspection.`,
+      text: `This unit's serial number decodes to ${year} — ${ageText}. This AED should still be within warranty. You may proceed with the inspection.`,
     };
   }
   if (tier === "aging") {
     return {
       calloutClass: "warn",
-      text: `This unit's serial number decodes to ${monthYear} — ${ageText}. This AED is past warranty under company policy (5-year replacement cycle) and may not meet the latest AHA guidelines — we recommend scheduling a replacement. AEDs are typically usable for around 10 years when well maintained, so you may still proceed with the inspection.`,
+      text: `This unit's serial number decodes to ${year} — ${ageText}. This AED is past warranty under company policy (5-year replacement cycle) and may not meet the latest AHA guidelines — we recommend scheduling a replacement. AEDs are typically usable for around 10 years when well maintained, so you may still proceed with the inspection.`,
     };
   }
   // tier === "expired"
   return {
     calloutClass: "notready",
-    text: `This unit's serial number decodes to ${monthYear} — ${ageText}. This AED is well past warranty under company policy (5-year replacement cycle) and has likely exceeded its typical ~10-year service life — we strongly recommend scheduling a replacement. You may still proceed with the inspection.`,
+    text: `This unit's serial number decodes to ${year} — ${ageText}. This AED is well past warranty under company policy (5-year replacement cycle) and has likely exceeded its typical ~10-year service life — we strongly recommend scheduling a replacement. You may still proceed with the inspection.`,
   };
 }
 
@@ -803,6 +796,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   // noise. Only checked for the three brands with a verified format (see
   // lib/aedSerialDate.js); other models show no hint and are never blocked.
   const serialFormatHint = isSerialField ? aedSerialFormatHint(serialUnitModel) : null;
+  const serialExample = isSerialField ? aedSerialExample(serialUnitModel) : null;
   const serialFormatInvalid =
     isSerialField && serialValue && serialUnitModel && !isValidAedSerialFormat(serialUnitModel, serialValue);
   // The field itself always stays a normal, editable input underneath this
@@ -825,6 +819,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               value={answers[question.id] || ""}
               onChange={(v) => setAnswer(question.id, v)}
               ariaLabelledby={qblockLabelId(question.id)}
+              placeholder={serialExample ? `e.g. ${serialExample}` : undefined}
             />
             {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
             {serialFormatInvalid && (
