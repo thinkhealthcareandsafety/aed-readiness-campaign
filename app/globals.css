@@ -846,9 +846,11 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
   gap: 12px;
+  align-items: stretch;
 }
 .icon-grid.wide { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .icon-card {
+  height: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
