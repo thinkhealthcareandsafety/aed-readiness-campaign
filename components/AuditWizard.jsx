@@ -7,6 +7,7 @@ import { OptionImage } from "@/components/OptionImage";
 import { FieldReferencePhoto, PaediatricReferencePhoto, CabinetReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
 import { HotelSelect } from "@/components/HotelSelect";
+import { logoForHotel } from "@/lib/hotelBrands";
 import Landing from "@/components/Landing";
 import LiveScore from "@/components/LiveScore";
 import PrizeWheel from "@/components/PrizeWheel";
@@ -415,6 +416,12 @@ export default function AuditWizard({ schema, detectedCity }) {
   }
 
   const identity = extractIdentity(schema, answers);
+  // Once the responder has picked their hotel, brand it back at them for
+  // the rest of the audit — a small "you're doing this for [hotel]" touch
+  // that makes a 14-step form feel tailored rather than generic. Silently
+  // absent for "Other"/unmatched entries (no logo asset exists), same
+  // graceful-fallback rule the picker itself already follows.
+  const hotelBrand = identity.hotel ? logoForHotel(identity.hotel) : null;
 
   return (
     <>
@@ -433,6 +440,13 @@ export default function AuditWizard({ schema, detectedCity }) {
               <small>Think Health &middot; PREPARED Score</small>
             </span>
           </div>
+          {hotelBrand && (
+            <div className="hotel-badge">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static bundled brand mark, no next/image needed */}
+              <img src={hotelBrand.logo} alt="" className="hotel-badge-logo" />
+              <span className="hotel-badge-name">{identity.hotel}</span>
+            </div>
+          )}
           <div className="topbar-meta">
             {!isModeChoice && <LiveScore points={scored.total.points} max={scored.total.max} />}
             <div className="step-label">
