@@ -3,12 +3,27 @@
 import { useRef, useState } from "react";
 import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import LiveCamera from "@/components/LiveCamera";
+import { FieldReferencePhoto, CabinetReferencePhoto, ReadinessReferencePhoto } from "@/components/ReferenceGuide";
 
 const ITEM_ICON = {
   battery_attached: "/icons/battery-ok.svg",
   pads_connected: "/icons/pads-sealed.svg",
   aed_cabinet_ok: "/icons/cabinet-ok.svg",
   readiness_indicator: "/icons/status-ready.svg",
+};
+
+// Maps a checklist item to the same per-model reference-photo `kind` the
+// manual flow uses (see MODEL_PHOTOS in ReferenceGuide.jsx) — so scanning
+// "Battery expiry" for AED (2) shows exactly that unit's own model's real
+// battery-label photo, not a generic camera glyph. aed_cabinet_ok and
+// readiness_indicator aren't in MODEL_PHOTOS at all (not model-specific /
+// no per-brand photo exists) and are handled as their own generic example
+// photo instead, same as the manual flow already does for the cabinet.
+const ITEM_REFERENCE_KIND = {
+  pads_expiry_date: "pads",
+  battery_expiry_date: "battery",
+  battery_attached: "batteryAttached",
+  pads_connected: "padsAttached",
 };
 
 const VIDEO_FRAME_COUNT = 12;
@@ -234,6 +249,8 @@ function InspectItemCard({ task, result, onCapture }) {
         <StatusGlyph status={status} />
       </div>
 
+      <ItemReferencePhoto itemId={item.id} model={task.model} />
+
       {result?.mediaUrl && (
         <div className="inspect-card-thumb">
           {/* eslint-disable-next-line @next/next/no-img-element -- captured photo/frame, not a build-time asset */}
@@ -304,6 +321,14 @@ function InspectItemCard({ task, result, onCapture }) {
       )}
     </div>
   );
+}
+
+function ItemReferencePhoto({ itemId, model }) {
+  if (itemId === "aed_cabinet_ok") return <CabinetReferencePhoto />;
+  if (itemId === "readiness_indicator") return <ReadinessReferencePhoto />;
+  const kind = ITEM_REFERENCE_KIND[itemId];
+  if (!kind || !model) return null;
+  return <FieldReferencePhoto models={[model]} kind={kind} />;
 }
 
 function CameraGlyph({ video }) {
