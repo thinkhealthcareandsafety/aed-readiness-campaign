@@ -1,9 +1,16 @@
 "use client";
 
-export function QBlock({ label, required, points, hint, children }) {
+// fieldId (a stable id, question.id at every call site) turns the visible
+// label into something a bare <input>/<select> can actually be associated
+// with via aria-labelledby — without it, a screen reader announces "text
+// field, blank" with no indication of which of the form's ~40 fields it's
+// even on. Optional so QBlock still works for the radio/checkbox/quantity
+// controls below, whose own <label>-wrapped options already have an
+// accessible name from their own visible text and don't need this.
+export function QBlock({ label, required, points, hint, children, fieldId }) {
   return (
     <div className="qblock">
-      <div className="qlabel">
+      <div className="qlabel" id={fieldId != null ? qblockLabelId(fieldId) : undefined}>
         <span>
           {label}
           {required && <span className="req">&nbsp;*</span>}
@@ -14,6 +21,10 @@ export function QBlock({ label, required, points, hint, children }) {
       {hint && <div className="qhint">{hint}</div>}
     </div>
   );
+}
+
+export function qblockLabelId(fieldId) {
+  return `qlabel-${fieldId}`;
 }
 
 export function RadioGroup({ name, value, onChange, options, row }) {
@@ -160,12 +171,13 @@ export function IconQuantityGrid({ items, value, onChange, max }) {
   );
 }
 
-export function TextInput({ type = "text", value, onChange, placeholder }) {
+export function TextInput({ type = "text", value, onChange, placeholder, ariaLabelledby }) {
   return (
     <input
       type={type}
       value={value || ""}
       placeholder={placeholder}
+      aria-labelledby={ariaLabelledby}
       // Real format enforcement lives server-side (lib/genericScoring.js
       // isValidEmail/isValidIndianMobile) — these are just the matching
       // mobile-keyboard/length hints so a phone field doesn't invite a
@@ -207,9 +219,9 @@ export function TabSelect({ value, onChange, options }) {
   );
 }
 
-export function Select({ value, onChange, options, placeholder }) {
+export function Select({ value, onChange, options, placeholder, ariaLabelledby }) {
   return (
-    <select value={value || ""} onChange={(e) => onChange(e.target.value)}>
+    <select value={value || ""} onChange={(e) => onChange(e.target.value)} aria-labelledby={ariaLabelledby}>
       <option value="" disabled>
         {placeholder || "Select..."}
       </option>

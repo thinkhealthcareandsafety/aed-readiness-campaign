@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, TabSelect, LinearScale } from "@/components/fields";
+import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, TabSelect, LinearScale, qblockLabelId } from "@/components/fields";
 import { OptionImage } from "@/components/OptionImage";
 import { FieldReferencePhoto, PaediatricReferencePhoto, CabinetReferencePhoto, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
@@ -49,6 +49,19 @@ function CityPill({ cities, selected, onChange }) {
       </select>
     </label>
   );
+}
+
+// A plain fetch() never times out on its own — on flaky hotel wifi a
+// request can stall indefinitely with no error and no response, which
+// previously left submit()/the early email check spinning ("Submitting...",
+// "Checking...") forever with no way to recover short of reloading the
+// whole 14-step form and losing the in-progress draft. AbortController
+// turns a hang into an actual rejected promise the existing catch blocks
+// already handle.
+function fetchWithTimeout(url, options, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
 function findQuestionByFieldRole(schema, role) {
@@ -332,7 +345,7 @@ export default function AuditWizard({ schema, detectedCity }) {
       if (email) {
         setCheckingEmail(true);
         try {
-          const res = await fetch("/api/submissions/check-email", {
+          const res = await fetchWithTimeout("/api/submissions/check-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
@@ -394,11 +407,15 @@ export default function AuditWizard({ schema, detectedCity }) {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetch("/api/submissions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
-      });
+      const res = await fetchWithTimeout(
+        "/api/submissions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers }),
+        },
+        30000 // the actual submission does real work server-side (scoring, prize pick, a DB write) — longer budget than the courtesy email check above
+      );
       // Read the body on failure too — a 409 duplicate-email response has a
       // specific, actionable message ("This email has already completed an
       // audit.") that a bare "Submission failed" would otherwise swallow.
@@ -417,7 +434,21 @@ export default function AuditWizard({ schema, detectedCity }) {
       setWonPrize(data.prize);
       setSubmitting(false);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Something went wrong sending your audit. Please try again.");
+      // fetchWithTimeout's AbortController rejects with a DOMException named
+      // "AbortError", whose own .message ("signal is aborted without
+      // reason") means nothing to a hotel staffer — swapped for copy that
+      // actually tells them what to do about it. The 14 steps of answers
+      // are still sitting safely in the draft (see loadDraft/localStorage
+      // above), so "try again" is a real, low-cost recovery, not a threat
+      // of lost work.
+      const timedOut = err instanceof Error && err.name === "AbortError";
+      setSubmitError(
+        timedOut
+          ? "That took too long to send — check your connection and try again. Your answers are still saved."
+          : err instanceof Error
+            ? err.message
+            : "Something went wrong sending your audit. Please try again."
+      );
       setSubmitting(false);
     }
   }
@@ -724,12 +755,13 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
     return (
       <>
         {aiBadge}
-        <QBlock label={question.label} required={question.required} hint={question.hint}>
+        <QBlock label={question.label} required={question.required} hint={question.hint} fieldId={question.id}>
           <div className={refKind ? "field-with-ref" : undefined}>
             <TextInput
               type={question.type === "email" ? "email" : question.type === "tel" ? "tel" : "text"}
               value={answers[question.id] || ""}
               onChange={(v) => setAnswer(question.id, v)}
+              ariaLabelledby={qblockLabelId(question.id)}
             />
             {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
             {serialFormatInvalid && (
@@ -760,9 +792,14 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
     return (
       <>
         {aiBadge}
-        <QBlock label={question.label} required={question.required} hint={question.hint}>
+        <QBlock label={question.label} required={question.required} hint={question.hint} fieldId={question.id}>
           <div className={refKind ? "field-with-ref" : undefined}>
-            <TextInput type="date" value={answers[question.id] || ""} onChange={(v) => setAnswer(question.id, v)} />
+            <TextInput
+              type="date"
+              value={answers[question.id] || ""}
+              onChange={(v) => setAnswer(question.id, v)}
+              ariaLabelledby={qblockLabelId(question.id)}
+            />
             {refKind && <FieldReferencePhoto models={refModels} kind={refKind} />}
           </div>
         </QBlock>
@@ -800,7 +837,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
     // row wrapping across two or three lines.
     const isTabSelect = !isHotelSelect && question.options.length <= 6;
     return (
-      <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint}>
+      <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint} fieldId={question.id}>
         {isHotelSelect ? (
           <>
             <CityPill
@@ -830,6 +867,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             onChange={(v) => setRadioAnswer(question, v)}
             options={question.options.map((o) => ({ value: o.value, label: o.label }))}
             placeholder="Select..."
+            ariaLabelledby={qblockLabelId(question.id)}
           />
         )}
         {selectedOpt?.allowFreeText && (
