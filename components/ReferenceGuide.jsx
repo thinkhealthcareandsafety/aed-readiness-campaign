@@ -67,6 +67,16 @@ function modelsWithPhoto(models, kind) {
   return models.map((m) => MODEL_PHOTOS[m]).filter((m) => m && m[kind]);
 }
 
+// Exposes one specific model's photo without handing callers the whole
+// MODEL_PHOTOS table — used by AuditWizard.jsx to swap the actual Yes/No
+// answer-button artwork on the battery/pads "installed correctly?"
+// questions to match whichever model that specific unit reported, instead
+// of every unit showing the same seeded Philips FRx photo regardless of
+// its real model.
+export function photoForModel(model, kind) {
+  return (model && MODEL_PHOTOS[model]?.[kind]) || null;
+}
+
 // Full-size click-to-preview overlay, shared by every thumbnail row. Kept
 // self-contained (own state, own escape/backdrop handling) so any number of
 // ThumbRows can exist on a step without coordinating through a parent.

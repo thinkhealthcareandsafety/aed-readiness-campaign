@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QBlock, RadioGroup, CheckboxList, IconRadioGrid, IconCheckboxGrid, IconQuantityGrid, TextInput, Select, TabSelect, LinearScale, qblockLabelId } from "@/components/fields";
 import { OptionImage, isPhotoUrl } from "@/components/OptionImage";
-import { FieldReferencePhoto, ImageLightbox, referenceKindFor, unitNumberFromLabel } from "@/components/ReferenceGuide";
+import { FieldReferencePhoto, ImageLightbox, referenceKindFor, unitNumberFromLabel, photoForModel } from "@/components/ReferenceGuide";
 import AutoInspection from "@/components/AutoInspection";
 import { HotelSelect } from "@/components/HotelSelect";
 import { logoForHotel } from "@/lib/hotelBrands";
@@ -18,6 +18,16 @@ import { aedAgeStatus, isValidAedSerialFormat, aedSerialFormatHint, aedSerialExa
 import { COUNTRY_CODES, DEFAULT_COUNTRY_ISO, countryByIso, composePhoneValue, parsePhoneValueLenient, sanitizeLocalDigits } from "@/lib/phoneCountries";
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
+
+// The battery_attached/pads_connected questions were seeded with one fixed
+// pair of real Philips FRx photos (see lib/seedFormData.js) — correct for
+// an FRx unit, actively wrong for any other reported model. These generic,
+// brand-agnostic line icons (the seed's own pre-photo defaults) are what a
+// non-FRx unit's "No" answer falls back to, since there's no real "battery
+// not attached"/"pads not connected" photo sourced for every other model
+// yet — showing the FRx-specific "not attached" photo mislabeled as e.g. a
+// ZOLL unit would be worse than a generic icon, not better.
+const GENERIC_NOT_ATTACHED_ICON = { batteryAttached: "/icons/battery-bad.svg", padsAttached: "/icons/pads-unsealed.svg" };
 
 // Only ever inserted right after the AED Status (registration) section —
 // i.e. only when the responder has already confirmed they have an AED and
@@ -947,6 +957,21 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   const serialUnitModel = isSerialField ? unitModelFor(question, aedModelSequence || []) : null;
   const ageStatus = isSerialField ? aedAgeStatus(serialUnitModel, answers[question.id]) : null;
   const ageMessage = ageStatus ? aedAgeMessage(ageStatus) : null;
+  // battery_attached/pads_connected are seeded with one fixed pair of real
+  // Philips FRx photos — right for an FRx unit, wrong for any other
+  // reported model. Swaps in that unit's own real photo when one's been
+  // sourced (see MODEL_PHOTOS in ReferenceGuide.jsx), or a brand-agnostic
+  // generic icon for "No" otherwise, rather than showing every unit the
+  // same FRx-specific photos regardless of its actual model.
+  const isAttachedField = refKind === "batteryAttached" || refKind === "padsAttached";
+  const attachedUnitModel = isAttachedField ? unitModelFor(question, aedModelSequence || []) : null;
+  const attachedModelDiffers = Boolean(attachedUnitModel) && attachedUnitModel !== "frx";
+  function resolvedOptionImage(o) {
+    if (!attachedModelDiffers) return o.imageUrl;
+    if (o.value === "yes") return photoForModel(attachedUnitModel, refKind) || o.imageUrl;
+    if (o.value === "no") return GENERIC_NOT_ATTACHED_ICON[refKind] || o.imageUrl;
+    return o.imageUrl;
+  }
   const serialValue = answers[question.id];
   // Only flagged once the field has something in it — an empty required
   // field is already caught by validateSection on Next, and flashing a
@@ -1173,18 +1198,15 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             onChange={(v) => setRadioAnswer(question, v)}
             wide={question.options.length <= 2}
             pair={question.options.length === 2 && !question.options.some((o) => o.sub)}
-            items={question.options.map((o) => ({
-              value: o.value,
-              label: o.label,
-              sub: o.sub,
-              art: (
-                <ZoomableOptionArt
-                  src={o.imageUrl}
-                  alt={o.label}
-                  onZoom={() => setZoomPreview({ photo: o.imageUrl, caption: o.label })}
-                />
-              ),
-            }))}
+            items={question.options.map((o) => {
+              const src = resolvedOptionImage(o);
+              return {
+                value: o.value,
+                label: o.label,
+                sub: o.sub,
+                art: <ZoomableOptionArt src={src} alt={o.label} onZoom={() => setZoomPreview({ photo: src, caption: o.label })} />,
+              };
+            })}
           />
         ) : (
           <RadioGroup
