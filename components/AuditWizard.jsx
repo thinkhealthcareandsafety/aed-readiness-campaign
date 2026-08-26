@@ -665,30 +665,33 @@ export default function AuditWizard({ schema, detectedCity }) {
       {!autoScanActive && (
         <div className="wizard-footer">
           <div className="inner">
-            <button className="btn btn-ghost" onClick={goBack} disabled={stepIndex === 0 || submitting}>
-              Back
-            </button>
-            {error && (
-              <span className="error-msg" role="alert" title={error}>
+            {/* Used to sit crammed into the same row as Back/Next, competing
+               with them for width — a longer message (there are several
+               now: duplicate-serial, phone-country, serial-format-hint)
+               just got ellipsis-truncated mid-sentence with no way to read
+               the rest short of hovering for the title tooltip, which
+               doesn't work on touch at all. Its own full-width row lets it
+               wrap across as many lines as it needs instead. */}
+            {(error || submitError) && (
+              <div className="error-msg" role="alert">
                 <WarningIcon />
-                <span>{error}</span>
-              </span>
+                <span>{error || submitError}</span>
+              </div>
             )}
-            {submitError && (
-              <span className="error-msg" role="alert" title={submitError}>
-                <WarningIcon />
-                <span>{submitError}</span>
-              </span>
-            )}
-            {isModeChoice ? null : !isLast ? (
-              <button className="btn btn-primary" onClick={goNext} disabled={checkingEmail}>
-                {checkingEmail ? "Checking…" : "Next"}
+            <div className="wizard-footer-nav">
+              <button className="btn btn-ghost" onClick={goBack} disabled={stepIndex === 0 || submitting}>
+                Back
               </button>
-            ) : (
-              <button className="btn btn-primary" onClick={submit} disabled={submitting}>
-                {submitting ? "Submitting..." : "Submit audit"}
-              </button>
-            )}
+              {isModeChoice ? null : !isLast ? (
+                <button className="btn btn-primary" onClick={goNext} disabled={checkingEmail}>
+                  {checkingEmail ? "Checking…" : "Next"}
+                </button>
+              ) : (
+                <button className="btn btn-primary" onClick={submit} disabled={submitting}>
+                  {submitting ? "Submitting..." : "Submit audit"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

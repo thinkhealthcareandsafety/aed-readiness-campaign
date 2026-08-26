@@ -1011,13 +1011,17 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   position: sticky; bottom: 0; background: var(--paper); border-top: 1px solid var(--line);
   padding: 14px clamp(16px, 4vw, 40px); display: flex; justify-content: center;
 }
-.wizard-footer .inner { width: 100%; max-width: 720px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+/* The error banner and the Back/Next row are stacked, not side by side —
+   see the comment above this markup in AuditWizard.jsx for why: a longer
+   message crammed into the same row as the buttons had nowhere to go but
+   a single truncated line. */
+.wizard-footer .inner { width: 100%; max-width: 720px; display: flex; flex-direction: column; gap: 10px; }
+.wizard-footer-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .error-msg {
-  display: inline-flex; align-items: center; gap: 6px; color: var(--notready); font-size: .85rem; font-weight: 600;
-  min-width: 0;
+  display: flex; align-items: flex-start; gap: 6px; color: var(--notready); font-size: .85rem; font-weight: 600;
+  line-height: 1.4;
 }
-.error-msg svg { width: 15px; height: 15px; flex-shrink: 0; }
-.error-msg span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.error-msg svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px; }
 
 /* display:inline-flex (rather than relying on the UA default) matters here
    because .btn is used on both <button> and <a> — an <a> defaults to
