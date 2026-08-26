@@ -32,10 +32,34 @@ const MODEL_PHOTOS = {
     brand: "ZOLL AED Plus",
     serial: "/reference/zollplus-serial.jpg",
     pads: "/reference/zollplus-pads.jpg",
+    // Real photo from ZOLL's own AED Plus Administrator's Guide (Figure 8:
+    // Battery Compartment) — the AED Plus takes 10 loose lithium cells in a
+    // battery bank rather than a single labeled pack, so there's no single
+    // "expiry sticker" shot the way the Philips units have; this shows the
+    // actual compartment/cell layout instead.
+    battery: "/reference/zollplus-battery.jpg",
+    // Also sourced from the Administrator's Guide (Figure 1: Identifying
+    // Operating Controls and Indicators) rather than a photo — a generic
+    // web/stock photo couldn't be verified to match this exact unit the
+    // way the existing zollplus-serial/pads photos clearly do, and an
+    // official manufacturer diagram is unambiguous about exactly which
+    // part is which. Same crop covers both the electrode connector (top)
+    // and battery compartment (bottom) labels, so it's reused for both.
+    batteryAttached: "/reference/zollplus-unit-diagram.jpg",
+    padsAttached: "/reference/zollplus-unit-diagram.jpg",
   },
   defibtech: {
     brand: "Defibtech",
     battery: "/reference/defibtech-battery.jpg",
+    // Sourced from Defibtech's own DDU-100 User Manual (the exact
+    // sub-model matching this app's existing defibtech.jpg selector
+    // thumbnail — Defibtech has several visually different sub-models, so
+    // this specific match mattered) rather than a stock photo, for the
+    // same reason as zollPlus above: an official diagram is unambiguous
+    // about which exact part is which, and only one page reused for both.
+    pads: "/reference/defibtech-pads.jpg",
+    batteryAttached: "/reference/defibtech-unit-diagram.jpg",
+    padsAttached: "/reference/defibtech-unit-diagram.jpg",
   },
 };
 
