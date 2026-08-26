@@ -15,7 +15,7 @@ function slicePath(index) {
   const endDeg = startDeg + SLICE_DEG;
   const cx = 100;
   const cy = 100;
-  const r = 96;
+  const r = 88;
   const toXY = (deg) => {
     const rad = (deg * Math.PI) / 180;
     return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
@@ -112,7 +112,10 @@ export default function PrizeWheel({ prize, onDone }) {
 
         <div className={`prize-wheel-wrap${started && !revealed ? " is-spinning" : ""}`}>
           <div className="prize-wheel-glow" aria-hidden="true" />
-          <div className="prize-wheel-pointer" aria-hidden="true" />
+          <div className="prize-wheel-shadow" aria-hidden="true" />
+          <div className="prize-wheel-pointer" aria-hidden="true">
+            <span className="prize-wheel-pointer-sheen" />
+          </div>
           <svg
             viewBox="0 0 200 200"
             className="prize-wheel-svg"
@@ -125,12 +128,20 @@ export default function PrizeWheel({ prize, onDone }) {
                   <stop offset="55%" stopColor="white" stopOpacity="0" />
                 </radialGradient>
               ))}
+              {/* A soft top-down sheen suggesting a lacquered, physical
+                 disc rather than a flat vector fill — the single biggest
+                 gap between this and a real cast prize wheel. */}
+              <radialGradient id="wheelGloss" cx="50%" cy="28%" r="65%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
+                <stop offset="55%" stopColor="#ffffff" stopOpacity="0.06" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              </radialGradient>
             </defs>
-            {/* Thin white spokes between slices, a single fine ink ring
-               around the rim, plain solid medallions — restrained, on the
-               same paper/ink/structure palette as the rest of the app,
-               instead of a gold-casino treatment that read as a jarring,
-               cheaper detour from everywhere else in this tool. */}
+            {/* Thin white spokes between slices, plain solid fills —
+               restrained, on the same paper/ink/structure palette as the
+               rest of the app, instead of a gold-casino treatment that
+               read as a jarring, cheaper detour from everywhere else in
+               this tool. */}
             {PRIZES.map((p, i) => (
               <path key={p.id} d={slicePath(i)} fill={p.color} stroke="#f5f6f3" strokeWidth="1.5" />
             ))}
@@ -142,23 +153,34 @@ export default function PrizeWheel({ prize, onDone }) {
                for anything not near the top) was unreadable at a glance,
                which was the actual complaint. An icon reads fine at any
                rotation; the always-upright legend below is the one and
-               only place the prize names are spelled out. */}
+               only place the prize names are spelled out. Icons sit
+               directly on the slice color (no white coin behind them) —
+               they're drawn as solid-white glyphs with a thin ink outline
+               specifically so they hold contrast against any of the 5
+               brand slice colors. */}
             {PRIZES.map((p, i) => (
               <g
                 key={`${p.id}-label`}
                 transform={sliceLabelTransform(i)}
                 className={`prize-wheel-slice-medallion${revealed && p.id === prize ? " is-winner" : ""}`}
               >
-                {/* A plain image would blend into whichever slice color sits
-                   behind it — the white, thin-ringed medallion gives every
-                   icon the same guaranteed-contrast backdrop regardless of
-                   slice color. */}
-                <circle cx="158" cy="100" r="20" fill="#ffffff" stroke="#d7d2c4" strokeWidth="1.5" className="prize-wheel-medallion-ring" />
-                <image href={p.image} x="143" y="85" width="30" height="30" />
+                {revealed && p.id === prize && (
+                  <circle cx="152" cy="100" r="23" fill="none" stroke="#ffffff" strokeWidth="2.5" className="prize-wheel-medallion-ring" />
+                )}
+                <image href={p.image} x="135" y="83" width="34" height="34" />
               </g>
             ))}
-            <circle cx="100" cy="100" r="94" fill="none" stroke="#1c2430" strokeWidth="2" />
-            <circle cx="100" cy="100" r="18" fill="#1c2430" />
+            {/* Beveled rim band (dark base + thin inner/outer catch-light
+               lines) instead of a single flat stroke — the detail that
+               reads as "a physical cast disc" rather than a flat cutout. */}
+            <circle cx="100" cy="100" r="93" fill="none" stroke="#1c2430" strokeWidth="10" />
+            <circle cx="100" cy="100" r="98.3" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.22" />
+            <circle cx="100" cy="100" r="87.5" fill="none" stroke="#000000" strokeWidth="1.2" opacity="0.18" />
+            <circle cx="100" cy="100" r="88" fill="url(#wheelGloss)" />
+            {/* Beveled hub — a darker outer ring, a lighter mid ring for
+               the catch-light, and a small paper-colored center dot. */}
+            <circle cx="100" cy="100" r="19" fill="#1c2430" />
+            <circle cx="100" cy="100" r="15.5" fill="none" stroke="#3a4552" strokeWidth="1.2" opacity="0.7" />
             <circle cx="100" cy="100" r="5" fill="#f5f6f3" opacity="0.85" />
           </svg>
         </div>
