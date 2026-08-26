@@ -508,6 +508,15 @@ button { font-family: inherit; }
   -webkit-backdrop-filter: blur(22px) saturate(160%);
   border-bottom: 1px solid var(--line); padding: 14px clamp(16px, 4vw, 40px);
 }
+/* On a phone this whole stack (brand row + hotel card + step dots) sat
+   between the responder and the actual question on every single step —
+   tightened padding/margins throughout, and the subtitle line drops
+   entirely (the brand name alone is enough identification once you're
+   already mid-form; PREPARED-standard framing matters on the landing page,
+   not on every scroll here). */
+@media (max-width: 480px) {
+  .wizard-topbar { padding: 10px clamp(16px, 4vw, 40px) 8px; }
+}
 /* Even heavier blur still left scrolled-past text legible enough to visibly
    collide with the topbar's own — a phone's topbar takes up proportionally
    more of the viewport, so there's far less room for that to read as subtle
@@ -521,6 +530,14 @@ button { font-family: inherit; }
 .wizard-topbar .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; }
 .wizard-topbar .brand-logo { height: 28px; width: auto; flex-shrink: 0; }
 .wizard-topbar .brand small { display: block; font-family: var(--font-body); font-weight: 500; color: var(--ink-soft); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+/* Dropped entirely on a phone — the brand name alone is enough
+   identification once you're already mid-form; this line's job (framing
+   the PREPARED standard) matters on the landing page, not on every scroll
+   through the topbar here. Placed after the base rule above, not next to
+   it, so it actually wins the cascade at equal specificity. */
+@media (max-width: 480px) {
+  .wizard-topbar .brand small { display: none; }
+}
 .wizard-topbar .step-label { font-size: .82rem; color: var(--ink-soft); font-family: var(--font-mono); white-space: nowrap; }
 /* A "you're auditing for [hotel]" identity card, not just a name tucked
    into the header — its own row gives the logo room to actually read as a
@@ -548,7 +565,7 @@ button { font-family: inherit; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 @media (max-width: 480px) {
-  .hotel-card { padding: 8px 12px; gap: 10px; }
+  .hotel-card { padding: 8px 12px; gap: 10px; margin-top: 8px; }
   .hotel-card-logo { height: 32px; width: 46px; }
   .hotel-card-name { white-space: normal; font-size: 1rem; }
 }
@@ -593,6 +610,9 @@ button { font-family: inherit; }
    keeps the same horizontal-centering .wizard-card relied on when it was
    the only child of a row flex container. */
 .wizard-main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px clamp(16px, 4vw, 40px) 140px; }
+@media (max-width: 480px) {
+  .wizard-main { padding-top: 18px; }
+}
 .wizard-card {
   width: 100%; max-width: 760px; background: var(--paper-raised); border: 1px solid var(--line);
   border-radius: 20px; padding: clamp(24px, 4vw, 40px);
@@ -961,6 +981,9 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 
 /* ---------- Step-dot tracker ---------- */
 .step-dots { display: flex; align-items: center; gap: 5px; margin-top: 12px; flex-wrap: wrap; }
+@media (max-width: 480px) {
+  .step-dots { margin-top: 8px; }
+}
 .step-dots .dot-item {
   height: 6px; flex: 1; min-width: 10px; border-radius: 999px; background: var(--line);
   transition: background .25s ease, flex-grow .25s ease, opacity .15s ease;
