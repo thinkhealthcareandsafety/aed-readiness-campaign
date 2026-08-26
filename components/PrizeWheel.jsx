@@ -1,28 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { PRIZES } from "@/lib/prizes";
 
 const SLICE_DEG = 360 / PRIZES.length; // 72°
 const SPIN_MS = 3800;
-
-// Confetti is purely decorative and never carries information (the prize
-// name/legend highlight do that), so it's fine to generate its randomness
-// on the client with Math.random() — nothing here needs to be
-// cryptographically fair or server-verifiable, unlike the prize pick itself.
-const CONFETTI_COLORS = ["#e6c069", "#2f5d42", "#7a1f2e", "#1f3557", "#c9972f"];
-function makeConfetti(count) {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    delay: Math.random() * 0.5,
-    duration: 1.6 + Math.random() * 1.1,
-    drift: (Math.random() - 0.5) * 140,
-    rotate: Math.random() * 720 - 360,
-    size: 6 + Math.random() * 6,
-    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-  }));
-}
 
 function sliceMidDeg(index) {
   return index * SLICE_DEG - 90 + SLICE_DEG / 2; // -90 so slice 0 starts at 12 o'clock
@@ -53,17 +35,6 @@ function sliceLabelTransform(index) {
   return `rotate(${sliceMidDeg(index)} 100 100)`;
 }
 
-// Small marquee bulbs evenly spaced around the rim — the classic
-// "wheel of fortune" cabinet detail. Every 3rd bulb chases lit while
-// spinning; count chosen so it divides evenly by slice count for a tidy
-// bulb-per-slice-boundary alignment.
-const BULB_COUNT = 20;
-function bulbXY(i) {
-  const deg = (360 / BULB_COUNT) * i - 90;
-  const rad = (deg * Math.PI) / 180;
-  return [100 + 92 * Math.cos(rad), 100 + 92 * Math.sin(rad)];
-}
-
 // The prize (which slice actually wins) was already decided server-side at
 // submission time — see app/api/submissions/route.js. This component's
 // only job is to visually land on that pre-decided value; there is nothing
@@ -76,7 +47,6 @@ export default function PrizeWheel({ prize, onDone }) {
 
   const winIndex = Math.max(0, PRIZES.findIndex((p) => p.id === prize));
   const winLabel = PRIZES[winIndex]?.label || "your prize";
-  const confetti = useMemo(() => makeConfetti(36), []);
 
   useEffect(() => {
     // Read once on mount, independent of whether/when the visitor actually
@@ -134,28 +104,8 @@ export default function PrizeWheel({ prize, onDone }) {
 
   return (
     <div className="prize-wheel-overlay" role="dialog" aria-modal="true" aria-label="Prize reveal">
-      {revealed && (
-        <div className="prize-wheel-confetti" aria-hidden="true">
-          {confetti.map((c) => (
-            <span
-              key={c.id}
-              className="confetto"
-              style={{
-                left: `${c.left}%`,
-                background: c.color,
-                width: c.size,
-                height: c.size * 0.4,
-                animationDelay: `${c.delay}s`,
-                animationDuration: `${c.duration}s`,
-                "--drift": `${c.drift}px`,
-                "--rotate": `${c.rotate}deg`,
-              }}
-            />
-          ))}
-        </div>
-      )}
       <div className={`prize-wheel-card${revealed ? " is-revealed" : started ? " is-spinning" : ""}`}>
-        <span className="landing-eyebrow dark">
+        <span className="landing-eyebrow">
           {revealed ? "Congratulations!" : started ? "Spinning the wheel…" : "Your audit is in"}
         </span>
         <h2 className="landing-h2">{started ? "Your audit is in" : "One spin, one prize"}</h2>
@@ -169,26 +119,20 @@ export default function PrizeWheel({ prize, onDone }) {
             style={{ transform: `rotate(${angle}deg)`, transitionDuration: reducedMotion ? "0ms" : `${SPIN_MS}ms` }}
           >
             <defs>
-              <radialGradient id="hubShine" cx="35%" cy="30%" r="75%">
-                <stop offset="0%" stopColor="#fff3d1" />
-                <stop offset="55%" stopColor="#d9a944" />
-                <stop offset="100%" stopColor="#8a6329" />
-              </radialGradient>
-              <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fdeeb8" />
-                <stop offset="45%" stopColor="#c9972f" />
-                <stop offset="55%" stopColor="#8a6329" />
-                <stop offset="100%" stopColor="#e6c069" />
-              </linearGradient>
               {PRIZES.map((p) => (
                 <radialGradient key={p.id} id={`slice-${p.id}`} cx="50%" cy="50%" r="75%">
-                  <stop offset="0%" stopColor="white" stopOpacity="0.22" />
+                  <stop offset="0%" stopColor="white" stopOpacity="0.14" />
                   <stop offset="55%" stopColor="white" stopOpacity="0" />
                 </radialGradient>
               ))}
             </defs>
+            {/* Thin white spokes between slices, a single fine ink ring
+               around the rim, plain solid medallions — restrained, on the
+               same paper/ink/structure palette as the rest of the app,
+               instead of a gold-casino treatment that read as a jarring,
+               cheaper detour from everywhere else in this tool. */}
             {PRIZES.map((p, i) => (
-              <path key={p.id} d={slicePath(i)} fill={p.color} stroke="#c9972f" strokeWidth="1" />
+              <path key={p.id} d={slicePath(i)} fill={p.color} stroke="#f5f6f3" strokeWidth="1.5" />
             ))}
             {PRIZES.map((p, i) => (
               <path key={`${p.id}-sheen`} d={slicePath(i)} fill={`url(#slice-${p.id})`} />
@@ -206,33 +150,16 @@ export default function PrizeWheel({ prize, onDone }) {
                 className={`prize-wheel-slice-medallion${revealed && p.id === prize ? " is-winner" : ""}`}
               >
                 {/* A plain image would blend into whichever slice color sits
-                   behind it — the cream, gold-rimmed coin gives every icon
-                   the same guaranteed-contrast backdrop regardless of slice
-                   color, styled to match the wheel's gold-rim theme instead
-                   of a plain flat white dot. */}
-                <circle cx="158" cy="100" r="20" fill="#f7ecd3" stroke="#c9972f" strokeWidth="1.5" className="prize-wheel-medallion-ring" />
+                   behind it — the white, thin-ringed medallion gives every
+                   icon the same guaranteed-contrast backdrop regardless of
+                   slice color. */}
+                <circle cx="158" cy="100" r="20" fill="#ffffff" stroke="#d7d2c4" strokeWidth="1.5" className="prize-wheel-medallion-ring" />
                 <image href={p.image} x="143" y="85" width="30" height="30" />
               </g>
             ))}
-            <circle cx="100" cy="100" r="94" fill="none" stroke="url(#goldRim)" strokeWidth="7" />
-            <circle cx="100" cy="100" r="90" fill="none" stroke="#3a2a12" strokeWidth="1.5" opacity="0.5" />
-            <g className="prize-wheel-bulbs">
-              {Array.from({ length: BULB_COUNT }, (_, i) => {
-                const [bx, by] = bulbXY(i);
-                return (
-                  <circle
-                    key={i}
-                    cx={bx.toFixed(2)}
-                    cy={by.toFixed(2)}
-                    r="3.4"
-                    className="prize-wheel-bulb"
-                    style={{ animationDelay: `${(i / BULB_COUNT) * 1.1}s` }}
-                  />
-                );
-              })}
-            </g>
-            <circle cx="100" cy="100" r="18" fill="url(#hubShine)" stroke="#5c4322" strokeWidth="1.5" />
-            <circle cx="100" cy="100" r="6" fill="#5c4322" opacity="0.55" />
+            <circle cx="100" cy="100" r="94" fill="none" stroke="#1c2430" strokeWidth="2" />
+            <circle cx="100" cy="100" r="18" fill="#1c2430" />
+            <circle cx="100" cy="100" r="5" fill="#f5f6f3" opacity="0.85" />
           </svg>
         </div>
 
@@ -250,7 +177,7 @@ export default function PrizeWheel({ prize, onDone }) {
 
         {!started && (
           <button type="button" className="btn btn-primary prize-wheel-spin-cta" onClick={() => setStarted(true)}>
-            🎡 Spin to Win!
+            Spin to Win
           </button>
         )}
 
@@ -258,7 +185,7 @@ export default function PrizeWheel({ prize, onDone }) {
           {revealed && (
             <>
               <p className="prize-wheel-headline">
-                🎉 You won: <b>{winLabel}</b>
+                You won: <b>{winLabel}</b>
               </p>
               <p className="prize-wheel-note">
                 {prize === "aedsmartx"
