@@ -76,6 +76,11 @@ function scrollToAuditSlowly(e) {
   }
   const startTime = performance.now();
   const maxDuration = Math.min(2600, Math.max(1200, Math.abs(target.getBoundingClientRect().top) * 0.9));
+  // Time constant for the exponential chase below — ~63% of whatever
+  // distance remains closes every TAU_MS of *real elapsed time*, matched
+  // to feel like the previous version's "8% per frame at a steady 60fps".
+  const TAU_MS = 200;
+  let lastTime = startTime;
   function step(now) {
     const remaining = target.getBoundingClientRect().top;
     // Snap the last couple of pixels via scrollIntoView instead of letting
@@ -85,16 +90,23 @@ function scrollToAuditSlowly(e) {
       target.scrollIntoView({ block: "start" });
       return;
     }
-    // Moves a fraction of whatever distance is left *right now* every
-    // frame — recomputed live from the DOM instead of committing to a
-    // fixed total distance measured once at click time. A mobile browser's
-    // address bar collapsing mid-scroll shifts the whole page's layout,
-    // which left the previous fixed-distance version landing short of the
-    // form (visible in the client's screenshot: the closing section still
-    // showing above the topbar after the "scroll" finished). Chasing the
-    // live position self-corrects for that instead of aiming at a target
-    // that's since moved.
-    window.scrollBy(0, remaining * 0.08);
+    const dt = now - lastTime;
+    lastTime = now;
+    // Moves however much of the remaining distance a continuous
+    // exponential decay would cover in *this frame's actual duration* —
+    // recomputed live from the DOM each frame (not a fixed total distance
+    // measured once at click time), so it stays correct whether the target
+    // moved (a mobile address bar collapsing mid-scroll shifts the whole
+    // page's layout) or the visitor themselves scrolled. Parameterizing the
+    // decay by dt instead of applying a fixed fraction *per frame* is the
+    // actual smoothness fix: the previous version assumed every frame took
+    // the same ~16.7ms, so a slow/dropped frame (common mid-scroll on a
+    // real phone, especially while the reveal-on-scroll sections are
+    // animating in) still only moved that same tiny fixed fraction instead
+    // of proportionally more ground — which is exactly what reads as
+    // stutter. This covers proportionally more distance on a slow frame,
+    // so the perceived speed stays constant regardless of frame rate.
+    window.scrollBy(0, remaining * (1 - Math.exp(-dt / TAU_MS)));
     requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
