@@ -136,6 +136,13 @@ export default function PrizeWheel({ prize, onDone }) {
                 <stop offset="55%" stopColor="#ffffff" stopOpacity="0.06" />
                 <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
               </radialGradient>
+              {/* One shared clip shared by all 5 photo badges — each badge
+                 sits in its own slice's rotated <g>, but at identical local
+                 coordinates within that group, so a single clip works for
+                 all of them. */}
+              <clipPath id="prizePhotoClip">
+                <rect x="129" y="77" width="46" height="46" rx="10" />
+              </clipPath>
             </defs>
             {/* Thin white spokes between slices, plain solid fills —
                restrained, on the same paper/ink/structure palette as the
@@ -151,23 +158,25 @@ export default function PrizeWheel({ prize, onDone }) {
             {/* No in-slice text: at 5 slices, a label small enough to fit
                the wedge (and rotated to match it — sideways or upside-down
                for anything not near the top) was unreadable at a glance,
-               which was the actual complaint. An icon reads fine at any
+               which was the actual complaint. A photo reads fine at any
                rotation; the always-upright legend below is the one and
-               only place the prize names are spelled out. Icons sit
-               directly on the slice color (no white coin behind them) —
-               they're drawn as solid-white glyphs with a thin ink outline
-               specifically so they hold contrast against any of the 5
-               brand slice colors. */}
+               only place the prize names are spelled out. Real product
+               photos carry their own busy backgrounds/colors, so — unlike
+               a flat glyph — each one sits in a small white photo-card
+               frame (cover-cropped via the shared clip path) instead of
+               directly on the slice color. */}
             {PRIZES.map((p, i) => (
               <g
                 key={`${p.id}-label`}
                 transform={sliceLabelTransform(i)}
                 className={`prize-wheel-slice-medallion${revealed && p.id === prize ? " is-winner" : ""}`}
               >
+                <rect x="126" y="74" width="52" height="52" rx="12" fill="#ffffff" className="prize-wheel-photo-frame" />
+                <image href={p.image} x="129" y="77" width="46" height="46" preserveAspectRatio="xMidYMid slice" clipPath="url(#prizePhotoClip)" />
+                <rect x="129" y="77" width="46" height="46" rx="10" fill="none" stroke="#1c2430" strokeOpacity="0.14" strokeWidth="1" />
                 {revealed && p.id === prize && (
-                  <circle cx="152" cy="100" r="23" fill="none" stroke="#ffffff" strokeWidth="2.5" className="prize-wheel-medallion-ring" />
+                  <rect x="126" y="74" width="52" height="52" rx="12" fill="none" stroke="#ffffff" strokeWidth="2.5" className="prize-wheel-medallion-ring" />
                 )}
-                <image href={p.image} x="135" y="83" width="34" height="34" />
               </g>
             ))}
             {/* Beveled rim band (dark base + thin inner/outer catch-light
@@ -188,8 +197,8 @@ export default function PrizeWheel({ prize, onDone }) {
         <ul className="prize-wheel-legend">
           {PRIZES.map((p) => (
             <li key={p.id} className={p.id === prize && revealed ? "won" : undefined}>
-              <span className="prize-wheel-legend-thumb" style={{ background: p.color }}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- small static icon inside an SVG-adjacent legend, not page content */}
+              <span className="prize-wheel-legend-thumb">
+                {/* eslint-disable-next-line @next/next/no-img-element -- small static photo inside an SVG-adjacent legend, not page content */}
                 <img src={p.image} alt="" />
               </span>
               {p.label}
