@@ -565,12 +565,17 @@ button { font-family: inherit; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 @media (max-width: 480px) {
-  .hotel-card { padding: 8px 12px; gap: 10px; margin-top: 8px; }
-  .hotel-card-logo { height: 32px; width: 46px; }
+  .hotel-card { padding: 6px 12px; gap: 10px; margin-top: 6px; }
+  .hotel-card-logo { height: 28px; width: 40px; }
   .hotel-card-name { white-space: normal; font-size: 1rem; }
 }
 
-.topbar-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-left: auto; }
+/* Live score + step counter side by side, not stacked — the two used to
+   sit on their own separate lines (column direction) for no real reason,
+   which on a phone meant a whole extra ~20px line under the brand row on
+   every single step. Row direction fits both easily on the one line
+   .brandrow already gives this a whole row to itself for. */
+.topbar-meta { display: flex; flex-direction: row; align-items: center; gap: 10px; margin-left: auto; }
 /* On a narrow phone, "AED Readiness Campaign" plus the live-score pill
    don't fit on one row and the brand name was wrapping mid-word instead
    ("AED Readiness" / "Campaign") — flex-wrap above lets .topbar-meta drop
@@ -611,7 +616,7 @@ button { font-family: inherit; }
    the only child of a row flex container. */
 .wizard-main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px clamp(16px, 4vw, 40px) 140px; }
 @media (max-width: 480px) {
-  .wizard-main { padding-top: 18px; }
+  .wizard-main { padding-top: 14px; }
 }
 .wizard-card {
   width: 100%; max-width: 760px; background: var(--paper-raised); border: 1px solid var(--line);
@@ -982,7 +987,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 /* ---------- Step-dot tracker ---------- */
 .step-dots { display: flex; align-items: center; gap: 5px; margin-top: 12px; flex-wrap: wrap; }
 @media (max-width: 480px) {
-  .step-dots { margin-top: 8px; }
+  .step-dots { margin-top: 6px; }
 }
 .step-dots .dot-item {
   height: 6px; flex: 1; min-width: 10px; border-radius: 999px; background: var(--line);
