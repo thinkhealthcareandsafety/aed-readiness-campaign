@@ -1212,6 +1212,8 @@ table.admin-table tr:hover td { background: var(--structure-tint); }
 .inspect-card-pass { border-color: var(--ready); background: var(--ready-tint); }
 .inspect-card-fail, .inspect-card-error { border-color: var(--notready); background: var(--notready-tint); }
 .inspect-card-analyzing { border-color: var(--accent); background: var(--accent-tint); }
+.inspect-card-needs_review { border-color: var(--warn); background: var(--warn-tint); }
+.inspect-card-skipped { border-color: var(--line-strong); background: var(--paper); }
 
 .inspect-card-head { display: flex; align-items: flex-start; gap: 10px; }
 .inspect-card-icon { width: 30px; height: 30px; flex-shrink: 0; color: var(--structure); object-fit: contain; }
@@ -1222,6 +1224,8 @@ table.admin-table tr:hover td { background: var(--structure-tint); }
 .inspect-status-glyph { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 700; }
 .inspect-status-glyph.ok { background: var(--ready); color: #fff; }
 .inspect-status-glyph.bad { background: var(--notready); color: #fff; }
+.inspect-status-glyph.warn { background: var(--warn); color: #fff; }
+.inspect-status-glyph.neutral { background: var(--line-strong); color: #fff; }
 .inspect-status-glyph.spin { border: 2px solid var(--line-strong); border-top-color: var(--accent); animation: inspectSpin .8s linear infinite; }
 @keyframes inspectSpin { to { transform: rotate(360deg); } }
 
@@ -1231,7 +1235,15 @@ table.admin-table tr:hover td { background: var(--structure-tint); }
 .inspect-card-notes { font-size: .78rem; border-radius: 8px; padding: 6px 10px; margin: 0; }
 .inspect-card-notes.ok { background: var(--ready-tint); color: var(--ready); }
 .inspect-card-notes.bad { background: var(--notready-tint); color: var(--notready); }
+.inspect-card-notes.warn { background: var(--warn-tint); color: var(--warn); }
+.inspect-card-notes.neutral { background: var(--line); color: var(--ink-soft); }
 .inspect-card-conf { opacity: .75; }
+
+.inspect-quality-warning {
+  border: 1px dashed var(--warn); background: var(--warn-tint); border-radius: 10px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+}
+.inspect-quality-warning p { margin: 0; font-size: .82rem; color: var(--warn); }
 
 .inspect-file-input { display: none; }
 .inspect-card-btn { width: 100%; justify-content: center; }

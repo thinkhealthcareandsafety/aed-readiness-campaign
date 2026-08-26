@@ -26,7 +26,19 @@ const ITEM_REFERENCE_KIND = {
   pads_connected: "padsAttached",
 };
 
-const VIDEO_FRAME_COUNT = 12;
+// Fixed-count sampling regardless of clip length meant a longer or
+// lower-fps recording could sample right past a brief LED flash between
+// two sample points. Scaling the count to the clip's own duration (roughly
+// one sample every 400ms) keeps sampling density consistent instead.
+const MIN_VIDEO_FRAMES = 8;
+const MAX_VIDEO_FRAMES = 24;
+const TARGET_FRAME_INTERVAL_S = 0.4;
+
+// Below this, Gemini's own stated uncertainty means its answer shouldn't
+// silently auto-fill a safety-relevant audit field — route it to manual
+// review instead (see handleCapture below and the "needs_review" status).
+const MIN_CONFIDENCE = 0.55;
+
 // A phone camera photo easily runs 8-12MP (several MB); Gemini only needs
 // enough resolution to read a printed label, and every extra megabyte is
 // slower to upload on hotel wifi, slower for Gemini to process, and more
@@ -66,10 +78,78 @@ async function downscaleImage(file, maxEdge = MAX_IMAGE_EDGE, quality = 0.85) {
   }
 }
 
-// Extracts VIDEO_FRAME_COUNT JPEG frames, evenly spaced across the clip's
-// duration, from a recorded video File/Blob — works the same whether that
-// blob came from the OS file picker or from LiveCamera's own MediaRecorder
-// capture, since both are just video files at this point.
+// A cheap client-side gate before a photo ever reaches Gemini — a
+// pitch-black, blown-out, or badly out-of-focus capture previously still
+// cost a full API round trip (and could brush up against the request
+// timeout) before the responder found out it was unusable. Never blocks a
+// capture outright (see the "Analyze anyway" escape hatch in
+// InspectItemCard below) — this is a fast heads-up, not a hard gate, since
+// a heuristic like this can misfire on a legitimately fine photo.
+async function assessImageQuality(fileOrBlob) {
+  const url = URL.createObjectURL(fileOrBlob);
+  try {
+    const img = new Image();
+    img.src = url;
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error("Could not read that photo"));
+    });
+
+    const SIZE = 96;
+    const canvas = document.createElement("canvas");
+    canvas.width = SIZE;
+    canvas.height = SIZE;
+    const ctx = canvas.getContext("2d");
+    // Cover-fit draw (like object-fit: cover) so a non-square photo's
+    // aspect ratio doesn't skew the brightness/blur sample.
+    const scale = Math.max(SIZE / img.naturalWidth, SIZE / img.naturalHeight);
+    const dw = img.naturalWidth * scale;
+    const dh = img.naturalHeight * scale;
+    ctx.drawImage(img, (SIZE - dw) / 2, (SIZE - dh) / 2, dw, dh);
+
+    const { data } = ctx.getImageData(0, 0, SIZE, SIZE);
+    const gray = new Float32Array(SIZE * SIZE);
+    let sum = 0;
+    for (let i = 0; i < SIZE * SIZE; i++) {
+      const v = 0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2];
+      gray[i] = v;
+      sum += v;
+    }
+    const mean = sum / gray.length;
+
+    // Laplacian edge-energy variance as a blur proxy — a sharp, in-focus
+    // photo has strong local contrast (high variance); a blurry one is
+    // smooth almost everywhere (low variance).
+    let lapSum = 0;
+    let lapSumSq = 0;
+    let n = 0;
+    for (let y = 1; y < SIZE - 1; y++) {
+      for (let x = 1; x < SIZE - 1; x++) {
+        const idx = y * SIZE + x;
+        const lap = 4 * gray[idx] - gray[idx - 1] - gray[idx + 1] - gray[idx - SIZE] - gray[idx + SIZE];
+        lapSum += lap;
+        lapSumSq += lap * lap;
+        n++;
+      }
+    }
+    const lapMean = lapSum / n;
+    const lapVariance = lapSumSq / n - lapMean * lapMean;
+
+    if (mean < 28) return "That photo looks too dark — retake it somewhere brighter.";
+    if (mean > 245) return "That photo looks washed out — retake it out of direct glare or reflection.";
+    if (lapVariance < 40) return "That photo looks blurry — hold steady and let it focus before capturing.";
+    return null;
+  } catch {
+    return null; // a failed quality check should never block a real capture
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// Extracts a duration-scaled number of JPEG frames, evenly spaced across a
+// recorded video File/Blob — works the same whether that blob came from
+// the OS file picker or from LiveCamera's own MediaRecorder capture, since
+// both are just video files at this point.
 async function extractFrames(videoFile) {
   const url = URL.createObjectURL(videoFile);
   try {
@@ -89,9 +169,13 @@ async function extractFrames(videoFile) {
     const ctx = canvas.getContext("2d");
 
     const duration = video.duration || 0;
+    const frameCount = Math.min(
+      MAX_VIDEO_FRAMES,
+      Math.max(MIN_VIDEO_FRAMES, Math.round(duration / TARGET_FRAME_INTERVAL_S))
+    );
     const frames = [];
-    for (let i = 0; i < VIDEO_FRAME_COUNT; i++) {
-      const t = (duration * (i + 0.5)) / VIDEO_FRAME_COUNT;
+    for (let i = 0; i < frameCount; i++) {
+      const t = (duration * (i + 0.5)) / frameCount;
       await new Promise((resolve, reject) => {
         video.onseeked = resolve;
         video.onerror = () => reject(new Error("Could not read video"));
@@ -144,7 +228,13 @@ function buildTasks(unitCount, modelSequence) {
 export default function AutoInspection({ unitCount, modelSequence, modelLabelMap, serialByUnit, onComplete, onCancel }) {
   const [results, setResults] = useState({});
   const tasks = buildTasks(unitCount || 1, modelSequence || []);
-  const doneCount = tasks.filter((t) => ["pass", "fail"].includes(results[t.resultKey]?.status)).length;
+  // "needs_review" (low AI confidence) and "skipped" (responder opted out
+  // of this one item) both count as *done* for progress purposes — neither
+  // one auto-fills the form field (see handleAutoInspectionComplete in
+  // AuditWizard.jsx, which only acts on "pass"/"fail"), so the responder
+  // answers those specific questions manually later, exactly like the
+  // existing "unclear" readiness-indicator case already works.
+  const doneCount = tasks.filter((t) => ["pass", "fail", "needs_review", "skipped"].includes(results[t.resultKey]?.status)).length;
   const allDone = doneCount === tasks.length;
   const pct = Math.round((doneCount / tasks.length) * 100);
 
@@ -163,10 +253,29 @@ export default function AutoInspection({ unitCount, modelSequence, modelLabelMap
       // card's pending/analyzing/pass/fail/error status below. Rename it on
       // the way in so the spread can't silently clobber ours with null.
       const { status: readinessStatus, ...rest } = data;
-      setStatus(task.resultKey, { ...rest, readinessStatus, status: data.passed ? "pass" : "fail" });
+      // A low-confidence read gets routed to manual review regardless of
+      // what it claims passed/failed — Gemini's own stated uncertainty
+      // shouldn't silently auto-fill a safety-relevant audit field. This is
+      // the actual enforcement of the confidence score the UI already
+      // displayed but, until now, never acted on.
+      const lowConfidence = typeof data.confidence === "number" && data.confidence < MIN_CONFIDENCE;
+      const status = lowConfidence ? "needs_review" : data.passed ? "pass" : "fail";
+      const notes = lowConfidence
+        ? `Low AI confidence — please check this one yourself. (AI said: "${data.notes || "no detail given"}")`
+        : data.notes;
+      setStatus(task.resultKey, { ...rest, notes, readinessStatus, status });
     } catch (err) {
       setStatus(task.resultKey, { status: "error", notes: err instanceof Error ? err.message : "Analysis failed" });
     }
+  }
+
+  // Escape hatch for a single stubborn item — previously the only way past
+  // a bad/repeated read was "Back to manual", which discarded every other
+  // already-good result for that unit too. Recorded with no result data at
+  // all so handleAutoInspectionComplete's pass/fail-only check leaves the
+  // corresponding question for the responder to answer manually.
+  function handleSkip(task) {
+    setStatus(task.resultKey, { status: "skipped", notes: undefined, mediaUrl: undefined, confidence: undefined });
   }
 
   const byUnit = new Map();
@@ -201,7 +310,7 @@ export default function AutoInspection({ unitCount, modelSequence, modelLabelMap
           )}
           <div className="inspect-grid">
             {unitTasks.map((task) => (
-              <InspectItemCard key={task.resultKey} task={task} result={results[task.resultKey]} onCapture={handleCapture} />
+              <InspectItemCard key={task.resultKey} task={task} result={results[task.resultKey]} onCapture={handleCapture} onSkip={handleSkip} />
             ))}
           </div>
         </div>
@@ -219,18 +328,34 @@ export default function AutoInspection({ unitCount, modelSequence, modelLabelMap
   );
 }
 
-function InspectItemCard({ task, result, onCapture }) {
+function InspectItemCard({ task, result, onCapture, onSkip }) {
   const { item } = task;
   const inputRef = useRef(null);
   const [showCamera, setShowCamera] = useState(false);
   const [useUploadFallback, setUseUploadFallback] = useState(false);
+  // { message, blob } — a captured photo that failed the pre-upload
+  // quality heuristic, held here so the responder can retake it or send it
+  // to Gemini anyway rather than being blocked outright.
+  const [qualityWarning, setQualityWarning] = useState(null);
   const status = result?.status || "pending";
   const busy = status === "analyzing";
   const icon = ITEM_ICON[item.id];
+  const canSkip = status === "fail" || status === "error" || status === "needs_review";
+
+  async function processCapture(blob) {
+    if (item.mediaType === "image") {
+      const warning = await assessImageQuality(blob);
+      if (warning) {
+        setQualityWarning({ message: warning, blob });
+        return;
+      }
+    }
+    onCapture(task, blob);
+  }
 
   function handleBlobCaptured(blob) {
     setShowCamera(false);
-    onCapture(task, blob);
+    processCapture(blob);
   }
 
   return (
@@ -258,8 +383,8 @@ function InspectItemCard({ task, result, onCapture }) {
         </div>
       )}
 
-      {result?.notes && (status === "pass" || status === "fail" || status === "error") && (
-        <p className={`inspect-card-notes ${status === "pass" ? "ok" : "bad"}`}>
+      {result?.notes && (status === "pass" || status === "fail" || status === "error" || status === "needs_review") && (
+        <p className={`inspect-card-notes ${status === "pass" ? "ok" : status === "needs_review" ? "warn" : "bad"}`}>
           {result.notes}
           {typeof result.confidence === "number" && (
             <span className="inspect-card-conf"> · {Math.round(result.confidence * 100)}% confidence</span>
@@ -267,7 +392,29 @@ function InspectItemCard({ task, result, onCapture }) {
         </p>
       )}
 
-      {showCamera ? (
+      {status === "skipped" && <p className="inspect-card-notes neutral">Skipped — you&apos;ll answer this one manually.</p>}
+
+      {qualityWarning ? (
+        <div className="inspect-quality-warning">
+          <p>{qualityWarning.message}</p>
+          <div className="inspect-card-btn-row">
+            <button type="button" className="btn btn-ghost inspect-card-btn" onClick={() => setQualityWarning(null)}>
+              Retake
+            </button>
+            <button
+              type="button"
+              className="inspect-card-upload-link"
+              onClick={() => {
+                const blob = qualityWarning.blob;
+                setQualityWarning(null);
+                onCapture(task, blob);
+              }}
+            >
+              Analyze it anyway
+            </button>
+          </div>
+        </div>
+      ) : showCamera ? (
         <LiveCamera
           mediaType={item.mediaType}
           onCapture={handleBlobCaptured}
@@ -284,7 +431,7 @@ function InspectItemCard({ task, result, onCapture }) {
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
-              if (file) onCapture(task, file);
+              if (file) processCapture(file);
             }}
           />
           <div className="inspect-card-btn-row">
@@ -314,6 +461,11 @@ function InspectItemCard({ task, result, onCapture }) {
                 }}
               >
                 or upload a file instead
+              </button>
+            )}
+            {canSkip && (
+              <button type="button" className="inspect-card-upload-link" disabled={busy} onClick={() => onSkip(task)}>
+                Skip — I&apos;ll answer manually
               </button>
             )}
           </div>
@@ -349,6 +501,8 @@ function CameraGlyph({ video }) {
 function StatusGlyph({ status }) {
   if (status === "pass") return <span className="inspect-status-glyph ok">✓</span>;
   if (status === "fail" || status === "error") return <span className="inspect-status-glyph bad">!</span>;
+  if (status === "needs_review") return <span className="inspect-status-glyph warn">?</span>;
+  if (status === "skipped") return <span className="inspect-status-glyph neutral">–</span>;
   if (status === "analyzing") return <span className="inspect-status-glyph spin" aria-hidden />;
   return null;
 }
