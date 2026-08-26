@@ -21,12 +21,17 @@ const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", n
 
 // The battery_attached/pads_connected questions were seeded with one fixed
 // pair of real Philips FRx photos (see lib/seedFormData.js) — correct for
-// an FRx unit, actively wrong for any other reported model. These generic,
-// brand-agnostic line icons (the seed's own pre-photo defaults) are what a
-// non-FRx unit's "No" answer falls back to, since there's no real "battery
-// not attached"/"pads not connected" photo sourced for every other model
-// yet — showing the FRx-specific "not attached" photo mislabeled as e.g. a
-// ZOLL unit would be worse than a generic icon, not better.
+// an FRx unit, actively wrong for any other reported model. Maps each
+// "attached" reference-photo kind to its "not attached" sibling in
+// MODEL_PHOTOS (ReferenceGuide.jsx) — used for a non-FRx unit's "No"
+// answer once a model has its own real photo for that state (currently
+// zollPlus; see the resolvedOptionImage below).
+const NOT_ATTACHED_KIND = { batteryAttached: "batteryNotAttached", padsAttached: "padsNotAttached" };
+// Brand-agnostic line icons (the seed's own pre-photo defaults) — the
+// final fallback when a model has neither a real "not attached" photo nor
+// the seeded FRx one applies. Showing the FRx-specific "not attached"
+// photo mislabeled as e.g. a Defibtech unit would be worse than a generic
+// icon, not better.
 const GENERIC_NOT_ATTACHED_ICON = { batteryAttached: "/icons/battery-bad.svg", padsAttached: "/icons/pads-unsealed.svg" };
 
 // Only ever inserted right after the AED Status (registration) section —
@@ -969,7 +974,10 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   function resolvedOptionImage(o) {
     if (!attachedModelDiffers) return o.imageUrl;
     if (o.value === "yes") return photoForModel(attachedUnitModel, refKind) || o.imageUrl;
-    if (o.value === "no") return GENERIC_NOT_ATTACHED_ICON[refKind] || o.imageUrl;
+    if (o.value === "no") {
+      const notAttachedKind = NOT_ATTACHED_KIND[refKind];
+      return photoForModel(attachedUnitModel, notAttachedKind) || GENERIC_NOT_ATTACHED_ICON[refKind] || o.imageUrl;
+    }
     return o.imageUrl;
   }
   const serialValue = answers[question.id];

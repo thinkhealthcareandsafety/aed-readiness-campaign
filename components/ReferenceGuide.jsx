@@ -38,15 +38,16 @@ const MODEL_PHOTOS = {
     // "expiry sticker" shot the way the Philips units have; this shows the
     // actual compartment/cell layout instead.
     battery: "/reference/zollplus-battery.jpg",
-    // Also sourced from the Administrator's Guide (Figure 1: Identifying
-    // Operating Controls and Indicators) rather than a photo — a generic
-    // web/stock photo couldn't be verified to match this exact unit the
-    // way the existing zollplus-serial/pads photos clearly do, and an
-    // official manufacturer diagram is unambiguous about exactly which
-    // part is which. Same crop covers both the electrode connector (top)
-    // and battery compartment (bottom) labels, so it's reused for both.
-    batteryAttached: "/reference/zollplus-unit-diagram.jpg",
-    padsAttached: "/reference/zollplus-unit-diagram.jpg",
+    // Real photos of this exact unit (same lime-green AED Plus as
+    // zollplus-serial/pads above) showing both the pass and fail state for
+    // each question — supersedes an earlier round that reused one official
+    // manual diagram for all four, which worked as a "where is this part"
+    // reference but wasn't the real photo-of-the-actual-state each Yes/No
+    // button is supposed to show.
+    batteryAttached: "/reference/zollplus-battery-attached.jpg",
+    batteryNotAttached: "/reference/zollplus-battery-not-attached.jpg",
+    padsAttached: "/reference/zollplus-pads-attached.jpg",
+    padsNotAttached: "/reference/zollplus-pads-not-attached.jpg",
   },
   defibtech: {
     brand: "Defibtech",
