@@ -341,7 +341,7 @@ button { font-family: inherit; }
    variables) so it still reads the same regardless of the site's light/
    dark theme, sourced from the brand's own light-theme values. */
 .prize-wheel-card {
-  width: 100%; max-width: 440px; max-height: 92vh; overflow-y: auto; overflow-x: hidden;
+  width: 100%; max-width: 440px; max-height: 92vh; max-height: 92dvh; overflow-y: auto; overflow-x: hidden;
   background: #ffffff; border: 1px solid #e4e1d6; border-radius: 20px;
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.4) inset;
   padding: clamp(24px, 5vw, 38px); text-align: center;
@@ -422,6 +422,27 @@ button { font-family: inherit; }
    the app, no separate gold treatment. Only the spacing/size differ, since
    this is the one action the whole card exists to prompt. */
 .btn-primary.prize-wheel-spin-cta { margin-top: 18px; padding: 16px 36px; font-size: 1.08rem; border-radius: 14px; }
+/* The desktop-sized 300px wheel plus its legend, reveal text, and CTA
+   button added up to more vertical space than a real phone viewport has
+   left once its browser chrome (address bar, home indicator) is counted —
+   the spin button and the win reveal both ended up below the fold,
+   forcing a scroll inside a full-screen modal that's supposed to be the
+   payoff moment right after submitting. Every dimension here is trimmed
+   specifically so the idle state (heading + wheel + legend + Spin button)
+   and the revealed state (+ headline + note + CTA, − Spin button) both fit
+   within a real ~600-650px visible mobile viewport without scrolling. */
+@media (max-width: 480px) {
+  .prize-wheel-card { padding: 18px 18px 22px; gap: 4px; }
+  .prize-wheel-wrap { width: min(190px, 54vw); margin: 14px 0 10px; }
+  .prize-wheel-legend { gap: 2px 8px; margin-top: 2px; }
+  .prize-wheel-legend li { font-size: .8rem; padding: 3px 6px; gap: 8px; }
+  .prize-wheel-legend-thumb { width: 24px; height: 24px; }
+  .prize-wheel-reveal { min-height: 0; gap: 6px; margin-top: 6px; }
+  .prize-wheel-headline { font-size: 1.1rem !important; }
+  .prize-wheel-note { font-size: .8rem !important; }
+  .btn-primary.prize-wheel-spin-cta { margin-top: 10px; padding: 13px 28px; font-size: 1rem; }
+  .prize-wheel-reveal .btn-primary.prize-wheel-cta { margin-top: 4px; padding: 13px 28px; font-size: 1rem; }
+}
 
 @keyframes prizeWheelFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes prizeWheelPop { from { opacity: 0; transform: scale(.9) translateY(14px); } to { opacity: 1; transform: none; } }
