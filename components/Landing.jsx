@@ -70,8 +70,31 @@ function scrollToAuditSlowly(e) {
   const target = document.getElementById("audit");
   if (!target) return;
   e.preventDefault();
+
+  // globals.css sets `html { scroll-behavior: smooth }` globally so other,
+  // ordinary scrollIntoView calls elsewhere in the app get an animated
+  // scroll for free. But every window.scrollBy call this function makes
+  // below would ALSO get intercepted by that and turned into its own
+  // native smooth-scroll animation, layered on top of (and immediately
+  // interrupted by) the very next frame's call doing the same thing — two
+  // animations fighting over the same scroll position roughly 60 times a
+  // second. That fight, not frame timing, is what actually reads as
+  // "laggy": every scrollBy call kicks off a fresh ~300ms native animation
+  // that never gets anywhere close to finishing before the next one
+  // replaces it. Switching to "auto" for the duration of this function's
+  // own animation removes that second competing animation entirely; the
+  // original value is restored once it's done so scroll-behavior: smooth
+  // still applies everywhere else.
+  const root = document.documentElement;
+  const previousScrollBehavior = root.style.scrollBehavior;
+  root.style.scrollBehavior = "auto";
+  function restoreScrollBehavior() {
+    root.style.scrollBehavior = previousScrollBehavior;
+  }
+
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     target.scrollIntoView();
+    restoreScrollBehavior();
     return;
   }
   const startTime = performance.now();
@@ -88,6 +111,7 @@ function scrollToAuditSlowly(e) {
     // this is taking too long for any reason.
     if (Math.abs(remaining) < 2 || now - startTime > maxDuration + 400) {
       target.scrollIntoView({ block: "start" });
+      restoreScrollBehavior();
       return;
     }
     const dt = now - lastTime;
@@ -98,14 +122,12 @@ function scrollToAuditSlowly(e) {
     // measured once at click time), so it stays correct whether the target
     // moved (a mobile address bar collapsing mid-scroll shifts the whole
     // page's layout) or the visitor themselves scrolled. Parameterizing the
-    // decay by dt instead of applying a fixed fraction *per frame* is the
-    // actual smoothness fix: the previous version assumed every frame took
-    // the same ~16.7ms, so a slow/dropped frame (common mid-scroll on a
-    // real phone, especially while the reveal-on-scroll sections are
-    // animating in) still only moved that same tiny fixed fraction instead
-    // of proportionally more ground — which is exactly what reads as
-    // stutter. This covers proportionally more distance on a slow frame,
-    // so the perceived speed stays constant regardless of frame rate.
+    // decay by dt instead of applying a fixed fraction *per frame* keeps
+    // perceived speed constant regardless of frame rate (a slow/dropped
+    // frame covers proportionally more ground instead of the same tiny
+    // fixed step) — this matters once the competing native animation above
+    // is out of the way, since frame-rate hitches are the next thing that
+    // would otherwise show up as stutter.
     window.scrollBy(0, remaining * (1 - Math.exp(-dt / TAU_MS)));
     requestAnimationFrame(step);
   }
