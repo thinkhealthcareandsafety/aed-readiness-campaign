@@ -888,7 +888,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .icon-card.disabled:hover { transform: none; box-shadow: none; border-color: var(--line-strong); }
 .icon-card input { position: absolute; opacity: 0; pointer-events: none; }
 .icon-card-check {
-  position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%;
+  position: absolute; top: 10px; right: 10px; z-index: 2; width: 20px; height: 20px; border-radius: 50%;
   background: var(--line); color: transparent; font-size: .7rem; font-weight: 700;
   border: 1.5px solid transparent;
   display: flex; align-items: center; justify-content: center; transition: background .15s ease, color .15s ease, border-radius .15s ease;
