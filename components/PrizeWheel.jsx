@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { PRIZES } from "@/lib/prizes";
 
 const SLICE_DEG = 360 / PRIZES.length; // 72°
-const SPIN_MS = 3800;
+const SPIN_MS = 5000;
+const SPIN_TURNS = 6;
 
 function sliceMidDeg(index) {
   return index * SLICE_DEG - 90 + SLICE_DEG / 2; // -90 so slice 0 starts at 12 o'clock
@@ -79,7 +80,7 @@ export default function PrizeWheel({ prize, onDone }) {
     // mechanical; a real wheel never stops at exactly the same spot twice.
     const jitter = reducedMotion ? 0 : (Math.random() - 0.5) * SLICE_DEG * 0.47;
     const landingDeg = 360 - (winIndex * SLICE_DEG + SLICE_DEG / 2);
-    const target = reducedMotion ? landingDeg : 5 * 360 + landingDeg + jitter;
+    const target = reducedMotion ? landingDeg : SPIN_TURNS * 360 + landingDeg + jitter;
 
     if (reducedMotion) {
       // Jumping straight to the final state in response to the visitor's
@@ -144,14 +145,27 @@ export default function PrizeWheel({ prize, onDone }) {
                 <clipPath id="prizePhotoClip">
                   <rect x="129" y="77" width="46" height="46" rx="10" />
                 </clipPath>
+                <linearGradient id="hubDotGloss" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f0973a" />
+                  <stop offset="100%" stopColor="#d9761c" />
+                </linearGradient>
               </defs>
-              {/* Thin white spokes between slices, plain solid fills —
-                 restrained, on the same paper/ink/structure palette as the
-                 rest of the app, instead of a gold-casino treatment that
-                 read as a jarring, cheaper detour from everywhere else in
-                 this tool. */}
+              {/* Uniform dark alternating wedge tones, not a per-prize color
+                 key — the photo tile on each slice is what identifies the
+                 prize, so the wedges themselves read as one cast disc
+                 rather than a pie chart. Three tones (not a strict
+                 alternation) so the wrap seam at the last wedge doesn't
+                 repeat the first wedge's tone. Hairline dividers between
+                 slices are a light-on-dark stroke instead of the paper-tone
+                 one a light wheel face would need. */}
               {PRIZES.map((p, i) => (
-                <path key={p.id} d={slicePath(i)} fill={p.color} stroke="#f5f6f3" strokeWidth="1.5" />
+                <path
+                  key={p.id}
+                  d={slicePath(i)}
+                  fill={i % 2 ? "#222831" : i === PRIZES.length - 1 ? "#1e242c" : "#1b1f26"}
+                  stroke="rgba(255, 255, 255, 0.12)"
+                  strokeWidth="1"
+                />
               ))}
               {PRIZES.map((p, i) => (
                 <path key={`${p.id}-sheen`} d={slicePath(i)} fill={`url(#slice-${p.id})`} />
@@ -181,9 +195,9 @@ export default function PrizeWheel({ prize, onDone }) {
                   transform={sliceLabelTransform(i)}
                   className={`prize-wheel-slice-medallion${revealed && p.id === prize ? " is-winner" : ""}`}
                 >
-                  <rect x="126" y="74" width="52" height="52" rx="12" fill="#ffffff" className="prize-wheel-photo-frame" />
+                  <rect x="126" y="74" width="52" height="52" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" strokeWidth="1" className="prize-wheel-photo-frame" />
                   <image href={p.image} x="129" y="77" width="46" height="46" preserveAspectRatio="xMidYMid slice" clipPath="url(#prizePhotoClip)" />
-                  <rect x="129" y="77" width="46" height="46" rx="10" fill="none" stroke="#1c2430" strokeOpacity="0.14" strokeWidth="1" />
+                  <rect x="129" y="77" width="46" height="46" rx="10" fill="none" stroke="#ffffff" strokeOpacity="0.1" strokeWidth="1" />
                   {revealed && p.id === prize && (
                     <rect x="126" y="74" width="52" height="52" rx="12" fill="none" stroke="#ffffff" strokeWidth="2.5" className="prize-wheel-medallion-ring" />
                   )}
@@ -197,10 +211,11 @@ export default function PrizeWheel({ prize, onDone }) {
               <circle cx="100" cy="100" r="87.5" fill="none" stroke="#000000" strokeWidth="1.2" opacity="0.18" />
               <circle cx="100" cy="100" r="88" fill="url(#wheelGloss)" />
               {/* Beveled hub — a darker outer ring, a lighter mid ring for
-                 the catch-light, and a small paper-colored center dot. */}
+                 the catch-light, and a small glowing orange center dot
+                 (the one warm accent on an otherwise dark, neutral hub). */}
               <circle cx="100" cy="100" r="19" fill="#1c2430" />
               <circle cx="100" cy="100" r="15.5" fill="none" stroke="#3a4552" strokeWidth="1.2" opacity="0.7" />
-              <circle cx="100" cy="100" r="5" fill="#f5f6f3" opacity="0.85" />
+              <circle cx="100" cy="100" r="5" fill="url(#hubDotGloss)" className="prize-wheel-hub-dot" />
             </svg>
           </div>
           <div className="prize-wheel-odds-pill">
@@ -210,8 +225,8 @@ export default function PrizeWheel({ prize, onDone }) {
         </div>
 
         <div className="prize-wheel-pane prize-wheel-pane-copy">
-          <span className="landing-eyebrow">Your audit is in</span>
-          <h2 className="landing-h2 prize-wheel-heading">
+          <span className="prize-wheel-badge">Your audit is in</span>
+          <h2 className="prize-wheel-heading">
             One spin,
             <br />
             one prize

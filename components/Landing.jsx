@@ -17,6 +17,21 @@ const BRAND_STRIP = [
   { logo: "/hotel-logos/renaissance.png", name: "Renaissance" },
 ];
 
+// Short (1-2 word) labels for the decorative hero wheel's 74px tiles — the
+// real PRIZES[].label strings ("Replacement electrode pads") don't fit that
+// space. Presentation-only and local to this component: lib/prizes.js stays
+// untouched since POST /api/submissions' random index is contracted to its
+// exact order and label text.
+const PRIZE_SHORT_LABEL = {
+  pads: "Electrode pads",
+  battery: "Battery pack",
+  stretcher: "Stretcher",
+  first_aid_kit: "Response kit",
+  aedsmartx: "SmartX, 1 year",
+};
+
+const WHEEL_SEG = 360 / PRIZES.length;
+
 // IntersectionObserver-driven scroll reveal: a section starts slightly
 // lowered and faded, then settles into place the first time it crosses into
 // view. `threshold` is low (0.12) so long sections (e.g. the gift grid)
@@ -134,51 +149,40 @@ function scrollToAuditSlowly(e) {
   requestAnimationFrame(step);
 }
 
-const TRUST_ITEMS = [
-  { icon: ClockIcon, label: "~5 minutes" },
-  { icon: ChecklistIcon, label: "12 readiness checks" },
-  { icon: ScanIcon, label: "AI scan or manual" },
-  { icon: ScoreIcon, label: "Instant PREPARED score" },
-];
+const TRUST_ITEMS = ["~5 minutes", "12 readiness checks", "AI scan or manual", "Instant PREPARED score"];
 
 const HOW_STEPS = [
   {
-    icon: ScanIcon,
     title: "Answer a few questions, or let AI scan it",
     body: "Walk through the checklist yourself, or point your camera at the AED and let AI read the battery, pads, and cabinet for you.",
   },
   {
-    icon: ScoreIcon,
     title: "Get your instant PREPARED score",
     body: "The moment you finish, see exactly where the property stands across all eight readiness categories.",
   },
   {
-    icon: ReportIcon,
     title: "Walk away with a plan",
     body: "A clear action list, a shareable certificate for trained staff, and one spin of the prize wheel.",
+    isGift: true,
   },
 ];
 
 const WHY_CARDS = [
   {
-    icon: "/icons/battery-ok.svg",
     title: "Batteries & pads expire quietly",
     body: "Most properties don't realize their AED battery or pads have expired until it's too late to matter. This check flags it in minutes.",
   },
   {
-    icon: "/icons/status-ready.svg",
     title: "One score, eight categories",
     body: "Physical condition, expiry status, training, paediatric readiness, documentation and more — rolled into a single PREPARED score.",
   },
   {
-    icon: "/icons/doc-maintenance.svg",
     title: "A report you can act on",
     body: "See exactly what's ready, what's ageing, and what needs replacing — plus a shareable certificate for CPR/AED-trained staff.",
   },
 ];
 
 export default function Landing() {
-  const [trustRef, trustClass] = useReveal();
   const [howRef, howClass] = useReveal();
   const [giftRef, giftClass] = useReveal();
   const [whyRef, whyClass] = useReveal();
@@ -186,59 +190,138 @@ export default function Landing() {
 
   return (
     <>
-      <section className="landing-hero">
-        <video className="landing-hero-video" autoPlay muted loop playsInline preload="auto">
-          <source src="/videos/aed-kit-reveal.mp4" type="video/mp4" />
-        </video>
-        <div className="landing-hero-overlay" />
-        {/* The stock clip has a small AI-generator watermark baked into its
-           bottom-right corner (a light sparkle glyph) — it's in the source
-           pixels, not something CSS can select, so it's covered with a
-           patch matching the overlay's own dark corner color instead of
-           re-exporting/re-cropping the video. */}
-        <div className="landing-hero-watermark-patch" aria-hidden="true" />
-        <div className="landing-hero-inner">
-          <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
-          <h1 className="landing-h1">Is your AED ready to save a life right now?</h1>
-          <p className="landing-lead">
-            A free readiness check for your property&rsquo;s AED — battery, pads, training, and signage —
-            scored against the PREPARED standard, with a full report at the end.
-          </p>
-          <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-cta landing-cta-lg">
-            Start your free audit
-            <ArrowIcon />
+      <header className="landing-header">
+        {/* eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed */}
+        <img src="/brand/thinkhealth-logo.png" alt="Think Health" className="landing-header-logo" />
+        <div className="landing-header-actions">
+          <span className="landing-header-pill">
+            <span className="landing-header-pill-dot" aria-hidden="true" />
+            <span>Free audit &middot; free gift at the end</span>
+          </span>
+          <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-header-cta">
+            Start free audit
           </a>
         </div>
-        <a href="#audit" onClick={scrollToAuditSlowly} className="landing-scroll-cue" aria-label="Scroll down to start the audit">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 9l8 8 8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </a>
+      </header>
+
+      <section className="landing-hero">
+        <div className="landing-hero-bg" style={{ backgroundImage: "url(/images/hero-hotel-hallway.jpg)" }} aria-hidden="true" />
+        <div className="landing-hero-tint" aria-hidden="true" />
+        <div className="landing-hero-inner">
+          <div className="landing-hero-copy">
+            <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
+            <h1 className="landing-h1">Is your AED ready to save a life right now?</h1>
+            <p className="landing-lead">
+              A free readiness check for your property&rsquo;s AED — battery, pads, training, and signage —
+              scored against the PREPARED standard, with a full report at the end.
+            </p>
+            <div className="landing-hero-cta-row">
+              <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-cta landing-cta-lg">
+                Start your free audit
+                <ArrowIcon />
+              </a>
+              <span className="landing-hero-microcopy">
+                About 5 minutes.
+                <br />
+                No cost, no obligation.
+              </span>
+            </div>
+            <div className="landing-hero-chips">
+              {TRUST_ITEMS.map((label) => (
+                <span className="landing-hero-chip" key={label}>
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="landing-hero-gift">
+            <div className="landing-gift-card">
+              <div className="landing-gift-card-head">
+                <span className="landing-gift-card-label">Your reward</span>
+                <span className="landing-gift-card-meta">1 spin &middot; {PRIZES.length} gifts</span>
+              </div>
+
+              <div className="landing-hero-wheel" aria-hidden="true">
+                <div className="landing-hero-wheel-pointer" />
+                <div className="landing-hero-wheel-ring" />
+                <div className="landing-hero-wheel-disc" />
+                <div className="landing-hero-wheel-innerline" />
+                <div className="landing-hero-wheel-face">
+                  <div className="landing-hero-wheel-spin">
+                    <div className="landing-hero-wheel-wedges" />
+                    {PRIZES.map((p, i) => (
+                      <div
+                        key={`div-${p.id}`}
+                        className="landing-hero-wheel-divider"
+                        style={{ transform: `rotate(${i * WHEEL_SEG}deg)` }}
+                      />
+                    ))}
+                    {PRIZES.map((p, i) => {
+                      const c = i * WHEEL_SEG + WHEEL_SEG / 2;
+                      return (
+                        <div key={p.id} className="landing-hero-wheel-slot" style={{ transform: `rotate(${c}deg)` }}>
+                          <div
+                            className="landing-hero-wheel-tile"
+                            style={{ transform: `translate(-50%, -50%) translateY(-76px) rotate(${-c}deg)` }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- tiny decorative tile photo inside a fixed-size non-interactive graphic */}
+                            <img src={p.image} alt="" className="landing-hero-wheel-photo" />
+                            <span className="landing-hero-wheel-label">{PRIZE_SHORT_LABEL[p.id] || p.label}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="landing-hero-wheel-hub">
+                  <span className="landing-hero-wheel-hub-dot" />
+                </div>
+              </div>
+
+              <p className="landing-gift-card-tagline">
+                Finish the audit,
+                <br />
+                spin for a free gift
+              </p>
+
+              <div className="landing-gift-card-thumbs">
+                {PRIZES.map((p) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- small static thumbnail row, no next/image needed
+                  <img key={p.id} src={p.image} alt={p.label} title={p.label} />
+                ))}
+              </div>
+
+              <div className="landing-gift-card-footer">Every completed audit gets one spin</div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <div className="landing-trust-bar" ref={trustRef}>
-        <div className={`landing-trust-bar-inner ${trustClass}`}>
-          {TRUST_ITEMS.map(({ icon: Icon, label }) => (
-            <div className="landing-trust-item" key={label}>
-              <Icon />
-              <span>{label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="landing-brand-strip">
-          <span className="sr-only">{BRAND_STRIP.map((b) => b.name).join(", ")}, and other hotel brands</span>
+      <div className="landing-brand-bar">
+        <div className="landing-brand-bar-inner">
+          <span className="landing-brand-label">Built around the brands you operate</span>
           <div className="landing-brand-strip-track">
             {/* The logo row is duplicated back-to-back and the animation
                translates exactly one copy's width (-50%) before looping —
                that's what makes the loop seamless with pure CSS instead of
                needing JS to detect scroll position and jump/reset it. */}
             <div className="landing-brand-strip-logos" aria-hidden="true">
-              {[...BRAND_STRIP, ...BRAND_STRIP].map((b, i) => (
-                // eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed
-                <img key={`${b.name}-${i}`} src={b.logo} alt="" title={b.name} />
-              ))}
+              <div className="landing-brand-strip-group">
+                {BRAND_STRIP.map((b) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed
+                  <img key={`a-${b.name}`} src={b.logo} alt="" title={b.name} />
+                ))}
+              </div>
+              <div className="landing-brand-strip-group">
+                {BRAND_STRIP.map((b) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- small static brand mark, no next/image needed
+                  <img key={`b-${b.name}`} src={b.logo} alt="" title={b.name} />
+                ))}
+              </div>
             </div>
           </div>
+          <span className="sr-only">{BRAND_STRIP.map((b) => b.name).join(", ")}, and other hotel brands</span>
         </div>
       </div>
 
@@ -248,14 +331,11 @@ export default function Landing() {
           <h2 className="landing-h2">Three steps, about five minutes</h2>
           <div className="landing-how-steps">
             {HOW_STEPS.map((s, i) => (
-              <div className="landing-how-step" key={s.title}>
-                <div className="landing-how-step-badge">
-                  <s.icon />
-                  <span className="landing-how-step-num">{i + 1}</span>
-                </div>
+              <div className={`landing-how-step${s.isGift ? " is-gift" : ""}`} key={s.title}>
+                {s.isGift && <span className="landing-how-step-flag">Your gift</span>}
+                <span className="landing-how-step-badge">{String(i + 1).padStart(2, "0")}</span>
                 <h3>{s.title}</h3>
                 <p>{s.body}</p>
-                {i < HOW_STEPS.length - 1 && <span className="landing-how-connector" aria-hidden="true" />}
               </div>
             ))}
           </div>
@@ -263,30 +343,24 @@ export default function Landing() {
       </section>
 
       <section className="landing-gift" ref={giftRef}>
+        <div className="landing-gift-glow" aria-hidden="true" />
         <div className={`landing-section-inner landing-gift-inner ${giftClass}`}>
-          <div className="landing-gift-media-wrap landing-gift-media-wrap-portrait">
-            <video className="landing-gift-media" autoPlay muted loop playsInline preload="auto">
-              <source src="/videos/aed-kit-gift-reveal.mp4" type="video/mp4" />
-            </video>
-            {/* Same baked-in AI-generator watermark as the hero clip, same
-               fix — a patch matching this clip's own light background tone
-               instead of the hero's dark one. */}
-            <div className="landing-gift-watermark-patch" aria-hidden="true" />
+          <div className="landing-gift-head">
+            <div>
+              <span className="landing-eyebrow">Spin to win</span>
+              <h2 className="landing-h2">Finish your audit, spin the wheel</h2>
+            </div>
+            <p>Every completed audit gets one spin — equal odds, no codes, and our team follows up to arrange delivery.</p>
           </div>
-          <div className="landing-gift-copy">
-            <span className="landing-ribbon">Spin to win</span>
-            <h2 className="landing-h2 left">Finish your audit, spin the wheel</h2>
-            <p>Every completed audit gets one spin — you&rsquo;ll walk away with one of these:</p>
-            <ul className="landing-gift-list">
-              {PRIZES.map((p) => (
-                <li key={p.id}>
-                  <span className="check" style={{ background: p.color }}>
-                    &#10003;
-                  </span>{" "}
-                  {p.label}
-                </li>
-              ))}
-            </ul>
+          <div className="landing-gift-grid">
+            {PRIZES.map((p, i) => (
+              <div className="landing-gift-card-tile" key={p.id}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- static prize photo in a plain grid, no next/image needed */}
+                <img src={p.image} alt={p.label} />
+                <span className="landing-gift-card-tile-num">{String(i + 1).padStart(2, "0")}</span>
+                <p>{p.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -298,11 +372,7 @@ export default function Landing() {
           <div className="landing-card-grid">
             {WHY_CARDS.map((c, i) => (
               <div className="landing-card" key={c.title} style={{ transitionDelay: `${i * 90}ms` }}>
-                <span className="landing-card-num">{String(i + 1).padStart(2, "0")}</span>
-                <div className="landing-card-icon-wrap">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- static decorative icon, no next/image needed */}
-                  <img src={c.icon} alt="" className="landing-card-icon" />
-                </div>
+                <span className="landing-card-badge">{String(i + 1).padStart(2, "0")}</span>
                 <h3>{c.title}</h3>
                 <p>{c.body}</p>
               </div>
@@ -312,19 +382,60 @@ export default function Landing() {
       </section>
 
       <section className="landing-close" ref={closeRef}>
-        <div className={`landing-section-inner ${closeClass}`}>
-          <h2 className="landing-h2">Ready to see where you stand?</h2>
-          <p className="landing-close-sub">
-            Answer a few questions or let AI scan your unit — either way, you&rsquo;ll have a PREPARED score and a
-            clear action list in about five minutes.
-          </p>
-          <ul className="landing-close-reassure">
-            <li>No cost, no obligation</li>
-            <li>Report ready the moment you finish</li>
-            <li>One spin of the prize wheel when you&rsquo;re done</li>
-          </ul>
+        <div className={`landing-close-card ${closeClass}`}>
+          <div className="landing-close-copy">
+            <h2 className="landing-h2">Ready to see where you stand?</h2>
+            <p className="landing-close-sub">
+              Answer a few questions or let AI scan your unit — either way, you&rsquo;ll have a PREPARED score and a
+              clear action list in about five minutes.
+            </p>
+            <ul className="landing-close-reassure">
+              <li>
+                <span className="tick">&#10003;</span> No cost, no obligation
+              </li>
+              <li>
+                <span className="tick">&#10003;</span> Report ready the moment you finish
+              </li>
+              <li>
+                <span className="tick star">&#9733;</span> One spin of the prize wheel when you&rsquo;re done
+              </li>
+            </ul>
+            <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-cta landing-cta-lg">
+              Start your free audit
+              <ArrowIcon />
+            </a>
+          </div>
+
+          <div className="landing-voucher">
+            <div className="landing-voucher-notch left" aria-hidden="true" />
+            <div className="landing-voucher-notch right" aria-hidden="true" />
+            <div className="landing-voucher-head">
+              <span className="landing-voucher-label">Gift voucher</span>
+              <span className="landing-voucher-badge">1 spin</span>
+            </div>
+            <p className="landing-voucher-title">
+              One spin,
+              <br />
+              one free gift
+            </p>
+            <div className="landing-voucher-rule" />
+            <p className="landing-voucher-fine">Unlocked when your audit is submitted — no code needed.</p>
+            <div className="landing-voucher-thumbs">
+              {PRIZES.map((p) => (
+                // eslint-disable-next-line @next/next/no-img-element -- small static thumbnail row, no next/image needed
+                <img key={p.id} src={p.image} alt="" />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
+
+      <footer className="landing-footer">
+        <div className="landing-footer-inner">
+          <span>Think Health &middot; AED Readiness Campaign</span>
+          <span>Free audit &middot; free gift &middot; about five minutes</span>
+        </div>
+      </footer>
     </>
   );
 }
@@ -333,51 +444,6 @@ function ArrowIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="landing-cta-arrow">
       <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ClockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M12 7.5V12l3 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ChecklistIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="4.5" y="3.5" width="15" height="17" rx="2" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M8 8.5h8M8 12h8M8 15.5h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ScanIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M4 8V5.5a1.5 1.5 0 0 1 1.5-1.5H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-
-function ScoreIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3.5l2.47 5.1 5.53.66-4.06 3.86 1.07 5.5L12 15.9l-4.99 2.72 1.07-5.5-4.06-3.86 5.53-.66L12 3.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ReportIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7 3.5h7.5L19 8v12.5a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M14.2 3.5V8h4.6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M9 13.5l2 2 4-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
