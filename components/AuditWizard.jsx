@@ -981,7 +981,12 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   const attachedModelDiffers = isAttachedField && Boolean(perUnitModel) && perUnitModel !== "frx";
   function resolvedOptionImage(o) {
     if (isDamageField) {
-      return o.value === "yes" ? photoForModel(perUnitModel, "damage") || o.imageUrl : o.imageUrl;
+      if (o.value === "yes") return photoForModel(perUnitModel, "damage") || o.imageUrl;
+      // No dedicated "good condition" photo exists per model — reusing the
+      // pads-attached photo instead of sourcing a new one: it's already a
+      // real, clean shot of that exact model with nothing broken or
+      // missing, which is exactly what "good condition" needs to show.
+      if (o.value === "no") return photoForModel(perUnitModel, "padsAttached") || o.imageUrl;
     }
     if (!attachedModelDiffers) return o.imageUrl;
     if (o.value === "yes") return photoForModel(perUnitModel, refKind) || o.imageUrl;
