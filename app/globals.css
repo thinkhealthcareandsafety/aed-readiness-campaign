@@ -374,18 +374,36 @@ button { font-family: inherit; }
    variables) so it still reads the same regardless of the site's light/
    dark theme, sourced from the brand's own light-theme values. */
 .prize-wheel-card {
-  width: 100%; max-width: 440px; max-height: 92vh; max-height: 92dvh; overflow-y: auto; overflow-x: hidden;
-  background: #ffffff; border: 1px solid #e4e1d6; border-radius: 20px;
+  width: 100%; max-width: 780px; max-height: 92vh; max-height: 92dvh; overflow-y: auto; overflow-x: hidden;
+  background: #ffffff; border: 1px solid #e4e1d6; border-radius: 24px;
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.4) inset;
-  padding: clamp(24px, 5vw, 38px); text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  display: flex; flex-wrap: wrap; align-items: stretch;
   animation: prizeWheelPop .32s cubic-bezier(.2, 1.4, .4, 1) both;
   position: relative;
 }
 .prize-wheel-card .landing-eyebrow { color: #a6540f; }
 .prize-wheel-card .landing-h2 { color: #1c2430; }
 .prize-wheel-card.is-revealed { animation: prizeWheelPop .32s cubic-bezier(.2, 1.4, .4, 1) both, prizeWheelCardGlow 1.4s ease-out .1s; }
-.prize-wheel-wrap { position: relative; width: min(300px, 74vw); aspect-ratio: 1; margin: 30px 0 22px; flex-shrink: 0; }
+
+/* Two panes — the wheel on the left, copy + prize list / result on the
+   right — replacing the earlier single centered column. flex-wrap alone
+   (no media query) stacks them once the card is too narrow for both
+   300px-plus panes side by side, which is exactly the phone-width case. */
+.prize-wheel-pane { padding: clamp(22px, 4vw, 40px); display: flex; flex-direction: column; align-items: center; }
+.prize-wheel-pane-wheel {
+  flex: 1 1 300px; justify-content: center; gap: 18px;
+  background: radial-gradient(circle at 50% 38%, rgba(217, 118, 28, 0.06), transparent 70%);
+}
+.prize-wheel-pane-copy {
+  flex: 1 1 300px; justify-content: center; align-items: flex-start; text-align: left;
+  border-left: 1px solid #e4e1d6;
+}
+@media (max-width: 640px) {
+  .prize-wheel-pane-copy { border-left: none; border-top: 1px solid #e4e1d6; align-items: center; text-align: center; }
+  .prize-wheel-list { align-items: center; }
+  .prize-wheel-list li { justify-content: center; }
+}
+.prize-wheel-wrap { position: relative; width: min(260px, 58vw); aspect-ratio: 1; flex-shrink: 0; }
 .prize-wheel-glow {
   position: absolute; inset: -18%; border-radius: 50%; z-index: 0;
   background: radial-gradient(circle, #2f5d5a 0%, transparent 68%);
@@ -433,48 +451,77 @@ button { font-family: inherit; }
   clip-path: polygon(50% 100%, 100% 0%, 0% 0%);
 }
 .prize-wheel-wrap.is-spinning .prize-wheel-pointer { animation: prizeWheelPointerTick .13s ease-in-out infinite; }
-.prize-wheel-legend {
-  list-style: none; margin: 4px 0 0; padding: 0; width: 100%; text-align: left;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px;
+/* Winning-wedge spotlight (see the <path> in PrizeWheel.jsx) — fades in
+   under the medallion ring highlight once the wheel stops, instead of
+   the ring alone doing all the "this one" work. */
+.prize-wheel-tint { opacity: 0; transition: opacity .5s ease-out; }
+.prize-wheel-tint.show { opacity: 1; }
+
+.prize-wheel-odds-pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
+  background: #f7f5ef; border: 1px solid #ece8dc; font-size: .76rem; font-weight: 600; color: #5a6472;
 }
-.prize-wheel-legend li { display: flex; align-items: center; gap: 10px; font-size: .88rem; font-weight: 700; color: #1c2430; padding: 4px 8px; border-radius: 8px; transition: background .25s ease, color .25s ease, transform .25s ease; }
-.prize-wheel-legend li.won { color: #1c2430; background: #eef1f0; transform: scale(1.03); }
-.prize-wheel-legend-thumb {
-  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; overflow: hidden;
-  background: #ffffff; box-shadow: 0 0 0 1px #e4e1d6;
+.prize-wheel-odds-dot { width: 6px; height: 6px; border-radius: 50%; background: #d9761c; flex-shrink: 0; }
+
+.prize-wheel-heading { margin-top: 10px; }
+.prize-wheel-blurb { color: #5a6472; font-size: .94rem; line-height: 1.6; margin: 14px 0 0; max-width: 38ch; }
+
+.prize-wheel-list { list-style: none; margin: 22px 0 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.prize-wheel-list li {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px;
+  background: #f7f5ef; border: 1px solid #ece8dc; font-size: .88rem; font-weight: 600; color: #1c2430;
 }
-.prize-wheel-legend-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.prize-wheel-reveal { min-height: 96px; display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0; transform: scale(.85) translateY(6px); transition: none; margin-top: 10px; }
-.prize-wheel-reveal.show { opacity: 1; transform: none; transition: opacity .4s cubic-bezier(.2, 1.4, .4, 1), transform .4s cubic-bezier(.2, 1.4, .4, 1); }
-.prize-wheel-reveal p { margin: 0; font-size: 1.05rem; color: #1c2430; }
-.prize-wheel-headline { font-size: 1.28rem !important; font-weight: 700; }
-.prize-wheel-headline b { color: #a6540f; }
-.prize-wheel-note { font-size: .85rem !important; color: #5a6472; }
-@media (max-width: 380px) { .prize-wheel-legend { grid-template-columns: 1fr; } }
+.prize-wheel-list-num { font-family: var(--font-display); font-weight: 700; font-size: .78rem; color: #a6540f; min-width: 20px; flex-shrink: 0; }
+
+/* Replaces the prize list once the wheel stops — mirrors the list's own
+   card treatment (same radius/border language) so the swap doesn't read
+   as a different UI bolted on, just this card's content changing. */
+.prize-wheel-result {
+  width: 100%; margin-top: 22px; padding: 20px; border-radius: 18px;
+  background: linear-gradient(180deg, rgba(217, 118, 28, 0.12), rgba(217, 118, 28, 0.03));
+  border: 1px solid rgba(217, 118, 28, 0.3);
+  opacity: 0; transform: translateY(8px); transition: none;
+}
+.prize-wheel-result.show { opacity: 1; transform: none; transition: opacity .4s cubic-bezier(.2, 1.4, .4, 1), transform .4s cubic-bezier(.2, 1.4, .4, 1); }
+.prize-wheel-result-eyebrow {
+  display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #a6540f;
+}
+.prize-wheel-result-name { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.3rem, 3.4vw, 1.7rem); margin: 8px 0 0; color: #1c2430; }
+.prize-wheel-result-note { font-size: .88rem; line-height: 1.5; color: #5a6472; margin: 8px 0 0; }
+
+.prize-wheel-actions { width: 100%; margin-top: 26px; }
+.prize-wheel-status { font-size: .78rem; color: #7c848f; margin: 14px 0 0; }
 /* Plain .btn.btn-primary — same button as every other primary action in
    the app, no separate gold treatment. Only the spacing/size differ, since
    this is the one action the whole card exists to prompt. */
-.btn-primary.prize-wheel-spin-cta { margin-top: 18px; padding: 16px 36px; font-size: 1.08rem; border-radius: 14px; }
-/* The desktop-sized 300px wheel plus its legend, reveal text, and CTA
-   button added up to more vertical space than a real phone viewport has
-   left once its browser chrome (address bar, home indicator) is counted —
-   the spin button and the win reveal both ended up below the fold,
-   forcing a scroll inside a full-screen modal that's supposed to be the
-   payoff moment right after submitting. Every dimension here is trimmed
-   specifically so the idle state (heading + wheel + legend + Spin button)
-   and the revealed state (+ headline + note + CTA, − Spin button) both fit
-   within a real ~600-650px visible mobile viewport without scrolling. */
+.btn-primary.prize-wheel-spin-cta { width: 100%; padding: 16px 30px; font-size: 1.05rem; border-radius: 14px; }
+/* The desktop-sized wheel pane plus the copy pane's list, result and CTA
+   added up to more vertical space than a real phone viewport has left once
+   its browser chrome (address bar, home indicator) is counted — trimmed
+   specifically so both the idle state (wheel + list + Spin button) and the
+   revealed state (wheel + result + CTA) fit a real ~600-650px visible
+   mobile viewport, scrolling inside the card only if something still
+   doesn't fit rather than breaking the overlay's own layout. */
 @media (max-width: 480px) {
-  .prize-wheel-card { padding: 18px 18px 22px; gap: 4px; }
-  .prize-wheel-wrap { width: min(190px, 54vw); margin: 14px 0 10px; }
-  .prize-wheel-legend { gap: 2px 8px; margin-top: 2px; }
-  .prize-wheel-legend li { font-size: .8rem; padding: 3px 6px; gap: 8px; }
-  .prize-wheel-legend-thumb { width: 24px; height: 24px; }
-  .prize-wheel-reveal { min-height: 0; gap: 6px; margin-top: 6px; }
-  .prize-wheel-headline { font-size: 1.1rem !important; }
-  .prize-wheel-note { font-size: .8rem !important; }
-  .btn-primary.prize-wheel-spin-cta { margin-top: 10px; padding: 13px 28px; font-size: 1rem; }
-  .prize-wheel-reveal .btn-primary.prize-wheel-cta { margin-top: 4px; padding: 13px 28px; font-size: 1rem; }
+  .prize-wheel-pane { padding: 12px 16px; }
+  .prize-wheel-pane-wheel { gap: 8px; }
+  .prize-wheel-wrap { width: min(128px, 36vw); }
+  .prize-wheel-odds-pill { font-size: .64rem; padding: 3px 9px; }
+  .prize-wheel-heading { margin-top: 4px; font-size: 1.5rem; }
+  .prize-wheel-blurb { font-size: .82rem; line-height: 1.4; margin-top: 6px; }
+  /* Five stacked rows was the single biggest space cost on a phone — the
+     same 2-column collapse already used for the trust bar and closing
+     reassurance list (see .landing-trust-bar-inner / .landing-close-reassure)
+     turns 5 rows into 3. */
+  .prize-wheel-list { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 6px; margin-top: 10px; }
+  .prize-wheel-list li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .prize-wheel-list li { font-size: .74rem; padding: 6px 8px; gap: 6px; }
+  .prize-wheel-result { margin-top: 10px; padding: 12px; }
+  .prize-wheel-result-name { font-size: 1.05rem; margin-top: 4px; }
+  .prize-wheel-result-note { font-size: .78rem; margin-top: 4px; }
+  .prize-wheel-actions { margin-top: 10px; }
+  .btn-primary.prize-wheel-spin-cta { padding: 11px 22px; font-size: .92rem; }
+  .prize-wheel-status { font-size: .7rem; margin-top: 6px; }
 }
 
 @keyframes prizeWheelFade { from { opacity: 0; } to { opacity: 1; } }
@@ -494,7 +541,7 @@ button { font-family: inherit; }
   50% { transform: scale(1.18); filter: drop-shadow(0 0 6px rgba(47, 93, 90, 0.5)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .prize-wheel-overlay, .prize-wheel-card, .prize-wheel-cta, .prize-wheel-spin-cta,
+  .prize-wheel-overlay, .prize-wheel-card, .prize-wheel-spin-cta,
   .prize-wheel-wrap.is-spinning .prize-wheel-glow, .prize-wheel-wrap.is-spinning .prize-wheel-pointer,
   .prize-wheel-card.is-revealed, .prize-wheel-slice-medallion.is-winner .prize-wheel-medallion-ring { animation: none; opacity: .7; }
 }

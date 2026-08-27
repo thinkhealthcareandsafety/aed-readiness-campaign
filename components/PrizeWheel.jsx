@@ -50,7 +50,7 @@ export default function PrizeWheel({ prize, onDone }) {
 
   useEffect(() => {
     // Read once on mount, independent of whether/when the visitor actually
-    // presses "Spin to win" — prefers-reduced-motion can only be read
+    // presses "Spin the wheel" — prefers-reduced-motion can only be read
     // client-side (no DOM/matchMedia during SSR), so this is an unavoidable
     // one-time client-only correction, not state that should've been
     // derived during render.
@@ -59,8 +59,8 @@ export default function PrizeWheel({ prize, onDone }) {
   }, []);
 
   useEffect(() => {
-    // Waits for the visitor to press "Spin to win" (see the button in the
-    // JSX below) rather than auto-spinning the instant this component
+    // Waits for the visitor to press "Spin the wheel" (see the button in
+    // the JSX below) rather than auto-spinning the instant this component
     // mounts — landing on a payoff nobody asked to see yet doesn't feel
     // like winning anything, it just feels like a page finished loading.
     if (!started) return;
@@ -73,19 +73,17 @@ export default function PrizeWheel({ prize, onDone }) {
     // replacement — so `revealed` silently never becomes true in dev. The
     // effect below is written to be safely re-run instead (each run
     // schedules its own timer and its own cleanup cancels exactly that one).
-    // Lands the middle of the winning slice under the fixed 12-o'clock
-    // pointer: slice i occupies [i*72, (i+1)*72) starting from the top, so
-    // rotating the wheel by 360 - (i*72 + 36) degrees brings its center to
-    // the top. Extra full turns are purely cosmetic (skipped entirely under
-    // reduced-motion, which jumps straight to the final angle with no
-    // animated transition at all — see the transitionDuration below, which
-    // is set to 0ms in that case rather than just skipping the extra spins).
+    // Lands the winning slice under the fixed 12-o'clock pointer, with a
+    // small random offset from dead-center (never past the divider on
+    // either side) — an exact center-landing every time reads as suspiciously
+    // mechanical; a real wheel never stops at exactly the same spot twice.
+    const jitter = reducedMotion ? 0 : (Math.random() - 0.5) * SLICE_DEG * 0.47;
     const landingDeg = 360 - (winIndex * SLICE_DEG + SLICE_DEG / 2);
-    const target = reducedMotion ? landingDeg : 5 * 360 + landingDeg;
+    const target = reducedMotion ? landingDeg : 5 * 360 + landingDeg + jitter;
 
     if (reducedMotion) {
       // Jumping straight to the final state in response to the visitor's
-      // own "Spin to win" click (this effect only runs once `started`
+      // own "Spin the wheel" click (this effect only runs once `started`
       // flips true) — not state that could've been derived during render.
       // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
       setAngle(target);
@@ -102,132 +100,163 @@ export default function PrizeWheel({ prize, onDone }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- winIndex is derived from the prize prop, which never changes for a mounted instance
   }, [started, reducedMotion]);
 
-  return (
-    <div className="prize-wheel-overlay" role="dialog" aria-modal="true" aria-label="Prize reveal">
-      <div className={`prize-wheel-card${revealed ? " is-revealed" : started ? " is-spinning" : ""}`}>
-        <span className="landing-eyebrow">
-          {revealed ? "Congratulations!" : started ? "Spinning the wheel…" : "Your audit is in"}
-        </span>
-        <h2 className="landing-h2">{started ? "Your audit is in" : "One spin, one prize"}</h2>
+  const primaryLabel = revealed ? "See your full report" : started ? "Spinning…" : "Spin the wheel";
+  const status = revealed
+    ? "Saved to your submission — no need to note it down."
+    : started
+    ? "The wheel is turning…"
+    : `One spin per audit. Equal odds on all ${PRIZES.length} prizes.`;
 
-        <div className={`prize-wheel-wrap${started && !revealed ? " is-spinning" : ""}`}>
-          <div className="prize-wheel-glow" aria-hidden="true" />
-          <div className="prize-wheel-shadow" aria-hidden="true" />
-          <div className="prize-wheel-pointer" aria-hidden="true">
-            <span className="prize-wheel-pointer-sheen" />
-          </div>
-          <svg
-            viewBox="0 0 200 200"
-            className="prize-wheel-svg"
-            style={{ transform: `rotate(${angle}deg)`, transitionDuration: reducedMotion ? "0ms" : `${SPIN_MS}ms` }}
-          >
-            <defs>
-              {PRIZES.map((p) => (
-                <radialGradient key={p.id} id={`slice-${p.id}`} cx="50%" cy="50%" r="75%">
-                  <stop offset="0%" stopColor="white" stopOpacity="0.14" />
-                  <stop offset="55%" stopColor="white" stopOpacity="0" />
+  return (
+    <div className="prize-wheel-overlay" role="dialog" aria-modal="true" aria-label="Spin to win">
+      <div className={`prize-wheel-card${revealed ? " is-revealed" : started ? " is-spinning" : ""}`}>
+        <div className="prize-wheel-pane prize-wheel-pane-wheel">
+          <div className={`prize-wheel-wrap${started && !revealed ? " is-spinning" : ""}`}>
+            <div className="prize-wheel-glow" aria-hidden="true" />
+            <div className="prize-wheel-shadow" aria-hidden="true" />
+            <div className="prize-wheel-pointer" aria-hidden="true">
+              <span className="prize-wheel-pointer-sheen" />
+            </div>
+            <svg
+              viewBox="0 0 200 200"
+              className="prize-wheel-svg"
+              style={{ transform: `rotate(${angle}deg)`, transitionDuration: reducedMotion ? "0ms" : `${SPIN_MS}ms` }}
+            >
+              <defs>
+                {PRIZES.map((p) => (
+                  <radialGradient key={p.id} id={`slice-${p.id}`} cx="50%" cy="50%" r="75%">
+                    <stop offset="0%" stopColor="white" stopOpacity="0.14" />
+                    <stop offset="55%" stopColor="white" stopOpacity="0" />
+                  </radialGradient>
+                ))}
+                {/* A soft top-down sheen suggesting a lacquered, physical
+                   disc rather than a flat vector fill — the single biggest
+                   gap between this and a real cast prize wheel. */}
+                <radialGradient id="wheelGloss" cx="50%" cy="28%" r="65%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
+                  <stop offset="55%" stopColor="#ffffff" stopOpacity="0.06" />
+                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
                 </radialGradient>
+                {/* One shared clip shared by all 5 photo badges — each badge
+                   sits in its own slice's rotated <g>, but at identical local
+                   coordinates within that group, so a single clip works for
+                   all of them. */}
+                <clipPath id="prizePhotoClip">
+                  <rect x="129" y="77" width="46" height="46" rx="10" />
+                </clipPath>
+              </defs>
+              {/* Thin white spokes between slices, plain solid fills —
+                 restrained, on the same paper/ink/structure palette as the
+                 rest of the app, instead of a gold-casino treatment that
+                 read as a jarring, cheaper detour from everywhere else in
+                 this tool. */}
+              {PRIZES.map((p, i) => (
+                <path key={p.id} d={slicePath(i)} fill={p.color} stroke="#f5f6f3" strokeWidth="1.5" />
               ))}
-              {/* A soft top-down sheen suggesting a lacquered, physical
-                 disc rather than a flat vector fill — the single biggest
-                 gap between this and a real cast prize wheel. */}
-              <radialGradient id="wheelGloss" cx="50%" cy="28%" r="65%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
-                <stop offset="55%" stopColor="#ffffff" stopOpacity="0.06" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-              </radialGradient>
-              {/* One shared clip shared by all 5 photo badges — each badge
-                 sits in its own slice's rotated <g>, but at identical local
-                 coordinates within that group, so a single clip works for
-                 all of them. */}
-              <clipPath id="prizePhotoClip">
-                <rect x="129" y="77" width="46" height="46" rx="10" />
-              </clipPath>
-            </defs>
-            {/* Thin white spokes between slices, plain solid fills —
-               restrained, on the same paper/ink/structure palette as the
-               rest of the app, instead of a gold-casino treatment that
-               read as a jarring, cheaper detour from everywhere else in
-               this tool. */}
-            {PRIZES.map((p, i) => (
-              <path key={p.id} d={slicePath(i)} fill={p.color} stroke="#f5f6f3" strokeWidth="1.5" />
-            ))}
-            {PRIZES.map((p, i) => (
-              <path key={`${p.id}-sheen`} d={slicePath(i)} fill={`url(#slice-${p.id})`} />
-            ))}
-            {/* No in-slice text: at 5 slices, a label small enough to fit
-               the wedge (and rotated to match it — sideways or upside-down
-               for anything not near the top) was unreadable at a glance,
-               which was the actual complaint. A photo reads fine at any
-               rotation; the always-upright legend below is the one and
-               only place the prize names are spelled out. Real product
-               photos carry their own busy backgrounds/colors, so — unlike
-               a flat glyph — each one sits in a small white photo-card
-               frame (cover-cropped via the shared clip path) instead of
-               directly on the slice color. */}
-            {PRIZES.map((p, i) => (
-              <g
-                key={`${p.id}-label`}
-                transform={sliceLabelTransform(i)}
-                className={`prize-wheel-slice-medallion${revealed && p.id === prize ? " is-winner" : ""}`}
-              >
-                <rect x="126" y="74" width="52" height="52" rx="12" fill="#ffffff" className="prize-wheel-photo-frame" />
-                <image href={p.image} x="129" y="77" width="46" height="46" preserveAspectRatio="xMidYMid slice" clipPath="url(#prizePhotoClip)" />
-                <rect x="129" y="77" width="46" height="46" rx="10" fill="none" stroke="#1c2430" strokeOpacity="0.14" strokeWidth="1" />
-                {revealed && p.id === prize && (
-                  <rect x="126" y="74" width="52" height="52" rx="12" fill="none" stroke="#ffffff" strokeWidth="2.5" className="prize-wheel-medallion-ring" />
-                )}
-              </g>
-            ))}
-            {/* Beveled rim band (dark base + thin inner/outer catch-light
-               lines) instead of a single flat stroke — the detail that
-               reads as "a physical cast disc" rather than a flat cutout. */}
-            <circle cx="100" cy="100" r="93" fill="none" stroke="#1c2430" strokeWidth="10" />
-            <circle cx="100" cy="100" r="98.3" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.22" />
-            <circle cx="100" cy="100" r="87.5" fill="none" stroke="#000000" strokeWidth="1.2" opacity="0.18" />
-            <circle cx="100" cy="100" r="88" fill="url(#wheelGloss)" />
-            {/* Beveled hub — a darker outer ring, a lighter mid ring for
-               the catch-light, and a small paper-colored center dot. */}
-            <circle cx="100" cy="100" r="19" fill="#1c2430" />
-            <circle cx="100" cy="100" r="15.5" fill="none" stroke="#3a4552" strokeWidth="1.2" opacity="0.7" />
-            <circle cx="100" cy="100" r="5" fill="#f5f6f3" opacity="0.85" />
-          </svg>
+              {PRIZES.map((p, i) => (
+                <path key={`${p.id}-sheen`} d={slicePath(i)} fill={`url(#slice-${p.id})`} />
+              ))}
+              {/* Winning-wedge spotlight, revealed once the wheel stops —
+                 sits under the photo medallion so the medallion's own ring
+                 highlight (below) reads as the sharp focal point and this
+                 just warms the slice around it. */}
+              <path
+                d={slicePath(winIndex)}
+                fill="rgba(217, 118, 28, 0.32)"
+                className={`prize-wheel-tint${revealed ? " show" : ""}`}
+              />
+              {/* No in-slice text: at 5 slices, a label small enough to fit
+                 the wedge (and rotated to match it — sideways or upside-down
+                 for anything not near the top) was unreadable at a glance,
+                 which was the actual complaint. A photo reads fine at any
+                 rotation; the always-upright prize list/result panel beside
+                 the wheel is the one and only place the prize names are
+                 spelled out. Real product photos carry their own busy
+                 backgrounds/colors, so — unlike a flat glyph — each one sits
+                 in a small white photo-card frame (cover-cropped via the
+                 shared clip path) instead of directly on the slice color. */}
+              {PRIZES.map((p, i) => (
+                <g
+                  key={`${p.id}-label`}
+                  transform={sliceLabelTransform(i)}
+                  className={`prize-wheel-slice-medallion${revealed && p.id === prize ? " is-winner" : ""}`}
+                >
+                  <rect x="126" y="74" width="52" height="52" rx="12" fill="#ffffff" className="prize-wheel-photo-frame" />
+                  <image href={p.image} x="129" y="77" width="46" height="46" preserveAspectRatio="xMidYMid slice" clipPath="url(#prizePhotoClip)" />
+                  <rect x="129" y="77" width="46" height="46" rx="10" fill="none" stroke="#1c2430" strokeOpacity="0.14" strokeWidth="1" />
+                  {revealed && p.id === prize && (
+                    <rect x="126" y="74" width="52" height="52" rx="12" fill="none" stroke="#ffffff" strokeWidth="2.5" className="prize-wheel-medallion-ring" />
+                  )}
+                </g>
+              ))}
+              {/* Beveled rim band (dark base + thin inner/outer catch-light
+                 lines) instead of a single flat stroke — the detail that
+                 reads as "a physical cast disc" rather than a flat cutout. */}
+              <circle cx="100" cy="100" r="93" fill="none" stroke="#1c2430" strokeWidth="10" />
+              <circle cx="100" cy="100" r="98.3" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.22" />
+              <circle cx="100" cy="100" r="87.5" fill="none" stroke="#000000" strokeWidth="1.2" opacity="0.18" />
+              <circle cx="100" cy="100" r="88" fill="url(#wheelGloss)" />
+              {/* Beveled hub — a darker outer ring, a lighter mid ring for
+                 the catch-light, and a small paper-colored center dot. */}
+              <circle cx="100" cy="100" r="19" fill="#1c2430" />
+              <circle cx="100" cy="100" r="15.5" fill="none" stroke="#3a4552" strokeWidth="1.2" opacity="0.7" />
+              <circle cx="100" cy="100" r="5" fill="#f5f6f3" opacity="0.85" />
+            </svg>
+          </div>
+          <div className="prize-wheel-odds-pill">
+            <span className="prize-wheel-odds-dot" aria-hidden="true" />
+            {`${PRIZES.length} prizes · 1 spin · equal odds`}
+          </div>
         </div>
 
-        <ul className="prize-wheel-legend">
-          {PRIZES.map((p) => (
-            <li key={p.id} className={p.id === prize && revealed ? "won" : undefined}>
-              <span className="prize-wheel-legend-thumb">
-                {/* eslint-disable-next-line @next/next/no-img-element -- small static photo inside an SVG-adjacent legend, not page content */}
-                <img src={p.image} alt="" />
-              </span>
-              {p.label}
-            </li>
-          ))}
-        </ul>
+        <div className="prize-wheel-pane prize-wheel-pane-copy">
+          <span className="landing-eyebrow">Your audit is in</span>
+          <h2 className="landing-h2 prize-wheel-heading">
+            One spin,
+            <br />
+            one prize
+          </h2>
+          <p className="prize-wheel-blurb">
+            Every completed audit earns one spin. Spin once to see which prize this property gets.
+          </p>
 
-        {!started && (
-          <button type="button" className="btn btn-primary prize-wheel-spin-cta" onClick={() => setStarted(true)}>
-            Spin to Win
-          </button>
-        )}
-
-        <div className={`prize-wheel-reveal${revealed ? " show" : ""}`} aria-live="polite">
-          {revealed && (
-            <>
-              <p className="prize-wheel-headline">
-                You won: <b>{winLabel}</b>
-              </p>
-              <p className="prize-wheel-note">
-                {prize === "aedsmartx"
-                  ? "Our team will reach out about your AEDSmartX subscription."
-                  : "Our team will follow up to arrange delivery."}
-              </p>
-              <button type="button" className="btn btn-primary prize-wheel-cta" onClick={onDone}>
-                See your full report
-              </button>
-            </>
+          {!revealed && (
+            <ol className="prize-wheel-list">
+              {PRIZES.map((p, i) => (
+                <li key={p.id}>
+                  <span className="prize-wheel-list-num">{String(i + 1).padStart(2, "0")}</span>
+                  {p.label}
+                </li>
+              ))}
+            </ol>
           )}
+
+          <div className={`prize-wheel-result${revealed ? " show" : ""}`} aria-live="polite">
+            {revealed && (
+              <>
+                <span className="prize-wheel-result-eyebrow">You won</span>
+                <p className="prize-wheel-result-name">{winLabel}</p>
+                <p className="prize-wheel-result-note">
+                  {prize === "aedsmartx"
+                    ? "Our team will reach out about your AEDSmartX subscription."
+                    : "Our team will follow up to arrange delivery."}
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="prize-wheel-actions">
+            <button
+              type="button"
+              className="btn btn-primary prize-wheel-spin-cta"
+              disabled={started && !revealed}
+              onClick={() => (revealed ? onDone?.() : setStarted(true))}
+            >
+              {primaryLabel}
+            </button>
+          </div>
+
+          <p className="prize-wheel-status">{status}</p>
         </div>
       </div>
     </div>
