@@ -141,6 +141,24 @@ const TRUST_ITEMS = [
   { icon: ScoreIcon, label: "Instant PREPARED score" },
 ];
 
+const HOW_STEPS = [
+  {
+    icon: ScanIcon,
+    title: "Answer a few questions, or let AI scan it",
+    body: "Walk through the checklist yourself, or point your camera at the AED and let AI read the battery, pads, and cabinet for you.",
+  },
+  {
+    icon: ScoreIcon,
+    title: "Get your instant PREPARED score",
+    body: "The moment you finish, see exactly where the property stands across all eight readiness categories.",
+  },
+  {
+    icon: ReportIcon,
+    title: "Walk away with a plan",
+    body: "A clear action list, a shareable certificate for trained staff, and one spin of the prize wheel.",
+  },
+];
+
 const WHY_CARDS = [
   {
     icon: "/icons/battery-ok.svg",
@@ -161,6 +179,7 @@ const WHY_CARDS = [
 
 export default function Landing() {
   const [trustRef, trustClass] = useReveal();
+  const [howRef, howClass] = useReveal();
   const [giftRef, giftClass] = useReveal();
   const [whyRef, whyClass] = useReveal();
   const [closeRef, closeClass] = useReveal();
@@ -222,6 +241,26 @@ export default function Landing() {
           </div>
         </div>
       </div>
+
+      <section className="landing-how" ref={howRef}>
+        <div className={`landing-section-inner ${howClass}`}>
+          <span className="landing-eyebrow dark">How it works</span>
+          <h2 className="landing-h2">Three steps, about five minutes</h2>
+          <div className="landing-how-steps">
+            {HOW_STEPS.map((s, i) => (
+              <div className="landing-how-step" key={s.title}>
+                <div className="landing-how-step-badge">
+                  <s.icon />
+                  <span className="landing-how-step-num">{i + 1}</span>
+                </div>
+                <h3>{s.title}</h3>
+                <p>{s.body}</p>
+                {i < HOW_STEPS.length - 1 && <span className="landing-how-connector" aria-hidden="true" />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="landing-gift" ref={giftRef}>
         <div className={`landing-section-inner landing-gift-inner ${giftClass}`}>
@@ -329,6 +368,16 @@ function ScoreIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 3.5l2.47 5.1 5.53.66-4.06 3.86 1.07 5.5L12 15.9l-4.99 2.72 1.07-5.5-4.06-3.86 5.53-.66L12 3.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ReportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 3.5h7.5L19 8v12.5a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M14.2 3.5V8h4.6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M9 13.5l2 2 4-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

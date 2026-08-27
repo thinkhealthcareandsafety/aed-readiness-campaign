@@ -180,7 +180,10 @@ button { font-family: inherit; }
   max-width: 1040px; margin: 0 auto; padding: 22px clamp(16px, 4vw, 40px); display: flex; justify-content: center;
   gap: clamp(20px, 4vw, 52px); flex-wrap: wrap;
 }
-.landing-trust-item { display: flex; align-items: center; gap: 9px; color: var(--ink-soft); font-size: .84rem; font-weight: 600; white-space: nowrap; }
+.landing-trust-item {
+  display: flex; align-items: center; gap: 9px; color: var(--ink-soft); font-size: .84rem; font-weight: 600; white-space: nowrap;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px 8px 12px;
+}
 .landing-trust-item svg { width: 18px; height: 18px; color: var(--structure); flex-shrink: 0; }
 @media (max-width: 560px) {
   /* Below ~560px, the flex-wrap row above collapses to one item per line
@@ -232,6 +235,36 @@ button { font-family: inherit; }
 
 .landing-section-inner { max-width: 1040px; margin: 0 auto; padding: 84px clamp(16px, 4vw, 40px); text-align: center; }
 .landing-h2 { font-size: clamp(1.65rem, 3.2vw, 2.2rem); margin-top: 8px; letter-spacing: -0.01em; }
+
+/* ---------- Landing: how-it-works steps ---------- */
+.landing-how { background: var(--paper); border-bottom: 1px solid var(--line); }
+.landing-how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 44px; text-align: left; }
+.landing-how-step { position: relative; padding: 0 22px 0 0; }
+.landing-how-step-badge {
+  position: relative; width: 52px; height: 52px; border-radius: 15px; background: var(--paper-raised);
+  border: 1px solid var(--line); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center;
+  color: var(--structure); margin-bottom: 18px;
+}
+.landing-how-step-badge svg { width: 24px; height: 24px; }
+.landing-how-step-num {
+  position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-family: var(--font-body); font-size: .72rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(217, 118, 28, 0.4);
+}
+.landing-how-step h3 { font-size: 1.02rem; margin-bottom: 8px; }
+.landing-how-step p { color: var(--ink-soft); font-size: .9rem; margin: 0; max-width: 30ch; }
+/* A short dashed line bridging each step to the next, standing in for a
+   literal arrow — reads as "this leads to that" without needing an actual
+   connector glyph that would have to dodge each card's own content height. */
+.landing-how-connector {
+  position: absolute; top: 26px; left: 62px; right: -14px; height: 0;
+  border-top: 2px dashed var(--line-strong);
+}
+@media (max-width: 780px) {
+  .landing-how-steps { grid-template-columns: 1fr; gap: 32px; }
+  .landing-how-step { padding-right: 0; }
+  .landing-how-connector { display: none; }
+}
 
 /* ---------- Landing: free-kit incentive (photo + copy) ---------- */
 .landing-gift { background: var(--structure-tint); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
