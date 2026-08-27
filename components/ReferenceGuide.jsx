@@ -27,6 +27,11 @@ const MODEL_PHOTOS = {
     pads: "/reference/hs1-pads.jpg",
     batteryAttached: "/reference/hs1-battery-attached.jpg",
     padsAttached: "/reference/hs1-pads-connected.jpg",
+    // Real photos of the same empty battery bay / cartridge slot on an HS1
+    // unit — closes the same "No" gap already fixed for ZOLL AED Plus (see
+    // AuditWizard.jsx's NOT_ATTACHED_KIND resolution).
+    batteryNotAttached: "/reference/hs1-battery-not-attached.jpg",
+    padsNotAttached: "/reference/hs1-pads-not-attached.jpg",
   },
   zollPlus: {
     brand: "ZOLL AED Plus",
