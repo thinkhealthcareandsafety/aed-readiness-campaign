@@ -890,10 +890,21 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   background: var(--paper-raised);
   cursor: pointer;
   overflow: hidden;
-  transition: transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s ease, border-color .16s ease, background .16s ease;
+  transition: transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s ease, border-color .16s ease, background .16s ease, opacity .16s ease;
 }
 .icon-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(28,36,48,0.10); border-color: var(--accent); }
 .icon-card.selected { border-color: var(--accent); background: var(--accent-tint); box-shadow: 0 10px 24px rgba(28,36,48,0.10); }
+/* Once a single-choice (radio) grid has an answer, the options *not*
+   picked recede instead of all still looking equally "live" next to the
+   chosen one — the orange border/tint alone was easy to miss at a glance
+   across 3-4 similar-looking cards. Scoped to input[type="radio"]
+   specifically (via :has(), same technique as the focus-ring rule above)
+   so a checkbox grid — where several cards staying visually active is
+   correct, since more than one really is selected — is never affected.
+   Still fully clickable (this only touches opacity), and brightens back
+   on hover so switching the answer isn't fighting a dimmed target. */
+.icon-grid:has(input[type="radio"]):has(.icon-card.selected) .icon-card:not(.selected) { opacity: .5; }
+.icon-grid:has(input[type="radio"]):has(.icon-card.selected) .icon-card:not(.selected):hover { opacity: .85; }
 /* This card's <input> is deliberately opacity:0/pointer-events:none (see
    below) so mouse clicks land on the artwork instead of a 1px hit target —
    but that also means it has NO visible presence at all by default, so a
