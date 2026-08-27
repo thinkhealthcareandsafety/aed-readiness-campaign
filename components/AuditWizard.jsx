@@ -969,14 +969,25 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   // generic icon for "No" otherwise, rather than showing every unit the
   // same FRx-specific photos regardless of its actual model.
   const isAttachedField = refKind === "batteryAttached" || refKind === "padsAttached";
-  const attachedUnitModel = isAttachedField ? unitModelFor(question, aedModelSequence || []) : null;
-  const attachedModelDiffers = Boolean(attachedUnitModel) && attachedUnitModel !== "frx";
+  // "damage" has no seeded default that's "correct for one specific model
+  // and wrong for the rest" the way battery/pads did — the seed is a
+  // brand-neutral 3-photo composite (see migrateOptionImagesRound4 in
+  // lib/db.js). So unlike isAttachedField above, this always prefers a
+  // per-model photo when one exists, for every model including frx,
+  // rather than only overriding when the model "differs" from a baked-in
+  // default.
+  const isDamageField = refKind === "damage";
+  const perUnitModel = isAttachedField || isDamageField ? unitModelFor(question, aedModelSequence || []) : null;
+  const attachedModelDiffers = isAttachedField && Boolean(perUnitModel) && perUnitModel !== "frx";
   function resolvedOptionImage(o) {
+    if (isDamageField) {
+      return o.value === "yes" ? photoForModel(perUnitModel, "damage") || o.imageUrl : o.imageUrl;
+    }
     if (!attachedModelDiffers) return o.imageUrl;
-    if (o.value === "yes") return photoForModel(attachedUnitModel, refKind) || o.imageUrl;
+    if (o.value === "yes") return photoForModel(perUnitModel, refKind) || o.imageUrl;
     if (o.value === "no") {
       const notAttachedKind = NOT_ATTACHED_KIND[refKind];
-      return photoForModel(attachedUnitModel, notAttachedKind) || GENERIC_NOT_ATTACHED_ICON[refKind] || o.imageUrl;
+      return photoForModel(perUnitModel, notAttachedKind) || GENERIC_NOT_ATTACHED_ICON[refKind] || o.imageUrl;
     }
     return o.imageUrl;
   }

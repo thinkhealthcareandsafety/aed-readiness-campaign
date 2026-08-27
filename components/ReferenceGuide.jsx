@@ -19,6 +19,12 @@ const MODEL_PHOTOS = {
     // physical-status questions, which ask something different.
     batteryAttached: "/reference/frx-battery-attached.jpg",
     padsAttached: "/reference/frx-pads-connected.jpg",
+    // Real photo of a genuinely cracked FRx front panel — see the
+    // `damage` kind resolution in AuditWizard.jsx, which always prefers
+    // the reporting unit's own model photo here instead of one shared
+    // cross-brand composite (damage-examples.jpg, still the fallback for
+    // any model without one of its own).
+    damage: "/reference/frx-damage.jpg",
   },
   hs1: {
     brand: "Philips HeartStart HS1",
@@ -32,6 +38,7 @@ const MODEL_PHOTOS = {
     // AuditWizard.jsx's NOT_ATTACHED_KIND resolution).
     batteryNotAttached: "/reference/hs1-battery-not-attached.jpg",
     padsNotAttached: "/reference/hs1-pads-not-attached.jpg",
+    damage: "/reference/hs1-damage.jpg",
   },
   zollPlus: {
     brand: "ZOLL AED Plus",
@@ -53,6 +60,7 @@ const MODEL_PHOTOS = {
     batteryNotAttached: "/reference/zollplus-battery-not-attached.jpg",
     padsAttached: "/reference/zollplus-pads-attached.jpg",
     padsNotAttached: "/reference/zollplus-pads-not-attached.jpg",
+    damage: "/reference/zollplus-damage.jpg",
   },
   defibtech: {
     brand: "Defibtech",
@@ -218,6 +226,7 @@ export function referenceKindFor(question) {
   // check.
   if (question.type === "radio" && label.includes("battery") && label.includes("installed")) return "batteryAttached";
   if (question.type === "radio" && label.includes("pads") && label.includes("connected")) return "padsAttached";
+  if (question.type === "radio" && label.includes("damage")) return "damage";
   return null;
 }
 
