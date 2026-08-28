@@ -26,7 +26,7 @@ const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", n
 // MODEL_PHOTOS (ReferenceGuide.jsx) — used for a non-FRx unit's "No"
 // answer once a model has its own real photo for that state (currently
 // zollPlus; see the resolvedOptionImage below).
-const NOT_ATTACHED_KIND = { batteryAttached: "batteryNotAttached", padsAttached: "padsNotAttached" };
+const NOT_ATTACHED_KIND = { batteryAttached: "batteryNotAttached", padsAttached: "padsNotAttached", readyIndicator: "notReadyIndicator" };
 // Brand-agnostic line icons (the seed's own pre-photo defaults) — the
 // final fallback when a model has neither a real "not attached" photo nor
 // the seeded FRx one applies. Showing the FRx-specific "not attached"
@@ -962,13 +962,14 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   const serialUnitModel = isSerialField ? unitModelFor(question, aedModelSequence || []) : null;
   const ageStatus = isSerialField ? aedAgeStatus(serialUnitModel, answers[question.id]) : null;
   const ageMessage = ageStatus ? aedAgeMessage(ageStatus) : null;
-  // battery_attached/pads_connected are seeded with one fixed pair of real
-  // Philips FRx photos — right for an FRx unit, wrong for any other
-  // reported model. Swaps in that unit's own real photo when one's been
-  // sourced (see MODEL_PHOTOS in ReferenceGuide.jsx), or a brand-agnostic
-  // generic icon for "No" otherwise, rather than showing every unit the
-  // same FRx-specific photos regardless of its actual model.
-  const isAttachedField = refKind === "batteryAttached" || refKind === "padsAttached";
+  // battery_attached/pads_connected/readyIndicator are all seeded with a
+  // fixed pair of real Philips FRx photos — right for an FRx unit, wrong
+  // for any other reported model. Swaps in that unit's own real photo when
+  // one's been sourced (see MODEL_PHOTOS in ReferenceGuide.jsx), or a
+  // brand-agnostic generic icon for "No"/"red" otherwise, rather than
+  // showing every unit the same FRx-specific photos regardless of its
+  // actual model.
+  const isAttachedField = refKind === "batteryAttached" || refKind === "padsAttached" || refKind === "readyIndicator";
   // "damage" has no seeded default that's "correct for one specific model
   // and wrong for the rest" the way battery/pads did — the seed is a
   // brand-neutral 3-photo composite (see migrateOptionImagesRound4 in
@@ -989,8 +990,8 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
       if (o.value === "no") return photoForModel(perUnitModel, "padsAttached") || o.imageUrl;
     }
     if (!attachedModelDiffers) return o.imageUrl;
-    if (o.value === "yes") return photoForModel(perUnitModel, refKind) || o.imageUrl;
-    if (o.value === "no") {
+    if (o.value === "yes" || o.value === "green") return photoForModel(perUnitModel, refKind) || o.imageUrl;
+    if (o.value === "no" || o.value === "red") {
       const notAttachedKind = NOT_ATTACHED_KIND[refKind];
       return photoForModel(perUnitModel, notAttachedKind) || GENERIC_NOT_ATTACHED_ICON[refKind] || o.imageUrl;
     }

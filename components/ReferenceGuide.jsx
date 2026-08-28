@@ -39,6 +39,12 @@ const MODEL_PHOTOS = {
     batteryNotAttached: "/reference/hs1-battery-not-attached.jpg",
     padsNotAttached: "/reference/hs1-pads-not-attached.jpg",
     damage: "/reference/hs1-damage.jpg",
+    // Real photo of this exact unit's power button lit green (ready). No
+    // "not ready" (button dark) counterpart yet — falls back to the seeded
+    // FRx photo for that option until one's sourced, same as any model
+    // missing one side of a pair elsewhere in this table (e.g. defibtech's
+    // batteryNotAttached/padsNotAttached).
+    readyIndicator: "/reference/hs1-ready.jpg",
   },
   zollPlus: {
     brand: "ZOLL AED Plus",
@@ -61,6 +67,13 @@ const MODEL_PHOTOS = {
     padsAttached: "/reference/zollplus-pads-attached.jpg",
     padsNotAttached: "/reference/zollplus-pads-not-attached.jpg",
     damage: "/reference/zollplus-damage.jpg",
+    // Real photos of this same unit's status/self-test button — lit (ring
+    // glowing) for the "displaying a ready indicator" Yes answer, dark/idle
+    // for the "Red / Orange / Not ready" one. Supersedes the seeded
+    // Philips-specific frx-status-ready/notready photos for any unit
+    // reported as a ZOLL AED Plus.
+    readyIndicator: "/reference/zollplus-ready.jpg",
+    notReadyIndicator: "/reference/zollplus-notready.jpg",
   },
   defibtech: {
     brand: "Defibtech",
@@ -227,6 +240,7 @@ export function referenceKindFor(question) {
   if (question.type === "radio" && label.includes("battery") && label.includes("installed")) return "batteryAttached";
   if (question.type === "radio" && label.includes("pads") && label.includes("connected")) return "padsAttached";
   if (question.type === "radio" && label.includes("damage")) return "damage";
+  if (question.type === "radio" && label.includes("ready") && label.includes("indicator")) return "readyIndicator";
   return null;
 }
 
