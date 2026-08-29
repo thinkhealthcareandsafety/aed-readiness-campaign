@@ -378,8 +378,17 @@ button { font-family: inherit; }
   .landing-hero-chips { justify-content: center; }
   .landing-gift-head { text-align: left; }
   .landing-close-card { text-align: center; }
+  /* A centered flex row breaks the moment its text wraps to a second
+     line: the icon centers to the full multi-line height while the text
+     itself stays left-aligned within its own auto-width box, so the icon
+     visibly detaches from the first line instead of sitting beside it.
+     Fix: left-align icon+text as a row (icon pinned to the top line via
+     align-items: flex-start), cap the row's own width so long items wrap
+     predictably, and center that whole fixed-width row as one block —
+     same fix already used for .landing-gift-list on mobile. */
   .landing-close-reassure { justify-items: center; }
-  .landing-close-reassure li { justify-content: center; }
+  .landing-close-reassure li { justify-content: flex-start; align-items: flex-start; text-align: left; max-width: 280px; }
+  .landing-close-reassure .tick { margin-top: 1px; }
 }
 
 /* ---------- Prize wheel (post-submission reveal, see PrizeWheel.jsx) ---------- */
