@@ -205,7 +205,7 @@ button { font-family: inherit; }
   position: absolute; inset: -9px; border-radius: 50%;
   background: conic-gradient(from 0deg, rgba(28, 36, 48, .28), rgba(28, 36, 48, .06) 25%, color-mix(in srgb, var(--accent) 55%, transparent) 50%, rgba(28, 36, 48, .06) 75%, rgba(28, 36, 48, .28));
 }
-.landing-hero-wheel-disc { position: absolute; inset: -3px; border-radius: 50%; background: var(--ink); box-shadow: 0 22px 44px -18px rgba(28, 36, 48, .65); }
+.landing-hero-wheel-disc { position: absolute; inset: -3px; border-radius: 50%; background: #1c2430; box-shadow: 0 22px 44px -18px rgba(28, 36, 48, .65); }
 .landing-hero-wheel-innerline { position: absolute; inset: 4px; border-radius: 50%; border: 1px solid rgba(245, 246, 243, .14); }
 .landing-hero-wheel-face { position: absolute; inset: 12px; border-radius: 50%; overflow: hidden; background: #171e27; }
 .landing-hero-wheel-spin { position: absolute; inset: 0; animation: spinSlow 60s linear infinite; }
@@ -220,7 +220,7 @@ button { font-family: inherit; }
 .landing-hero-wheel-label { font-size: .69rem; font-weight: 700; letter-spacing: .02em; text-align: center; line-height: 13px; color: rgba(245, 246, 243, .88); }
 .landing-hero-wheel-hub {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 62px; height: 62px; border-radius: 50%;
-  background: linear-gradient(180deg, #2b3543, var(--ink)); border: 1px solid rgba(245, 246, 243, .16);
+  background: linear-gradient(180deg, #2b3543, #1c2430); border: 1px solid rgba(245, 246, 243, .16);
   display: grid; place-items: center; z-index: 6; box-shadow: 0 10px 24px -8px rgba(28, 36, 48, .8);
 }
 .landing-hero-wheel-hub-dot {
@@ -282,7 +282,13 @@ button { font-family: inherit; }
 }
 
 /* ---------- Landing: gift panel (dark, all five prizes) ---------- */
-.landing-gift { background: var(--ink); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: relative; overflow: hidden; }
+/* Fixed hex, not theme variables — this panel is always dark by design
+   (same reasoning as the prize wheel's card). --ink/--line flip to near-
+   white in a dark-mode browser, which turned this into a near-white panel
+   still carrying white-on-white text — the one section on the page that
+   silently broke under system dark mode while everything else (built from
+   the same variables the "right" way round) kept reading fine. */
+.landing-gift { background: #1c2430; border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08); position: relative; overflow: hidden; }
 .landing-gift-glow {
   position: absolute; width: 520px; height: 520px; right: -140px; top: -180px; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 68%);
@@ -1087,7 +1093,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
    clips it) instead of a small inset thumbnail, matching the same
    edge-to-edge treatment the main icon-card grid got. */
 .icon-grid.pair { grid-template-columns: 1fr 1fr; gap: 14px; }
-.icon-grid.pair .icon-card { min-height: 100px; padding: 0; flex-direction: row; align-items: stretch; justify-content: flex-start; gap: 0; }
+.icon-grid.pair .icon-card { min-height: 124px; padding: 0; flex-direction: row; align-items: stretch; justify-content: flex-start; gap: 0; }
 /* height:auto here (with the parent's align-items:stretch) let the photo's
    own intrinsic aspect ratio decide the art box's height — a portrait
    source photo made its whole question's pair visibly taller than a
@@ -1096,10 +1102,10 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
    as a variable entirely: every pair card is the same height regardless
    of what aspect ratio the underlying photo/icon happens to be, and
    object-fit:cover (see OptionImage.jsx) crops any photo to fit it. */
-.icon-grid.pair .icon-card-art { width: 36%; min-width: 64px; max-width: 120px; height: 100px; flex-shrink: 0; }
+.icon-grid.pair .icon-card-art { width: 38%; min-width: 72px; max-width: 140px; height: 124px; flex-shrink: 0; }
 .icon-grid.pair .icon-card-label {
-  font-size: 1.05rem; flex: 1; min-width: 0; display: flex; align-items: center;
-  justify-content: center; text-align: center; padding: 10px 10px;
+  font-size: 1.2rem; font-weight: 800; flex: 1; min-width: 0; display: flex; align-items: center;
+  justify-content: center; text-align: center; padding: 12px 14px;
 }
 
 .qty-stepper { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
@@ -1234,6 +1240,47 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .certificate h2 { font-size: 2rem; margin: 10px 0 4px; }
 .certificate .name { font-family: var(--font-display); font-size: 1.6rem; margin: 18px 0 6px; border-bottom: 1px solid var(--line-strong); display: inline-block; padding-bottom: 6px; }
 .certificate .meta { color: var(--ink-soft); font-size: .88rem; margin-top: 14px; }
+
+/* ---------- Report: assessment-information grid ---------- */
+.report-info-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2px 24px;
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px;
+}
+.report-info-grid > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.report-info-grid > div:last-child, .report-info-grid > div:nth-last-child(2) { border-bottom: none; }
+.report-info-grid .k { color: var(--ink-soft); font-size: .86rem; }
+.report-info-grid .v { font-weight: 600; font-size: .9rem; text-align: right; }
+
+/* ---------- Report: per-question detailed insights ---------- */
+.insight-section { margin-top: 22px; }
+.insight-section-head {
+  display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: .84rem; color: var(--structure);
+  text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px;
+}
+.insight-section-head .letter {
+  display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px;
+  background: var(--structure-tint); font-family: var(--font-display); font-weight: 700; text-transform: none;
+  letter-spacing: 0; font-size: .82rem;
+}
+.insight-row {
+  display: flex; gap: 12px; background: var(--paper-raised); border: 1px solid var(--line); border-left: 3px solid var(--line-strong);
+  border-radius: 10px; padding: 13px 16px; margin-bottom: 8px;
+}
+.insight-row.status-good { border-left-color: var(--ready); }
+.insight-row.status-warn { border-left-color: var(--warn); }
+.insight-row.status-critical { border-left-color: var(--notready); background: color-mix(in srgb, var(--notready-tint) 40%, var(--paper-raised)); }
+.insight-body { flex: 1; min-width: 0; }
+.insight-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.insight-label { font-weight: 700; font-size: .92rem; }
+.insight-pill { font-size: .68rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+.insight-pill.good { background: var(--ready-tint); color: var(--ready); }
+.insight-pill.warn { background: var(--warn-tint); color: var(--warn); }
+.insight-pill.critical { background: var(--notready-tint); color: var(--notready); }
+.insight-answer { font-size: .88rem; color: var(--ink); margin-top: 3px; font-weight: 600; }
+.insight-rec { font-size: .86rem; color: var(--ink-soft); line-height: 1.5; margin: 5px 0 0; }
+
+.report-conclusion { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: .92rem; line-height: 1.65; }
+.report-conclusion p { margin: 0 0 12px; }
 
 @media print {
   .no-print { display: none !important; }
