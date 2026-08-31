@@ -205,25 +205,6 @@ export function FieldReferencePhoto({ models, kind }) {
   return <ThumbRow items={items} kind={kind} />;
 }
 
-// A cabinet mount isn't part of the AED unit itself — it's property-specific
-// hardware, not a brand feature — so unlike every other reference photo here
-// it isn't keyed per-model. One generic "what a good installation looks
-// like" example, honestly captioned as an example rather than any specific
-// brand's cabinet.
-const CABINET_PHOTO = { caption: "Example: mounted, visible AED cabinet", photo: "/reference/aed-cabinet-example.jpg" };
-export function CabinetReferencePhoto() {
-  return <ThumbRow items={[CABINET_PHOTO]} kind="photo" labelKey="caption" />;
-}
-
-// Same reasoning as CabinetReferencePhoto: the status-light *pattern* (solid
-// or slow-blinking green = ready) is the same thing to look for across
-// brands, but the only real photo on hand is the Philips FRx panel — so
-// this is captioned as a worked example, not asserted to be this unit's
-// own brand.
-const READY_INDICATOR_PHOTO = { caption: "Example: green (ready) indicator", photo: "/reference/frx-status-ready.jpg" };
-export function ReadinessReferencePhoto() {
-  return <ThumbRow items={[READY_INDICATOR_PHOTO]} kind="photo" labelKey="caption" />;
-}
 
 // Maps a question to which kind of reference photo helps it, purely from its
 // label/type — works for AED (1), (2), and any (3)+ clone without needing

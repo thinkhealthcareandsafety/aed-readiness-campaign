@@ -11,23 +11,23 @@ export function isPhotoUrl(src) {
 export function OptionImage({ src, alt }) {
   const [failed, setFailed] = useState(false);
   const effectiveSrc = !src || failed ? "/icons/model-other.svg" : src;
-  // Real photos (.jpg/.png/.webp) should fill their card edge-to-edge —
-  // cropping via object-fit:cover reads as a proper product photo, not a
-  // thumbnail floating in whitespace. Flat SVG pictograms (still used for
-  // several questions that never got a real photo) are drawn to be seen in
-  // full, not cropped, so those keep the old contain/max-size behavior.
-  const isPhoto = isPhotoUrl(effectiveSrc);
+  // object-fit:cover here used to crop real photos edge-to-edge — fine for
+  // a photo already framed close to the card's own aspect ratio, but the
+  // card grids span several different widths (a 4-up model grid, a 2-up
+  // Yes/No pair, ...) while the source photos are various-shaped product
+  // shots, so "cover" was cropping several of them down to an unrecognizable
+  // sliver (e.g. the ZOLL AED Plus photo losing its logo and handle, only a
+  // thin strip through the middle surviving). object-fit:contain shows the
+  // whole photo at every card size instead, same as the flat SVG
+  // pictograms already did — never upscaled past its own resolution, never
+  // cropped.
   return (
     // eslint-disable-next-line @next/next/no-img-element -- images are admin-uploaded, not build-time known assets
     <img
       src={effectiveSrc}
       alt={alt || ""}
       onError={() => setFailed(true)}
-      style={
-        isPhoto
-          ? { width: "100%", height: "100%", objectFit: "cover" }
-          : { maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }
-      }
+      style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
     />
   );
 }
