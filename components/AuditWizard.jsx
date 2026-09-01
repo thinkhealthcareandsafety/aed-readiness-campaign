@@ -17,7 +17,7 @@ import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extra
 import { aedAgeStatus, isValidAedSerialFormat, aedSerialFormatHint, aedSerialExample } from "@/lib/aedSerialDate";
 import { COUNTRY_CODES, DEFAULT_COUNTRY_ISO, countryByIso, composePhoneValue, parsePhoneValueLenient, sanitizeLocalDigits } from "@/lib/phoneCountries";
 
-const REVIEW_STEP = { id: "__review", letter: "✓", title: "Review & Submit", note: "Check your answers, then send the audit.", questions: [] };
+const REVIEW_STEP = { id: "__review", letter: "✓", title: "Submit Audit", questions: [] };
 
 // The battery_attached/pads_connected questions were seeded with one fixed
 // pair of real Philips FRx photos (see lib/seedFormData.js) — correct for
@@ -1322,6 +1322,13 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             </div>
           ))}
         <ImageLightbox item={zoomPreview} kind="photo" labelKey="caption" onClose={() => setZoomPreview(null)} />
+      </QBlock>
+    );
+  }
+
+  return null;
+}
+
       </QBlock>
     );
   }
