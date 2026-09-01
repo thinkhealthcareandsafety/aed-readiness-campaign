@@ -1328,10 +1328,3 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
 
   return null;
 }
-
-      </QBlock>
-    );
-  }
-
-  return null;
-}
