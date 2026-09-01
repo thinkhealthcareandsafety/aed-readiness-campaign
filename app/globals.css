@@ -741,14 +741,13 @@ button { font-family: inherit; }
   box-shadow: var(--shadow), 0 40px 70px -32px color-mix(in srgb, var(--ink) 16%, transparent);
 }
 
-.section-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.section-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
 .section-eyebrow .letter { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--structure); line-height: 1; }
 .section-eyebrow .pts { margin-left: auto; font-family: var(--font-mono); font-size: .85rem; background: var(--structure); color: var(--paper-raised); padding: 3px 10px; border-radius: 999px; }
 /* tabIndex=-1 in AuditWizard.jsx means this is only ever focused
    programmatically on a step change, never via Tab — no default ring to
    suppress for a keyboard user, so it's safe to drop here. */
 .section-title { font-size: 1.5rem; margin-bottom: 4px; outline: none; }
-.section-note { color: var(--ink-soft); font-size: .92rem; max-width: 62ch; margin-bottom: 24px; }
 
 /* ---------- Field + its reference photo, side by side ----------
    Wraps the input and FieldReferencePhoto together (see QuestionBlock in
@@ -1003,6 +1002,12 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   align-items: stretch;
 }
 .icon-grid.wide { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+/* An odd option count (5 accessories, 3 documentation types, ...) left a
+   lone trailing card sitting alone in a half-empty final row — same fix
+   already used for .landing-close-reassure/.prize-wheel-list: the lone
+   last item spans the full row instead of sitting stranded in one column
+   in a fully whitespace one. */
+.icon-grid .icon-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .icon-card {
   height: 100%;
   position: relative;

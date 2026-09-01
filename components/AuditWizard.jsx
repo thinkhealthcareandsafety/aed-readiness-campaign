@@ -582,10 +582,6 @@ export default function AuditWizard({ schema, detectedCity }) {
               {step.title}
             </h2>
           </div>
-          <p className="section-note">
-            {step.title === "Expiry Status" ? expiryStatusNote(aedModelSequence.length) : step.note}
-          </p>
-
           {isReview ? (
             <div className="callout ready">
               Thanks, {identity.firstName || "there"} — everything&rsquo;s filled in for{" "}
@@ -743,18 +739,6 @@ function WarningIcon() {
 // values from computeExpiryTierValue in genericScoring.js: plenty of runway
 // is green, under a year (including the two finer near-term tiers) is a
 // yellow heads-up, already expired is red.
-// The DB-seeded note for "Expiry Status" originally read "Scored on AED
-// (1). AED (2) is optional inventory only." — accurate back when a second
-// AED was only a maybe, but expandUnitQuestions now scores every unit the
-// responder actually reported (see genericScoring.js), so that copy became
-// misleading the moment someone reported 2+ units. Overridden here instead
-// of edited in the DB so it stays correct for any reported count, not just
-// the 1-vs-2 case a static string could describe.
-function expiryStatusNote(unitCount) {
-  if (unitCount <= 1) return "Every field below is scored.";
-  return `You reported ${unitCount} AEDs — every one is scored below, not just the first.`;
-}
-
 function expiryTierClass(tierValue) {
   if (tierValue === "expired") return "notready";
   if (tierValue === "gt6m" || tierValue === "within6m" || tierValue === "within1m" || tierValue === "within1w") return "warn";
