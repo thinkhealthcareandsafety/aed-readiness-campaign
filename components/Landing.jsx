@@ -149,36 +149,36 @@ function scrollToAuditSlowly(e) {
   requestAnimationFrame(step);
 }
 
-const TRUST_ITEMS = ["~5 minutes", "12 readiness checks", "AI scan or manual", "Instant PREPARED score"];
+const TRUST_ITEMS = ["Takes ~5 minutes", "12 quick health checks", "AI photo scanner included", "Instant readiness report"];
 
 const HOW_STEPS = [
   {
-    title: "Answer a few questions, or let AI scan it",
-    body: "Walk through the checklist yourself, or point your camera at the AED and let AI read the battery, pads, and cabinet for you.",
+    title: "Quick answers or instant AI photo scan",
+    body: "Walk through the simple checklist on your phone, or snap a photo of your AED to let our smart scanner read the battery and pad dates for you.",
   },
   {
-    title: "Get your instant PREPARED score",
-    body: "The moment you finish, see exactly where the property stands across all eight readiness categories.",
+    title: "Get your instant readiness score",
+    body: "The moment you finish, see a clean visual dashboard showing what’s in great shape and what needs a quick top-up.",
   },
   {
-    title: "Walk away with a plan",
-    body: "A clear action list, a shareable certificate for trained staff, and one spin of the prize wheel.",
+    title: "Claim your clear action plan & gift",
+    body: "Download your customized checklist, issue staff certificates, and spin the wheel for a free maintenance gift.",
     isGift: true,
   },
 ];
 
 const WHY_CARDS = [
   {
-    title: "Batteries & pads expire quietly",
-    body: "Most properties don't realize their AED battery or pads have expired until it's too late to matter. This check flags it in minutes.",
+    title: "Batteries & pads expire when you least expect it",
+    body: "Gel pads dry out and batteries fade quietly over time. This quick checkup flags expiring items before a real emergency happens.",
   },
   {
-    title: "One score, eight categories",
-    body: "Physical condition, expiry status, training, paediatric readiness, documentation and more — rolled into a single PREPARED score.",
+    title: "Clear answers across 8 key safety areas",
+    body: "From physical cabinet access to team CPR confidence, get a complete 360° view of your property’s emergency readiness.",
   },
   {
-    title: "A report you can act on",
-    body: "See exactly what's ready, what's ageing, and what needs replacing — plus a shareable certificate for CPR/AED-trained staff.",
+    title: "Actionable steps, zero guesswork",
+    body: "No complicated jargon. You get plain-language recommendations so your team knows exactly what to do next to keep everyone safe.",
   },
 ];
 
@@ -196,7 +196,7 @@ export default function Landing() {
         <div className="landing-header-actions">
           <span className="landing-header-pill">
             <span className="landing-header-pill-dot" aria-hidden="true" />
-            <span>Free audit &middot; free gift at the end</span>
+            <span>5-minute checkup &middot; Instant safety report &amp; gift</span>
           </span>
           <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-header-cta">
             Start free audit
@@ -210,10 +210,9 @@ export default function Landing() {
         <div className="landing-hero-inner">
           <div className="landing-hero-copy">
             <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
-            <h1 className="landing-h1">Is your AED ready to save a life right now?</h1>
+            <h1 className="landing-h1">Is your property&rsquo;s AED truly ready to save a life today?</h1>
             <p className="landing-lead">
-              A free readiness check for your property&rsquo;s AED — battery, pads, training, and signage —
-              scored against the PREPARED standard, with a full report at the end.
+              An emergency can happen in seconds. Take 5 minutes to check your property’s AED battery, pads, signage, and team training. Get an instant, easy-to-read readiness report to make sure you&rsquo;re always prepared.
             </p>
             <div className="landing-hero-cta-row">
               <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-cta landing-cta-lg">
@@ -221,9 +220,9 @@ export default function Landing() {
                 <ArrowIcon />
               </a>
               <span className="landing-hero-microcopy">
-                About 5 minutes.
+                Takes about 5 minutes.
                 <br />
-                No cost, no obligation.
+                100% free &middot; no obligation.
               </span>
             </div>
             <div className="landing-hero-chips">
@@ -238,7 +237,7 @@ export default function Landing() {
           <div className="landing-hero-gift">
             <div className="landing-gift-card">
               <div className="landing-gift-card-head">
-                <span className="landing-gift-card-label">Your reward</span>
+                <span className="landing-gift-card-label">Your thank-you gift</span>
                 <span className="landing-gift-card-meta">1 spin &middot; {PRIZES.length} gifts</span>
               </div>
 
@@ -280,7 +279,7 @@ export default function Landing() {
               </div>
 
               <p className="landing-gift-card-tagline">
-                Finish the audit,
+                Finish the checkup,
                 <br />
                 spin for a free gift
               </p>
@@ -292,7 +291,7 @@ export default function Landing() {
                 ))}
               </div>
 
-              <div className="landing-gift-card-footer">Every completed audit gets one spin</div>
+              <div className="landing-gift-card-footer">Every completed checkup earns one spin</div>
             </div>
           </div>
         </div>
@@ -300,7 +299,7 @@ export default function Landing() {
 
       <div className="landing-brand-bar">
         <div className="landing-brand-bar-inner">
-          <span className="landing-brand-label">Built around the brands you operate</span>
+          <span className="landing-brand-label">Designed for top hospitality &amp; commercial properties</span>
           <div className="landing-brand-strip-track">
             {/* The logo row is duplicated back-to-back and the animation
                translates exactly one copy's width (-50%) before looping —
@@ -327,8 +326,8 @@ export default function Landing() {
 
       <section className="landing-how" ref={howRef}>
         <div className={`landing-section-inner ${howClass}`}>
-          <span className="landing-eyebrow dark">How it works</span>
-          <h2 className="landing-h2">Three steps, about five minutes</h2>
+          <span className="landing-eyebrow dark">Simple 3-Step Process</span>
+          <h2 className="landing-h2">Three simple steps, about five minutes</h2>
           <div className="landing-how-steps">
             {HOW_STEPS.map((s, i) => (
               <div className={`landing-how-step${s.isGift ? " is-gift" : ""}`} key={s.title}>
@@ -348,9 +347,9 @@ export default function Landing() {
           <div className="landing-gift-head">
             <div>
               <span className="landing-eyebrow">Spin to win</span>
-              <h2 className="landing-h2">Finish your audit, spin the wheel</h2>
+              <h2 className="landing-h2">Finish your checkup, spin the wheel</h2>
             </div>
-            <p>Every completed audit gets one spin — equal odds, no codes, and our team follows up to arrange delivery.</p>
+            <p>Every completed audit gets one guaranteed spin — equal odds, zero hassle, and our team handles delivery right to your door.</p>
           </div>
           <div className="landing-gift-grid">
             {PRIZES.map((p, i) => (
@@ -367,8 +366,8 @@ export default function Landing() {
 
       <section className="landing-why" ref={whyRef}>
         <div className={`landing-section-inner ${whyClass}`}>
-          <span className="landing-eyebrow dark">Why it matters</span>
-          <h2 className="landing-h2">What a five-minute check catches</h2>
+          <span className="landing-eyebrow dark">Why property safety matters</span>
+          <h2 className="landing-h2">What a quick 5-minute checkup catches</h2>
           <div className="landing-card-grid">
             {WHY_CARDS.map((c, i) => (
               <div className="landing-card" key={c.title} style={{ transitionDelay: `${i * 90}ms` }}>
@@ -384,20 +383,19 @@ export default function Landing() {
       <section className="landing-close" ref={closeRef}>
         <div className={`landing-close-card ${closeClass}`}>
           <div className="landing-close-copy">
-            <h2 className="landing-h2">Ready to see where you stand?</h2>
+            <h2 className="landing-h2">Ready to ensure your property is 100% safe?</h2>
             <p className="landing-close-sub">
-              Answer a few questions or let AI scan your unit — either way, you&rsquo;ll have a PREPARED score and a
-              clear action list in about five minutes.
+              Answer a few questions or let our AI scan your unit — either way, you&rsquo;ll get an instant readiness dashboard and actionable guidance in about 5 minutes.
             </p>
             <ul className="landing-close-reassure">
               <li>
-                <span className="tick">&#10003;</span> No cost, no obligation
+                <span className="tick">&#10003;</span> 100% free with no obligation
               </li>
               <li>
-                <span className="tick">&#10003;</span> Report ready the moment you finish
+                <span className="tick">&#10003;</span> Instant readiness dashboard &amp; shareable report
               </li>
               <li>
-                <span className="tick star">&#9733;</span> One spin of the prize wheel when you&rsquo;re done
+                <span className="tick star">&#9733;</span> One spin of the prize wheel upon completion
               </li>
             </ul>
             <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-cta landing-cta-lg">
@@ -419,7 +417,7 @@ export default function Landing() {
               one free gift
             </p>
             <div className="landing-voucher-rule" />
-            <p className="landing-voucher-fine">Unlocked when your audit is submitted — no code needed.</p>
+            <p className="landing-voucher-fine">Unlocked automatically when your checkup is complete.</p>
             <div className="landing-voucher-thumbs">
               {PRIZES.map((p) => (
                 // eslint-disable-next-line @next/next/no-img-element -- small static thumbnail row, no next/image needed
@@ -433,7 +431,7 @@ export default function Landing() {
       <footer className="landing-footer">
         <div className="landing-footer-inner">
           <span>Think Health &middot; AED Readiness Campaign</span>
-          <span>Free audit &middot; free gift &middot; about five minutes</span>
+          <span>Free checkup &middot; free maintenance gift &middot; takes ~5 minutes</span>
         </div>
       </footer>
     </>
