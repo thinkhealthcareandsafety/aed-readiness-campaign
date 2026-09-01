@@ -366,7 +366,6 @@ export default function Landing() {
 
       <section className="landing-why" ref={whyRef}>
         <div className={`landing-section-inner ${whyClass}`}>
-          <span className="landing-eyebrow dark">Why property safety matters</span>
           <h2 className="landing-h2">What a quick 5-minute checkup catches</h2>
           <div className="landing-card-grid">
             {WHY_CARDS.map((c, i) => (

@@ -586,7 +586,7 @@ export default function AuditWizard({ schema, detectedCity }) {
                   >
                     <span className="tag">Manual</span>
                     <h3>Continue manually</h3>
-                    <p>Answer each question yourself, same as before — takes about 5 minutes.</p>
+                    <p>Fill out the step-by-step checklist yourself at your own pace — takes about 5 minutes.</p>
                   </button>
                   <button type="button" className="mode-choice-card" onClick={() => setAutoScanActive(true)}>
                     <span className="tag">AI scan</span>
