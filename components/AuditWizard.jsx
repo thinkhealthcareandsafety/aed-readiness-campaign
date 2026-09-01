@@ -1322,10 +1322,3 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
 
   return null;
 }
-etZoomPreview(null)} />
-      </QBlock>
-    );
-  }
-
-  return null;
-}
