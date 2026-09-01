@@ -1115,17 +1115,21 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 /* ---------- Illustrated image-card grids (AED models, status lamp, paediatric) ---------- */
 .icon-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
   align-items: stretch;
 }
+.icon-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.icon-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.icon-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
 .icon-grid.wide { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-/* An odd option count (5 accessories, 3 documentation types, ...) left a
-   lone trailing card sitting alone in a half-empty final row — same fix
-   already used for .landing-close-reassure/.prize-wheel-list: the lone
-   last item spans the full row instead of sitting stranded in one column
-   in a fully whitespace one. */
-.icon-grid .icon-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+@media (max-width: 640px) {
+  .icon-grid.cols-2,
+  .icon-grid.cols-3,
+  .icon-grid.cols-4 {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
 .icon-card {
   height: 100%;
   position: relative;
@@ -1135,7 +1139,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   text-align: center;
   gap: 8px;
   padding: 0 0 14px;
-  min-height: 56px;
+  min-height: 120px;
   border: 1.5px solid var(--line-strong);
   border-radius: 16px;
   background: var(--paper-raised);

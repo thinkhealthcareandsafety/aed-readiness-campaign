@@ -80,8 +80,9 @@ export function CheckboxList({ value, onToggle, items, disabledKeys }) {
 }
 
 export function IconRadioGrid({ name, value, onChange, items, wide, pair }) {
+  const colsClass = items.length === 2 ? " cols-2" : items.length === 3 ? " cols-3" : items.length === 4 ? " cols-4" : "";
   return (
-    <div className={`icon-grid${wide ? " wide" : ""}${pair ? " pair" : ""}`}>
+    <div className={`icon-grid${wide ? " wide" : ""}${pair ? " pair" : ""}${colsClass}`}>
       {items.map((opt) => (
         <label key={opt.value} className={`icon-card${value === opt.value ? " selected" : ""}`}>
           <input
@@ -112,8 +113,9 @@ export function IconCheckboxGrid({ value, onChange, onToggle, items, disabledKey
     if (onToggle) onToggle(key, checked);
     else onChange({ ...v, [key]: checked });
   };
+  const colsClass = items.length === 2 ? " cols-2" : items.length === 3 ? " cols-3" : items.length === 4 ? " cols-4" : "";
   return (
-    <div className="icon-grid">
+    <div className={`icon-grid${colsClass}`}>
       {items.map(({ key, label, sub, art }) => {
         const isDisabled = !v[key] && disabled.has(key);
         return (
@@ -140,8 +142,9 @@ export function IconCheckboxGrid({ value, onChange, onToggle, items, disabledKey
 export function IconQuantityGrid({ items, value, onChange, max }) {
   const v = value || {};
   const total = Object.values(v).reduce((s, n) => s + (n || 0), 0);
+  const colsClass = items.length === 2 ? " cols-2" : items.length === 3 ? " cols-3" : items.length === 4 ? " cols-4" : "";
   return (
-    <div className="icon-grid">
+    <div className={`icon-grid${colsClass}`}>
       {items.map(({ key, label, sub, art }) => {
         const qty = v[key] || 0;
         const atCap = Number.isFinite(max) && total >= max && qty <= 0;
