@@ -12,7 +12,7 @@ import Landing from "@/components/Landing";
 import LiveScore from "@/components/LiveScore";
 import PrizeWheel from "@/components/PrizeWheel";
 import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
-import { listHotelCities, sortHotelOptionsByCity } from "@/lib/hotelCities";
+import { sortHotelOptionsByCity } from "@/lib/hotelCities";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, reconcileLinkedSelections, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
 import { aedAgeStatus, isValidAedSerialFormat, aedSerialFormatHint, aedSerialExample } from "@/lib/aedSerialDate";
 import { COUNTRY_CODES, DEFAULT_COUNTRY_ISO, countryByIso, composePhoneValue, parsePhoneValueLenient, sanitizeLocalDigits } from "@/lib/phoneCountries";
@@ -45,27 +45,6 @@ const MODE_CHOICE_STEP = {
   note: "Photograph your AED and let AI read the details, or answer each question yourself.",
   questions: [],
 };
-
-// Small override control shown above the hotel picker: "Showing: {city} ▾"
-// — the picker itself already sorts that city's hotels to the top, this
-// just lets the responder pick a different one (e.g. auditing a property
-// outside their own city).
-function CityPill({ cities, selected, onChange }) {
-  if (!cities.length) return null;
-  return (
-    <label className="city-pill">
-      <span className="city-pill-label">Showing:</span>
-      <select value={selected || ""} onChange={(e) => onChange(e.target.value || null)}>
-        {!selected && <option value="">All cities</option>}
-        {cities.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 // A plain fetch() never times out on its own — on flaky hotel wifi a
 // request can stall indefinitely with no error and no response, which
@@ -582,6 +561,7 @@ export default function AuditWizard({ schema, detectedCity }) {
               {step.title}
             </h2>
           </div>
+          {step.note && <p className="section-subtitle">{step.note}</p>}
           {isReview ? (
             <div className="callout ready">
               Thanks, {identity.firstName || "there"} — everything&rsquo;s filled in for{" "}
@@ -630,41 +610,45 @@ export default function AuditWizard({ schema, detectedCity }) {
             // state, since it only needs to last for this one render pass.
             (() => {
               let lastUnit = null;
-              return step.questions.map((q) => {
-                const unit = unitNumberFromLabel(q.label);
-                const isNewUnit = unit != null && unit !== lastUnit;
-                if (unit != null) lastUnit = unit;
-                const unitModel = isNewUnit ? aedModelSequence[unit - 1] : null;
-                const unitModelLabel = unitModel ? modelLabelByValue[unitModel] : null;
-                const unitSerial = isNewUnit ? serialByUnit[unit - 1] : null;
-                return (
-                  <div key={q.id} id={`q-field-${q.id}`}>
-                    {isNewUnit && (
-                      <div className="unit-banner">
-                        <span className="unit-banner-id">
-                          AED ({unit}){unitModelLabel ? ` — ${unitModelLabel}` : ""}
-                        </span>
-                        {unitSerial && <span className="unit-banner-serial">SN {unitSerial}</span>}
+              return (
+                <div className="wizard-questions-grid">
+                  {step.questions.map((q) => {
+                    const unit = unitNumberFromLabel(q.label);
+                    const isNewUnit = unit != null && unit !== lastUnit;
+                    if (unit != null) lastUnit = unit;
+                    const unitModel = isNewUnit ? aedModelSequence[unit - 1] : null;
+                    const unitModelLabel = unitModel ? modelLabelByValue[unitModel] : null;
+                    const unitSerial = isNewUnit ? serialByUnit[unit - 1] : null;
+                    return (
+                      <div key={q.id} id={`q-field-${q.id}`} className={`q-wrapper${q.fieldRole ? ` field-role-${q.fieldRole}` : ""}`}>
+                        {isNewUnit && (
+                          <div className="unit-banner">
+                            <span className="unit-banner-id">
+                              AED ({unit}){unitModelLabel ? ` — ${unitModelLabel}` : ""}
+                            </span>
+                            {unitSerial && <span className="unit-banner-serial">SN {unitSerial}</span>}
+                          </div>
+                        )}
+                        <QuestionBlock
+                          question={q}
+                          aiInfo={aiFilled[q.id]}
+                          answers={answers}
+                          setAnswer={setAnswer}
+                          setRadioAnswer={setRadioAnswer}
+                          setCheckboxAnswer={setCheckboxAnswer}
+                          selectedCity={selectedCity}
+                          onCityChange={setSelectedCity}
+                          setQuantityAnswer={setQuantityAnswer}
+                          setFreeText={setFreeText}
+                          selectedAedModels={selectedAedModels}
+                          aedModelSequence={aedModelSequence}
+                          trainingRecencyValue={trainingRecencyValue}
+                        />
                       </div>
-                    )}
-                    <QuestionBlock
-                      question={q}
-                      aiInfo={aiFilled[q.id]}
-                      answers={answers}
-                      setAnswer={setAnswer}
-                      setRadioAnswer={setRadioAnswer}
-                      setCheckboxAnswer={setCheckboxAnswer}
-                      selectedCity={selectedCity}
-                      onCityChange={setSelectedCity}
-                      setQuantityAnswer={setQuantityAnswer}
-                      setFreeText={setFreeText}
-                      selectedAedModels={selectedAedModels}
-                      aedModelSequence={aedModelSequence}
-                      trainingRecencyValue={trainingRecencyValue}
-                    />
-                  </div>
-                );
-              });
+                    );
+                  })}
+                </div>
+              );
             })()
           )}
         </div>
@@ -1122,22 +1106,15 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
     return (
       <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint} fieldId={question.id}>
         {isHotelSelect ? (
-          <>
-            <CityPill
-              cities={listHotelCities()}
-              selected={selectedCity}
-              onChange={onCityChange}
-            />
-            <HotelSelect
-              value={val}
-              onChange={(v) => setRadioAnswer(question, v)}
-              options={sortHotelOptionsByCity(
-                question.options.map((o) => ({ value: o.value, label: o.label })),
-                selectedCity
-              )}
-              placeholder="Select..."
-            />
-          </>
+          <HotelSelect
+            value={val}
+            onChange={(v) => setRadioAnswer(question, v)}
+            options={sortHotelOptionsByCity(
+              question.options.map((o) => ({ value: o.value, label: o.label })),
+              selectedCity
+            )}
+            placeholder="Search and select your hotel..."
+          />
         ) : isTabSelect ? (
           <TabSelect
             value={val}
