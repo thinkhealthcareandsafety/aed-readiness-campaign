@@ -1257,6 +1257,26 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .step-dots .dot-item:disabled { cursor: default; }
 .step-dots .dot-item:focus-visible { outline: 2px solid var(--structure); outline-offset: 2px; }
 
+/* ---------- PREPARED letter tracker ----------
+   Shows the 8 scored sections' letters (P R E P A R E D) as a persistent
+   strip, filling in with a checkmark as each one is completed — lets the
+   responder see at a glance which parts of "PREPARED" are already done
+   instead of only ever seeing the single current section's letter. */
+.prepared-track { display: flex; align-items: center; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+.prepared-letter {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
+  font-family: var(--font-display); font-size: .82rem; font-weight: 700; line-height: 1;
+  background: var(--paper); color: var(--structure); border: 1.5px solid var(--line-strong);
+  transition: background .25s ease, color .25s ease, border-color .25s ease, transform .2s ease;
+}
+.prepared-letter.done { background: var(--structure); border-color: var(--structure); color: var(--paper-raised); }
+.prepared-letter.current { background: var(--accent); border-color: var(--accent); color: #fff; transform: scale(1.12); }
+@media (max-width: 480px) {
+  .prepared-track { margin-top: 6px; gap: 4px; }
+  .prepared-letter { width: 20px; height: 20px; font-size: .72rem; border-radius: 6px; }
+}
+
 /* ---------- Field-level validation flash ----------
    Fired by scrollToQuestion in AuditWizard.jsx after a failed Next: the
    invalid field scrolls into view and briefly outlines itself, so on a step

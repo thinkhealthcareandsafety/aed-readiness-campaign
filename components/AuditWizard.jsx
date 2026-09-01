@@ -19,6 +19,16 @@ import { COUNTRY_CODES, DEFAULT_COUNTRY_ISO, countryByIso, composePhoneValue, pa
 
 const REVIEW_STEP = { id: "__review", letter: "✓", title: "Submit Audit", questions: [] };
 
+// The 8 scored sections that spell out "PREPARED" each carry that single
+// letter in the DB (form_sections.letter) in this exact order — Physical
+// Status, Readiness Alert, Expiry Status, Paediatric Readiness, AED
+// Responder Training, Regular Inspection, Emergency Accessories &
+// Contacts, Documentation. Everything else (Hotel Details, AED
+// Installation Status/Numbers, Good Samaritan) carries a non-PREPARED
+// marker ("1", "2", "✚"), so filtering on membership in this set is enough
+// to pick out exactly those 8 sections without hardcoding their titles.
+const PREPARED_LETTERS = new Set(["P", "R", "E", "A", "D"]);
+
 // The battery_attached/pads_connected questions were seeded with one fixed
 // pair of real Philips FRx photos (see lib/seedFormData.js) — correct for
 // an FRx unit, actively wrong for any other reported model. Maps each
@@ -244,6 +254,14 @@ export default function AuditWizard({ schema, detectedCity }) {
       REVIEW_STEP,
     ];
   }, [visibleSections, modeChoiceInsertIndex]);
+  // Lets the responder watch the PREPARED acronym fill in letter-by-letter
+  // as they move through the form — see PREPARED_LETTERS above for why a
+  // plain membership filter is enough to land on exactly these 8 steps, in
+  // the right order, with no hardcoded titles.
+  const preparedTrack = useMemo(
+    () => steps.map((s, i) => ({ ...s, index: i })).filter((s) => PREPARED_LETTERS.has(s.letter)),
+    [steps]
+  );
   const step = steps[Math.min(stepIndex, steps.length - 1)];
   const isLast = stepIndex === steps.length - 1;
   const isReview = step.id === "__review";
@@ -533,6 +551,24 @@ export default function AuditWizard({ schema, detectedCity }) {
               />
             ))}
           </div>
+          {preparedTrack.length > 0 && (
+            <div className="prepared-track" role="list" aria-label="PREPARED checklist progress">
+              {preparedTrack.map((s) => {
+                const done = s.index < stepIndex;
+                const current = s.index === stepIndex;
+                return (
+                  <div
+                    key={s.id}
+                    role="listitem"
+                    className={`prepared-letter${done ? " done" : ""}${current ? " current" : ""}`}
+                    title={`${s.title}${done ? " — done" : current ? " — in progress" : ""}`}
+                  >
+                    {done ? "✓" : s.letter}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="wizard-main">
