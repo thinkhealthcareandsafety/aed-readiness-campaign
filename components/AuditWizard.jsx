@@ -493,200 +493,199 @@ export default function AuditWizard({ schema, detectedCity }) {
           above every subsequent step of a 14-step form. */}
       {stepIndex === 0 && <Landing />}
       <div className="wizard-page" id="audit">
-      <div className="wizard-topbar">
-        <div className="brandrow">
-          <div className="brand">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, no next/image needed */}
-            <img src="/brand/thinkhealth-logo.png" alt="Think Health" className="brand-logo" />
-            <span>
-              AED Readiness Campaign
-              <small>Think Health &middot; PREPARED Score</small>
-            </span>
-          </div>
-          <div className="topbar-meta">
-            {!isModeChoice && <LiveScore points={scored.total.points} max={scored.total.max} />}
-            <div className="step-label">
-              Step {stepIndex + 1} / {steps.length}
+        <div className="wizard-topbar">
+          <div className="brandrow">
+            <div className="brand">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, no next/image needed */}
+              <img src="/brand/thinkhealth-logo.png" alt="Think Health" className="brand-logo" />
+              <span>
+                AED Readiness Campaign
+                <small>Think Health &middot; PREPARED Score</small>
+              </span>
+            </div>
+            <div className="topbar-meta">
+              {!isModeChoice && <LiveScore points={scored.total.points} max={scored.total.max} />}
+              <div className="step-label">
+                Step {stepIndex + 1} / {steps.length}
+              </div>
             </div>
           </div>
-        </div>
-        {hotelBrand && (
-          <div className="hotel-card">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static bundled brand mark, no next/image needed */}
-            <img src={hotelBrand.logo} alt="" className="hotel-card-logo" />
-            <div className="hotel-card-text">
-              <span className="hotel-card-eyebrow">Auditing for</span>
-              <span className="hotel-card-name">{identity.hotel}</span>
+          {hotelBrand && (
+            <div className="hotel-card">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static bundled brand mark, no next/image needed */}
+              <img src={hotelBrand.logo} alt="" className="hotel-card-logo" />
+              <div className="hotel-card-text">
+                <span className="hotel-card-eyebrow">Auditing for</span>
+                <span className="hotel-card-name">{identity.hotel}</span>
+              </div>
             </div>
+          )}
+          <div className="step-dots">
+            {steps.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                className={`dot-item${i < stepIndex ? " done" : ""}${i === stepIndex ? " current" : ""}`}
+                onClick={() => jumpToStep(i)}
+                disabled={i >= stepIndex}
+                aria-current={i === stepIndex ? "step" : undefined}
+                aria-label={`${i < stepIndex ? "Go back to" : i === stepIndex ? "Current step:" : "Step"} ${i + 1}, ${s.title}`}
+              />
+            ))}
           </div>
-        )}
-        <div className="step-dots">
-          {steps.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              className={`dot-item${i < stepIndex ? " done" : ""}${i === stepIndex ? " current" : ""}`}
-              onClick={() => jumpToStep(i)}
-              disabled={i >= stepIndex}
-              aria-current={i === stepIndex ? "step" : undefined}
-              aria-label={`${i < stepIndex ? "Go back to" : i === stepIndex ? "Current step:" : "Step"} ${i + 1}, ${s.title}`}
-            />
-          ))}
         </div>
-      </div>
 
-      <div className="wizard-main">
-        {showResumeToast && (
-          <div className="callout structure resume-toast">
-            <span>Welcome back — resuming right where you left off.</span>
-            <button
-              type="button"
-              className="resume-toast-close"
-              onClick={() => setShowResumeToast(false)}
-              aria-label="Dismiss"
-            >
-              &times;
-            </button>
-          </div>
-        )}
-        <div className="wizard-card" key={step.id} style={{ animation: "stepFade .28s ease both" }}>
-          <div className="section-eyebrow">
-            <span className="letter">{step.letter}</span>
-            {/* tabIndex=-1 + programmatic focus on every step change (see the
+        <div className="wizard-main">
+          {showResumeToast && (
+            <div className="callout structure resume-toast">
+              <span>Welcome back — resuming right where you left off.</span>
+              <button
+                type="button"
+                className="resume-toast-close"
+                onClick={() => setShowResumeToast(false)}
+                aria-label="Dismiss"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+          <div className="wizard-card" key={step.id} style={{ animation: "stepFade .28s ease both" }}>
+            <div className="section-eyebrow">
+              <span className="letter">{step.letter}</span>
+              {/* tabIndex=-1 + programmatic focus on every step change (see the
                 stepIndex effect above) — not reachable via Tab, only ever
                 focused by that effect, so a screen reader announces the new
                 step instead of leaving focus stranded on the previous
                 step's (now relocated) Next button. */}
-            <h2 ref={headingRef} className="section-title" tabIndex={-1} style={{ marginBottom: 0 }}>
-              {step.title}
-            </h2>
-          </div>
-          {step.note && <p className="section-subtitle">{step.note}</p>}
-          {isReview ? (
-            <div className="callout ready">
-              Thanks, {identity.firstName || "there"} — everything&rsquo;s filled in for{" "}
-              <b>{identity.hotel || "your hotel"}</b>. Press <b>Submit audit</b> below to save this response and see
-              your PREPARED score and detailed AED report.
+              <h2 ref={headingRef} className="section-title" tabIndex={-1} style={{ marginBottom: 0 }}>
+                {step.title}
+              </h2>
             </div>
-          ) : isModeChoice ? (
-            autoScanActive ? (
-              <AutoInspection
-                unitCount={aedModelSequence.length}
-                modelSequence={aedModelSequence}
-                modelLabelMap={modelLabelByValue}
-                serialByUnit={serialByUnit}
-                onComplete={handleAutoInspectionComplete}
-                onCancel={() => setAutoScanActive(false)}
-              />
-            ) : (
-              <div className="mode-choice-grid">
-                <button
-                  type="button"
-                  className="mode-choice-card"
-                  onClick={() => setStepIndex((i) => Math.min(i + 1, steps.length - 1))}
-                >
-                  <span className="tag">Manual</span>
-                  <h3>Continue manually</h3>
-                  <p>Answer each question yourself, same as before — takes about 5 minutes.</p>
-                </button>
-                <button type="button" className="mode-choice-card" onClick={() => setAutoScanActive(true)}>
-                  <span className="tag">AI scan</span>
-                  <h3>Scan automatically</h3>
-                  <p>
-                    Photograph your AED&rsquo;s labels and status light — AI reads the serial number, expiry dates,
-                    and condition for you.
-                  </p>
-                </button>
+            {isReview ? (
+              <div className="callout ready">
+                Thanks, {identity.firstName || "there"} — everything&rsquo;s filled in for{" "}
+                <b>{identity.hotel || "your hotel"}</b>. Press <b>Submit audit</b> below to save this response and see
+                your PREPARED score and detailed AED report.
               </div>
-            )
-          ) : (
-            // A section like Expiry Status asks about "Battery (1)", "Pads
-            // (1)", "Battery (2)", "Pads (2)"... back to back — with two
-            // different brands reported, nothing on screen said which
-            // physical unit "(2)" actually was without scrolling down to
-            // spot the small reference-photo thumbnail. lastUnitRef tracks
-            // the unit number as the loop walks through, purely to detect
-            // "this question starts a new unit" — a plain local, not React
-            // state, since it only needs to last for this one render pass.
-            (() => {
-              let lastUnit = null;
-              return (
-                <div className="wizard-questions-grid">
-                  {step.questions.map((q) => {
-                    const unit = unitNumberFromLabel(q.label);
-                    const isNewUnit = unit != null && unit !== lastUnit;
-                    if (unit != null) lastUnit = unit;
-                    const unitModel = isNewUnit ? aedModelSequence[unit - 1] : null;
-                    const unitModelLabel = unitModel ? modelLabelByValue[unitModel] : null;
-                    const unitSerial = isNewUnit ? serialByUnit[unit - 1] : null;
-                    return (
-                      <div key={q.id} id={`q-field-${q.id}`} className={`q-wrapper${q.fieldRole ? ` field-role-${q.fieldRole}` : ""}`}>
-                        {isNewUnit && (
-                          <div className="unit-banner">
-                            <span className="unit-banner-id">
-                              AED ({unit}){unitModelLabel ? ` — ${unitModelLabel}` : ""}
-                            </span>
-                            {unitSerial && <span className="unit-banner-serial">SN {unitSerial}</span>}
-                          </div>
-                        )}
-                        <QuestionBlock
-                          question={q}
-                          aiInfo={aiFilled[q.id]}
-                          answers={answers}
-                          setAnswer={setAnswer}
-                          setRadioAnswer={setRadioAnswer}
-                          setCheckboxAnswer={setCheckboxAnswer}
-                          selectedCity={selectedCity}
-                          onCityChange={setSelectedCity}
-                          setQuantityAnswer={setQuantityAnswer}
-                          setFreeText={setFreeText}
-                          selectedAedModels={selectedAedModels}
-                          aedModelSequence={aedModelSequence}
-                          trainingRecencyValue={trainingRecencyValue}
-                        />
-                      </div>
-                    );
-                  })}
+            ) : isModeChoice ? (
+              autoScanActive ? (
+                <AutoInspection
+                  unitCount={aedModelSequence.length}
+                  modelSequence={aedModelSequence}
+                  modelLabelMap={modelLabelByValue}
+                  serialByUnit={serialByUnit}
+                  onComplete={handleAutoInspectionComplete}
+                  onCancel={() => setAutoScanActive(false)}
+                />
+              ) : (
+                <div className="mode-choice-grid">
+                  <button
+                    type="button"
+                    className="mode-choice-card"
+                    onClick={() => setStepIndex((i) => Math.min(i + 1, steps.length - 1))}
+                  >
+                    <span className="tag">Manual</span>
+                    <h3>Continue manually</h3>
+                    <p>Answer each question yourself, same as before — takes about 5 minutes.</p>
+                  </button>
+                  <button type="button" className="mode-choice-card" onClick={() => setAutoScanActive(true)}>
+                    <span className="tag">AI scan</span>
+                    <h3>Scan automatically</h3>
+                    <p>
+                      Photograph your AED&rsquo;s labels and status light — AI reads the serial number, expiry dates,
+                      and condition for you.
+                    </p>
+                  </button>
                 </div>
-              );
-            })()
-          )}
+              )
+            ) : (
+              // A section like Expiry Status asks about "Battery (1)", "Pads
+              // (1)", "Battery (2)", "Pads (2)"... back to back — with two
+              // different brands reported, nothing on screen said which
+              // physical unit "(2)" actually was without scrolling down to
+              // spot the small reference-photo thumbnail. lastUnitRef tracks
+              // the unit number as the loop walks through, purely to detect
+              // "this question starts a new unit" — a plain local, not React
+              // state, since it only needs to last for this one render pass.
+              (() => {
+                let lastUnit = null;
+                return (
+                  <div className="wizard-questions-grid">
+                    {step.questions.map((q) => {
+                      const unit = unitNumberFromLabel(q.label);
+                      const isNewUnit = unit != null && unit !== lastUnit;
+                      if (unit != null) lastUnit = unit;
+                      const unitModel = isNewUnit ? aedModelSequence[unit - 1] : null;
+                      const unitModelLabel = unitModel ? modelLabelByValue[unitModel] : null;
+                      const unitSerial = isNewUnit ? serialByUnit[unit - 1] : null;
+                      return (
+                        <div key={q.id} id={`q-field-${q.id}`} className={`q-wrapper${q.fieldRole ? ` field-role-${q.fieldRole}` : ""}`}>
+                          {isNewUnit && (
+                            <div className="unit-banner">
+                              <span className="unit-banner-id">
+                                AED ({unit}){unitModelLabel ? ` — ${unitModelLabel}` : ""}
+                              </span>
+                              {unitSerial && <span className="unit-banner-serial">SN {unitSerial}</span>}
+                            </div>
+                          )}
+                          <QuestionBlock
+                            question={q}
+                            aiInfo={aiFilled[q.id]}
+                            answers={answers}
+                            setAnswer={setAnswer}
+                            setRadioAnswer={setRadioAnswer}
+                            setCheckboxAnswer={setCheckboxAnswer}
+                            selectedCity={selectedCity}
+                            onCityChange={setSelectedCity}
+                            setQuantityAnswer={setQuantityAnswer}
+                            setFreeText={setFreeText}
+                            selectedAedModels={selectedAedModels}
+                            aedModelSequence={aedModelSequence}
+                            trainingRecencyValue={trainingRecencyValue}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()
+            )}
+          </div>
         </div>
-      </div>
 
-      {!autoScanActive && (
-        <div className="wizard-footer">
-          <div className="inner">
-            {/* Used to sit crammed into the same row as Back/Next, competing
+        {!autoScanActive && (
+          <div className="wizard-footer">
+            <div className="inner">
+              {/* Used to sit crammed into the same row as Back/Next, competing
                with them for width — a longer message (there are several
                now: duplicate-serial, phone-country, serial-format-hint)
                just got ellipsis-truncated mid-sentence with no way to read
                the rest short of hovering for the title tooltip, which
                doesn't work on touch at all. Its own full-width row lets it
                wrap across as many lines as it needs instead. */}
-            {(error || submitError) && (
-              <div className="error-msg" role="alert">
-                <WarningIcon />
-                <span>{error || submitError}</span>
-              </div>
-            )}
-            <div className="wizard-footer-nav">
-              <button className="btn btn-ghost" onClick={goBack} disabled={stepIndex === 0 || submitting}>
-                Back
-              </button>
-              {isModeChoice ? null : !isLast ? (
-                <button className="btn btn-primary" onClick={goNext} disabled={checkingEmail}>
-                  {checkingEmail ? "Checking…" : "Next"}
-                </button>
-              ) : (
-                <button className="btn btn-primary" onClick={submit} disabled={submitting}>
-                  {submitting ? "Submitting..." : "Submit audit"}
-                </button>
+              {(error || submitError) && (
+                <div className="error-msg" role="alert">
+                  <WarningIcon />
+                  <span>{error || submitError}</span>
+                </div>
               )}
+              <div className="wizard-footer-nav">
+                <button className="btn btn-ghost" onClick={goBack} disabled={stepIndex === 0 || submitting}>
+                  Back
+                </button>
+                {isModeChoice ? null : !isLast ? (
+                  <button className="btn btn-primary" onClick={goNext} disabled={checkingEmail}>
+                    {checkingEmail ? "Checking…" : "Next"}
+                  </button>
+                ) : (
+                  <button className="btn btn-primary" onClick={submit} disabled={submitting}>
+                    {submitting ? "Submitting..." : "Submit audit"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
       {wonPrize && submittedId && (
         <PrizeWheel prize={wonPrize} onDone={() => router.push(`/report/${submittedId}`)} />
@@ -1174,42 +1173,42 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
       <>
         {aiBadge}
         <QBlock label={question.label} required={question.required} points={max || null} hint={question.hint}>
-        {hasImages ? (
-          <IconRadioGrid
-            name={name}
-            value={val}
-            onChange={(v) => setRadioAnswer(question, v)}
-            wide={question.options.length <= 2}
-            pair={question.options.length === 2 && !question.options.some((o) => o.sub)}
-            items={question.options.map((o) => {
-              const src = resolvedOptionImage(o);
-              return {
-                value: o.value,
-                label: o.label,
-                sub: o.sub,
-                art: <ZoomableOptionArt src={src} alt={o.label} onZoom={() => setZoomPreview({ photo: src, caption: o.label })} />,
-              };
-            })}
-          />
-        ) : (
-          <RadioGroup
-            name={name}
-            value={val}
-            onChange={(v) => setRadioAnswer(question, v)}
-            row={question.options.length <= 2 && !question.options.some((o) => o.sub)}
-            options={question.options.map((o) => ({ value: o.value, label: o.label, sub: o.sub }))}
-          />
-        )}
-        {selectedOpt?.allowFreeText && (
-          <div style={{ marginTop: 10 }}>
-            <TextInput
-              value={answers[question.id]?.freeText || ""}
-              onChange={(v) => setFreeText(question, null, v)}
-              placeholder="Please specify"
+          {hasImages ? (
+            <IconRadioGrid
+              name={name}
+              value={val}
+              onChange={(v) => setRadioAnswer(question, v)}
+              wide={question.options.length <= 2}
+              pair={question.options.length === 2 && !question.options.some((o) => o.sub)}
+              items={question.options.map((o) => {
+                const src = resolvedOptionImage(o);
+                return {
+                  value: o.value,
+                  label: o.label,
+                  sub: o.sub,
+                  art: <ZoomableOptionArt src={src} alt={o.label} onZoom={() => setZoomPreview({ photo: src, caption: o.label })} />,
+                };
+              })}
             />
-          </div>
-        )}
-        <ImageLightbox item={zoomPreview} kind="photo" labelKey="caption" onClose={() => setZoomPreview(null)} />
+          ) : (
+            <RadioGroup
+              name={name}
+              value={val}
+              onChange={(v) => setRadioAnswer(question, v)}
+              row={question.options.length <= 2 && !question.options.some((o) => o.sub)}
+              options={question.options.map((o) => ({ value: o.value, label: o.label, sub: o.sub }))}
+            />
+          )}
+          {selectedOpt?.allowFreeText && (
+            <div style={{ marginTop: 10 }}>
+              <TextInput
+                value={answers[question.id]?.freeText || ""}
+                onChange={(v) => setFreeText(question, null, v)}
+                placeholder="Please specify"
+              />
+            </div>
+          )}
+          <ImageLightbox item={zoomPreview} kind="photo" labelKey="caption" onClose={() => setZoomPreview(null)} />
         </QBlock>
       </>
     );
@@ -1317,6 +1316,13 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
             </div>
           ))}
         <ImageLightbox item={zoomPreview} kind="photo" labelKey="caption" onClose={() => setZoomPreview(null)} />
+      </QBlock>
+    );
+  }
+
+  return null;
+}
+etZoomPreview(null)} />
       </QBlock>
     );
   }
