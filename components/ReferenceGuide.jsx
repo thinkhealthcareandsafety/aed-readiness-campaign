@@ -13,17 +13,12 @@ const MODEL_PHOTOS = {
     serial: "/reference/frx-serial.jpg",
     battery: "/reference/frx-battery.jpg",
     pads: "/reference/frx-pads.jpg",
-    // Distinct from `battery`/`pads` above — those two are annotated shots
-    // for finding the *expiry date* specifically; these are plain shots of
-    // the compartment/connector for the separate "is it actually seated"
-    // physical-status questions, which ask something different.
     batteryAttached: "/reference/frx-battery-attached.jpg",
+    batteryNotAttached: "/reference/frx-battery-not-attached.jpg",
     padsAttached: "/reference/frx-pads-connected.jpg",
-    // Real photo of a genuinely cracked FRx front panel — see the
-    // `damage` kind resolution in AuditWizard.jsx, which always prefers
-    // the reporting unit's own model photo here instead of one shared
-    // cross-brand composite (damage-examples.jpg, still the fallback for
-    // any model without one of its own).
+    padsNotAttached: "/reference/frx-pads-not-connected.jpg",
+    readyIndicator: "/reference/frx-status-ready.jpg",
+    notReadyIndicator: "/reference/frx-status-notready.jpg",
     damage: "/reference/frx-damage.jpg",
   },
   hs1: {
