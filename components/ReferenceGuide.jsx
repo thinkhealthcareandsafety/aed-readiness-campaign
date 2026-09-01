@@ -39,12 +39,10 @@ const MODEL_PHOTOS = {
     batteryNotAttached: "/reference/hs1-battery-not-attached.jpg",
     padsNotAttached: "/reference/hs1-pads-not-attached.jpg",
     damage: "/reference/hs1-damage.jpg",
-    // Real photo of this exact unit's power button lit green (ready). No
-    // "not ready" (button dark) counterpart yet — falls back to the seeded
-    // FRx photo for that option until one's sourced, same as any model
-    // missing one side of a pair elsewhere in this table (e.g. defibtech's
-    // batteryNotAttached/padsNotAttached).
+    // Real photos of this exact unit's power button — lit green (ready)
+    // and dark/unlit (not ready).
     readyIndicator: "/reference/hs1-ready.jpg",
+    notReadyIndicator: "/reference/hs1-notready.jpg",
   },
   zollPlus: {
     brand: "ZOLL AED Plus",
