@@ -839,10 +839,6 @@ button { font-family: inherit; }
   border-radius: 999px;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
 }
-.unit-banner-badge::before {
-  content: "⚕";
-  font-size: 1.1em;
-}
 .unit-banner-model {
   font-size: 1.05rem;
   font-weight: 700;
