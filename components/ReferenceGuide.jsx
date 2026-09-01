@@ -146,8 +146,8 @@ export function ImageLightbox({ item, kind, labelKey, onClose }) {
           &times;
         </button>
         {/* eslint-disable-next-line @next/next/no-img-element -- static reference photo, not build-time content */}
-        <img src={item[kind]} alt={`${caption} — where to find this`} />
-        <div className="ref-lightbox-caption">{caption}</div>
+        <img src={item[kind] || item.photo || item.src || item.imageUrl} alt={`${caption} — reference photo`} />
+        {caption && <div className="ref-lightbox-caption">{caption}</div>}
       </div>
     </div>,
     document.body
