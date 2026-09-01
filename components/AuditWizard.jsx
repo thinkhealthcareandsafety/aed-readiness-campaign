@@ -622,10 +622,16 @@ export default function AuditWizard({ schema, detectedCity }) {
                         <div key={q.id} id={`q-field-${q.id}`} className={`q-wrapper${q.fieldRole ? ` field-role-${q.fieldRole}` : ""}`}>
                           {isNewUnit && (
                             <div className="unit-banner">
-                              <span className="unit-banner-id">
-                                AED ({unit}){unitModelLabel ? ` — ${unitModelLabel}` : ""}
-                              </span>
-                              {unitSerial && <span className="unit-banner-serial">SN {unitSerial}</span>}
+                              <div className="unit-banner-left">
+                                <span className="unit-banner-badge">AED ({unit})</span>
+                                {unitModelLabel && <span className="unit-banner-model">{unitModelLabel}</span>}
+                              </div>
+                              {unitSerial && (
+                                <div className="unit-banner-serial-wrap">
+                                  <span className="unit-banner-serial-label">SN:</span>
+                                  <span className="unit-banner-serial">{unitSerial}</span>
+                                </div>
+                              )}
                             </div>
                           )}
                           <QuestionBlock

@@ -803,6 +803,77 @@ button { font-family: inherit; }
   .tel-input-group .tel-country-select { max-width: 96px; padding: 13px 4px; font-size: .82rem; }
 }
 
+/* ---------- Unit Banner Header for AEDs ---------- */
+.unit-banner {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(14, 165, 233, 0.12) 100%);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-left: 5px solid var(--accent);
+  border-radius: 12px;
+  padding: 13px 18px;
+  margin: 28px 0 18px 0;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.07);
+}
+.unit-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.unit-banner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  padding: 5px 14px;
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+.unit-banner-badge::before {
+  content: "⚕";
+  font-size: 1.1em;
+}
+.unit-banner-model {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.unit-banner-serial-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 5px 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.unit-banner-serial-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.unit-banner-serial {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  letter-spacing: 0.03em;
+}
+
 /* ---------- Inline per-field reference photo (Expiry / Paediatric) ----------
    Shown only for the AED model(s) the responder actually selected earlier —
    see FieldReferencePhoto / PaediatricReferencePhoto in ReferenceGuide.jsx. */
