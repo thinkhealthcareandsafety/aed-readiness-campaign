@@ -1,0 +1,39 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# One web service running the Next.js app (pages and API routes together;
+# there is no separate backend), plus one persistent disk.
+#
+# The disk is what makes this work: the app writes the SQLite database and
+# admin-uploaded images at runtime, and Render's filesystem is otherwise
+# wiped on every deploy. It is mounted at /var/data — outside the deployed
+# source tree, so the checkout and the volume can't collide — and AED_DATA_DIR
+# points the app there (see lib/dataDir.js).
+#
+# NOTE: persistent disks require a paid instance type. On the free tier the
+# disk is unavailable and every deploy would silently start from an empty
+# database.
+services:
+  - type: web
+    name: aed-readiness-campaign
+    runtime: node
+    plan: starter
+    # Closest region to the hotels being audited.
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # Both the database and /uploads live under here, on the mounted disk.
+      - key: AED_DATA_DIR
+        value: /var/data
+      # Set these in the Render dashboard — never committed.
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+    disk:
+      name: aed-data
+      mountPath: /var/data
+      sizeGB: 1

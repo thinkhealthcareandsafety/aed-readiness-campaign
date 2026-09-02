@@ -8,7 +8,7 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 
 // Same persisted-volume convention as app/api/admin/upload/route.js — see
 // app/api/uploads/[filename]/route.js for how these are served back out.
-const uploadsDir = path.join(process.cwd(), "data", "uploads");
+import { UPLOADS_DIR, ensureUploadsDir } from "@/lib/dataDir";
 
 const MAX_FILE_BYTES = 6 * 1024 * 1024; // one photo, or one extracted video frame
 const MAX_FILES = 26; // the readiness-indicator's frame count now scales with clip length, up to 24, plus headroom
@@ -75,11 +75,11 @@ export async function POST(request) {
       ? key_frame_index - 1
       : 0;
 
-  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  ensureUploadsDir();
   const persistedFile = files[frameIndex];
   const ext = persistedFile.type === "image/png" ? ".png" : persistedFile.type === "image/webp" ? ".webp" : ".jpg";
   const filename = `${crypto.randomUUID()}${ext}`;
-  fs.writeFileSync(path.join(uploadsDir, filename), buffers[frameIndex]);
+  fs.writeFileSync(path.join(UPLOADS_DIR, filename), buffers[frameIndex]);
 
   return NextResponse.json({ ...publicResult, mediaUrl: `/uploads/${filename}` });
 }

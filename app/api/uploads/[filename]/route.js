@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const uploadsDir = path.join(process.cwd(), "data", "uploads");
+import { UPLOADS_DIR } from "@/lib/dataDir";
 
 // Kept in lockstep with ALLOWED_EXT in app/api/admin/upload/route.js — .svg
 // is deliberately absent from both (an SVG can carry a <script> that a
@@ -32,7 +32,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const filePath = path.join(uploadsDir, filename);
+  const filePath = path.join(UPLOADS_DIR, filename);
   if (!fs.existsSync(filePath)) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

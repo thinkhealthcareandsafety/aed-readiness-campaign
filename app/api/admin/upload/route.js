@@ -3,11 +3,7 @@ import { isAdminAuthed } from "@/lib/adminAuth";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-
-// Lives on the same persisted volume as the database (see next.config.mjs and
-// app/api/uploads/[filename]/route.js for how these are served back out at
-// the same /uploads/<file> URL, despite not being under /public anymore).
-const uploadsDir = path.join(process.cwd(), "data", "uploads");
+import { UPLOADS_DIR, ensureUploadsDir } from "@/lib/dataDir";
 
 // .svg deliberately excluded: browsers execute inline <script>/event-handler
 // content in an SVG opened as a top-level document, so an uploaded SVG could
@@ -34,11 +30,11 @@ export async function POST(request) {
     return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
   }
 
-  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  ensureUploadsDir();
 
   const filename = `${crypto.randomUUID()}${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+  fs.writeFileSync(path.join(UPLOADS_DIR, filename), buffer);
 
   return NextResponse.json({ url: `/uploads/${filename}` }, { status: 201 });
 }
