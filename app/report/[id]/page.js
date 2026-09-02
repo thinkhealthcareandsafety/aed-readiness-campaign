@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getSubmission, getFormSchema } from "@/lib/db";
 import { scoreSubmission, expandUnitQuestions } from "@/lib/genericScoring";
 import { buildQuestionRows, finalObservation } from "@/lib/reportInsights";
-import { prizeLabel } from "@/lib/prizes";
+import { prizeLabel, prizeRequiresDelivery } from "@/lib/prizes";
 import ReportDashboardClient from "./ReportDashboardClient";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,20 @@ export default async function ReportPage({ params }) {
   const name = `${submission.first_name || ""} ${submission.last_name || ""}`.trim();
   const hasAED = submission.has_aed !== "no";
   const wonPrizeLabel = prizeLabel(submission.prize);
+  const needsDelivery = prizeRequiresDelivery(submission.prize);
+  const deliverySaved = needsDelivery && !!submission.delivery_submitted_at;
+  const deliveryAddress = deliverySaved
+    ? {
+        name: submission.delivery_name,
+        address1: submission.delivery_address1,
+        address2: submission.delivery_address2,
+        city: submission.delivery_city,
+        state: submission.delivery_state,
+        postalCode: submission.delivery_postal_code,
+        country: submission.delivery_country,
+        notes: submission.delivery_notes,
+      }
+    : null;
   const assessmentDate = new Date(submission.created_at);
 
   const preparedRows = scored.sections.filter((s) => !s.unscored && !s.isSupplementary);
@@ -50,6 +64,9 @@ export default async function ReportPage({ params }) {
       name={name}
       hasAED={hasAED}
       wonPrizeLabel={wonPrizeLabel}
+      needsDelivery={needsDelivery}
+      deliverySaved={deliverySaved}
+      deliveryAddress={deliveryAddress}
       assessmentDate={assessmentDate}
       preparedRows={preparedRows}
       supplementaryRows={supplementaryRows}

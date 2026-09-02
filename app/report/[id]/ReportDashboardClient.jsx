@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import PrintButton from "./PrintButton";
+import DeliveryAddressCard from "./DeliveryAddressCard";
 
 export default function ReportDashboardClient({
   submission,
@@ -12,6 +13,9 @@ export default function ReportDashboardClient({
   name,
   hasAED,
   wonPrizeLabel,
+  needsDelivery,
+  deliverySaved,
+  deliveryAddress,
   assessmentDate,
   preparedRows,
   supplementaryRows,
@@ -113,14 +117,23 @@ export default function ReportDashboardClient({
       </div>
 
       {/* Prize Won Banner */}
-      {wonPrizeLabel && (
+      {wonPrizeLabel && !needsDelivery && (
         <div className="prize-callout-card no-print">
           <div className="prize-icon">🎁</div>
           <div className="prize-info">
             <h4>Prize Unlocked: {wonPrizeLabel}</h4>
-            <p>Our AED readiness team will follow up directly regarding {submission.prize === "aedsmartx" ? "your subscription setup" : "delivery"}.</p>
+            <p>Our AED readiness team will follow up directly regarding your subscription setup.</p>
           </div>
         </div>
+      )}
+      {wonPrizeLabel && needsDelivery && (
+        <DeliveryAddressCard
+          submissionId={submission.id}
+          wonPrizeLabel={wonPrizeLabel}
+          initialSaved={deliverySaved}
+          initialAddress={deliveryAddress}
+          initialName={name}
+        />
       )}
 
       {!hasAED && (

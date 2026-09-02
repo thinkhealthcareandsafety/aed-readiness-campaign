@@ -4,6 +4,7 @@ import { isAdminAuthed } from "@/lib/adminAuth";
 import { listSubmissionsFull, getFormSchema } from "@/lib/db";
 import { aggregateSubmissions } from "@/lib/genericScoring";
 import { barColor } from "@/lib/scoreColor";
+import { prizeLabel, prizeRequiresDelivery } from "@/lib/prizes";
 import ScoreTrendChart from "@/components/ScoreTrendChart";
 import LogoutButton from "./LogoutButton";
 import DeleteSubmissionButton from "./DeleteSubmissionButton";
@@ -163,38 +164,59 @@ export default async function AdminPage() {
               <th>Has AED</th>
               <th>PREPARED</th>
               <th>Total</th>
+              <th>Prize</th>
+              <th>Delivery</th>
               <th></th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>{new Date(r.created_at).toLocaleString()}</td>
-                <td>{r.hotel}</td>
-                <td>
-                  {r.first_name} {r.last_name}
-                </td>
-                <td>{r.email}</td>
-                <td>{r.phone}</td>
-                <td>{r.has_aed === "yes" ? "Yes" : "No"}</td>
-                <td className="tabular">
-                  {r.prepared_points}/{r.prepared_max}
-                </td>
-                <td className="tabular">
-                  {r.total_points}/{r.total_max}
-                </td>
-                <td>
-                  <Link href={`/report/${r.id}`}>View report &rarr;</Link>
-                </td>
-                <td>
-                  <DeleteSubmissionButton id={r.id} label={`${r.first_name} ${r.last_name}`.trim() || r.hotel} />
-                </td>
-              </tr>
-            ))}
+            {rows.map((r) => {
+              const label = prizeLabel(r.prize);
+              const shipped = prizeRequiresDelivery(r.prize);
+              return (
+                <tr key={r.id}>
+                  <td>{new Date(r.created_at).toLocaleString()}</td>
+                  <td>{r.hotel}</td>
+                  <td>
+                    {r.first_name} {r.last_name}
+                  </td>
+                  <td>{r.email}</td>
+                  <td>{r.phone}</td>
+                  <td>{r.has_aed === "yes" ? "Yes" : "No"}</td>
+                  <td className="tabular">
+                    {r.prepared_points}/{r.prepared_max}
+                  </td>
+                  <td className="tabular">
+                    {r.total_points}/{r.total_max}
+                  </td>
+                  <td>{label || "—"}</td>
+                  <td>
+                    {!shipped ? (
+                      "—"
+                    ) : r.delivery_submitted_at ? (
+                      <span
+                        className="status-pill ready"
+                        title={`${r.delivery_address1}${r.delivery_address2 ? ", " + r.delivery_address2 : ""}, ${r.delivery_city}, ${r.delivery_state} ${r.delivery_postal_code}, ${r.delivery_country}${r.delivery_notes ? " — " + r.delivery_notes : ""}`}
+                      >
+                        Address received
+                      </span>
+                    ) : (
+                      <span className="status-pill notready">Awaiting address</span>
+                    )}
+                  </td>
+                  <td>
+                    <Link href={`/report/${r.id}`}>View report &rarr;</Link>
+                  </td>
+                  <td>
+                    <DeleteSubmissionButton id={r.id} label={`${r.first_name} ${r.last_name}`.trim() || r.hotel} />
+                  </td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={10} style={{ textAlign: "center", color: "var(--ink-soft)", padding: "28px 12px" }}>
+                <td colSpan={12} style={{ textAlign: "center", color: "var(--ink-soft)", padding: "28px 12px" }}>
                   No submissions yet.
                 </td>
               </tr>
