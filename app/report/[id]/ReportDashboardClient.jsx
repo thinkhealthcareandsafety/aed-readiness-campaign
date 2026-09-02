@@ -347,21 +347,27 @@ export default function ReportDashboardClient({
 
       {/* Good Samaritan Warrior Certificate Section */}
       {scored.qualifiesForCertificate ? (
-        <div className="certificate-wrapper">
-          <div className="certificate">
-            <div className="cert-eyebrow">Think Health &middot; AED Readiness Campaign</div>
-            <h2>Good Samaritan Warrior</h2>
-            <div className="cert-awardee-name">{name || "Awardee"}</div>
-            <p className="cert-desc">
-              has demonstrated CPR and AED operating readiness in support of <b>{hotelName || "their property"}</b>&rsquo;s
-              emergency response capability.
-            </p>
-            <div className="cert-meta-row">
-              <span>Issued: {assessmentDate.toLocaleDateString()}</span>
-              <span>Certificate No: {certificateNumber}</span>
-            </div>
+        <section className="dashboard-section certificate-section">
+          <div className="section-header">
+            <h2>Your Good Samaritan Warrior Certificate</h2>
+            <p>Issued {assessmentDate.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })} &middot; Certificate No: {certificateNumber}</p>
           </div>
-        </div>
+          {/* Same URL backs the preview and the download — the image is
+             generated from the submission itself, so what's on screen is
+             exactly what saves. eslint-disable: this is a generated PNG from
+             our own API route, not a static asset next/image can optimise. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/api/certificate/${submission.id}`}
+            alt={`Good Samaritan Warrior certificate for ${name || "awardee"}`}
+            className="certificate-image"
+          />
+          <div className="certificate-actions no-print">
+            <a className="btn btn-primary" href={`/api/certificate/${submission.id}?download=1`} download>
+              Download certificate
+            </a>
+          </div>
+        </section>
       ) : (
         <div className="callout structure" style={{ marginTop: 32 }}>
           <b>Certificate Locked:</b> The Good Samaritan Warrior certificate is awarded once CPR and AED training responses are recorded as completed. Complete that training and resubmit to unlock your official readiness certificate.

@@ -1893,16 +1893,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .info-key { font-size: 0.86rem; color: var(--ink-soft); }
 .info-val { font-size: 0.9rem; font-weight: 700; color: var(--ink); }
 
-/* Certificate styling enhancement */
-.certificate-wrapper {
-  margin-top: 40px;
+/* ---------- Good Samaritan Warrior certificate ----------
+   The certificate itself is a generated PNG (see lib/certificateImage.js);
+   these rules only frame it and sit the download action under it. */
+.certificate-section { margin-top: 40px; }
+.certificate-image {
+  display: block; width: 100%; height: auto; margin-top: 16px;
+  border: 1px solid var(--line-strong); border-radius: 12px;
+  box-shadow: 0 18px 40px -24px rgba(28, 36, 48, .5);
+  background: var(--paper-raised);
 }
-
-.certificate { margin-top: 20px; border: 2px solid var(--accent); border-radius: 16px; padding: 40px; text-align: center; background: var(--paper-raised); position: relative; }
-.certificate .cert-eyebrow { text-transform: uppercase; letter-spacing: .16em; font-size: .72rem; color: var(--accent-deep); font-weight: 700; }
-.certificate h2 { font-size: 2rem; margin: 10px 0 4px; }
-.certificate .cert-awardee-name { font-family: var(--font-display); font-size: 1.6rem; margin: 18px 0 6px; border-bottom: 1px solid var(--line-strong); display: inline-block; padding-bottom: 6px; }
-.certificate .cert-meta-row { display: flex; justify-content: center; gap: 24px; color: var(--ink-soft); font-size: .88rem; margin-top: 14px; }
+.certificate-actions { display: flex; justify-content: center; margin-top: 16px; }
 
 .report-conclusion { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: .92rem; line-height: 1.65; }
 .report-conclusion p { margin: 0 0 12px; }
