@@ -971,9 +971,20 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   const hasImages = question.options?.some((o) => o.imageUrl);
   const name = `q${question.id}`;
   const refKind = referenceKindFor(question);
-  const refModels = refKind ? referenceModelsFor(question, aedModelSequence || [], selectedAedModels) : null;
   const isSerialField = refKind === "serial";
   const serialUnitModel = isSerialField ? unitModelFor(question, aedModelSequence || []) : null;
+  // Serial fields intentionally have no "fall back to every selected
+  // model" behavior, same reasoning as unitModelFor's own comment above:
+  // e.g. reporting 2 AEDs but only 1 model selected so far leaves unit 2's
+  // model genuinely unknown, and showing unit 1's brand as unit 2's
+  // reference photo would be actively misleading, not just imprecise —
+  // it previously did exactly that by going through referenceModelsFor's
+  // fallback-to-selectedAedModels path like every other reference kind.
+  const refModels = refKind
+    ? isSerialField
+      ? (serialUnitModel ? [serialUnitModel] : [])
+      : referenceModelsFor(question, aedModelSequence || [], selectedAedModels)
+    : null;
   const ageStatus = isSerialField ? aedAgeStatus(serialUnitModel, answers[question.id]) : null;
   const ageMessage = ageStatus ? aedAgeMessage(ageStatus) : null;
   // battery_attached/pads_connected/readyIndicator are all seeded with a
