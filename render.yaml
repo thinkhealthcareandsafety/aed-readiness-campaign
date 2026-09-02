@@ -1,22 +1,32 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
 # One web service running the Next.js app (pages and API routes together;
-# there is no separate backend), plus one persistent disk.
+# there is no separate backend).
 #
-# The disk is what makes this work: the app writes the SQLite database and
-# admin-uploaded images at runtime, and Render's filesystem is otherwise
-# wiped on every deploy. It is mounted at /var/data — outside the deployed
-# source tree, so the checkout and the volume can't collide — and AED_DATA_DIR
-# points the app there (see lib/dataDir.js).
+# ---------------------------------------------------------------------------
+# CURRENT STATE: free tier, NO persistent disk.
 #
-# NOTE: persistent disks require a paid instance type. On the free tier the
-# disk is unavailable and every deploy would silently start from an empty
-# database.
+# That means the SQLite database and any admin-uploaded images live on an
+# ephemeral filesystem: they are wiped on every deploy, and again whenever a
+# free instance spins down after going idle. The form re-seeds itself from
+# lib/seedFormData.js on next boot, so the site always comes back up working —
+# but any audit submitted in the meantime is gone. Fine for getting off
+# Railway and for demoing; not somewhere to collect real audits yet.
+#
+# TO MAKE DATA DURABLE (once billing is sorted):
+#   1. change `plan: free` to `plan: starter`
+#   2. uncomment the `disk:` block at the bottom
+#   3. uncomment the AED_DATA_DIR env var below
+# Push those and Render will re-provision with the volume attached. No code
+# change is needed — lib/dataDir.js already reads AED_DATA_DIR, and with it
+# unset the app just falls back to the project directory, which is what makes
+# the free-tier phase work.
+# ---------------------------------------------------------------------------
 services:
   - type: web
     name: aed-readiness-campaign
     runtime: node
-    plan: starter
+    plan: free
     # Closest region to the hotels being audited.
     region: singapore
     buildCommand: npm ci && npm run build
@@ -25,15 +35,16 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "24"
-      # Both the database and /uploads live under here, on the mounted disk.
-      - key: AED_DATA_DIR
-        value: /var/data
+      # Uncomment together with the disk below — points the database and
+      # /uploads at the mounted volume instead of the project directory.
+      # - key: AED_DATA_DIR
+      #   value: /var/data
       # Set these in the Render dashboard — never committed.
       - key: ADMIN_PASSWORD
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-    disk:
-      name: aed-data
-      mountPath: /var/data
-      sizeGB: 1
+    # disk:
+    #   name: aed-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
