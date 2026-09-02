@@ -384,17 +384,20 @@ button { font-family: inherit; }
   .landing-hero-chips { justify-content: center; }
   .landing-gift-head { text-align: left; }
   .landing-close-card { text-align: center; }
-  /* A centered flex row breaks the moment its text wraps to a second
-     line: the icon centers to the full multi-line height while the text
-     itself stays left-aligned within its own auto-width box, so the icon
-     visibly detaches from the first line instead of sitting beside it.
-     Fix: left-align icon+text as a row (icon pinned to the top line via
-     align-items: flex-start), cap the row's own width so long items wrap
-     predictably, and center that whole fixed-width row as one block —
-     same fix already used for .landing-gift-list on mobile. */
-  .landing-close-reassure { justify-items: center; }
-  .landing-close-reassure li { justify-content: flex-start; align-items: flex-start; text-align: left; max-width: 280px; }
-  .landing-close-reassure .tick { margin-top: 1px; }
+  /* Each line needs to read as one row, not wrap — a wrapped line breaks
+     the icon-beside-text alignment (the icon centers to the full
+     multi-line height while the text stays left-aligned in its own box,
+     so it visibly detaches from the first line) and just looks unfinished
+     for a 3-item reassurance list. white-space: nowrap forces that, and
+     the fluid font-size is what actually keeps the longest line ("Instant
+     readiness dashboard & shareable report") inside even a ~360px phone
+     without it — a fixed mobile size left no room to shrink further on
+     the narrowest real devices. Centered as a block via justify-items so
+     the (now variable-width) rows still sit in the middle of the card
+     instead of pinned left.  */
+  .landing-close-reassure { justify-items: center; font-size: clamp(0.66rem, 3.5vw, 0.94rem); }
+  .landing-close-reassure li { justify-content: flex-start; align-items: center; text-align: left; white-space: nowrap; gap: 6px; }
+  .landing-close-reassure .tick { width: 16px; height: 16px; font-size: .58rem; flex-shrink: 0; }
 }
 
 /* ---------- Prize wheel (post-submission reveal, see PrizeWheel.jsx) ---------- */
