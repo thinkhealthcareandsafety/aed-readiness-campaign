@@ -17,6 +17,7 @@ export default function ReportDashboardClient({
   deliverySaved,
   deliveryAddress,
   assessmentDate,
+  certificateNumber,
   preparedRows,
   supplementaryRows,
   insightRows,
@@ -357,7 +358,7 @@ export default function ReportDashboardClient({
             </p>
             <div className="cert-meta-row">
               <span>Issued: {assessmentDate.toLocaleDateString()}</span>
-              <span>Verification Code: {submission.id.slice(0, 8).toUpperCase()}</span>
+              <span>Certificate No: {certificateNumber}</span>
             </div>
           </div>
         </div>

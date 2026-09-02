@@ -3,6 +3,7 @@ import { getSubmission, getFormSchema } from "@/lib/db";
 import { scoreSubmission, expandUnitQuestions } from "@/lib/genericScoring";
 import { buildQuestionRows, finalObservation } from "@/lib/reportInsights";
 import { prizeLabel, prizeRequiresDelivery } from "@/lib/prizes";
+import { formatCertificateNumber } from "@/lib/certificateNumber";
 import ReportDashboardClient from "./ReportDashboardClient";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,9 @@ export default async function ReportPage({ params }) {
       }
     : null;
   const assessmentDate = new Date(submission.created_at);
+  const certificateNumber = scored.qualifiesForCertificate
+    ? formatCertificateNumber(assessmentDate, submission.certificate_number)
+    : null;
 
   const preparedRows = scored.sections.filter((s) => !s.unscored && !s.isSupplementary);
   const supplementaryRows = scored.sections.filter((s) => !s.unscored && s.isSupplementary);
@@ -68,6 +72,7 @@ export default async function ReportPage({ params }) {
       deliverySaved={deliverySaved}
       deliveryAddress={deliveryAddress}
       assessmentDate={assessmentDate}
+      certificateNumber={certificateNumber}
       preparedRows={preparedRows}
       supplementaryRows={supplementaryRows}
       insightRows={insightRows}
