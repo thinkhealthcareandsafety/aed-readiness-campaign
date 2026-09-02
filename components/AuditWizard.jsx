@@ -472,10 +472,18 @@ export default function AuditWizard({ schema, detectedCity }) {
       // Navigation to /report/id is deferred until the prize reveal is
       // dismissed (see PrizeWheel's onDone below) rather than happening
       // immediately — data.prize is whatever the server already decided,
-      // never computed or guessed here.
+      // never computed or guessed here. A property with no AED installed
+      // is never eligible (see app/api/submissions/route.js) and gets
+      // data.prize: null back — nothing to reveal, so it skips straight to
+      // the report instead of leaving the wheel's onDone navigation
+      // unreachable.
       setSubmittedId(data.id);
-      setWonPrize(data.prize);
-      setSubmitting(false);
+      if (data.prize) {
+        setWonPrize(data.prize);
+        setSubmitting(false);
+      } else {
+        router.push(`/report/${data.id}`);
+      }
     } catch (err) {
       // fetchWithTimeout's AbortController rejects with a DOMException named
       // "AbortError", whose own .message ("signal is aborted without

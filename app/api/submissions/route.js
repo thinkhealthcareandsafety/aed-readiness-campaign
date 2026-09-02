@@ -55,8 +55,12 @@ export async function POST(request) {
 
   // Decided once, here, server-side, and never re-rollable — there is no
   // separate "spin" endpoint. The client only ever plays back whichever
-  // prize this response actually contains.
-  const prize = PRIZES[crypto.randomInt(PRIZES.length)].id;
+  // prize this response actually contains. Only a property that actually
+  // reported an installed AED is eligible — the campaign's reward is for
+  // maintaining a unit, not for filling out the form, so a "no AED
+  // installed" response never wins anything (prize stays null and the
+  // wizard skips the wheel entirely — see AuditWizard.jsx's submit()).
+  const prize = identity.hasAED === "yes" ? PRIZES[crypto.randomInt(PRIZES.length)].id : null;
 
   const id = insertSubmission({ answers, scored, identity, prize });
   return NextResponse.json({ id, prize }, { status: 201 });
