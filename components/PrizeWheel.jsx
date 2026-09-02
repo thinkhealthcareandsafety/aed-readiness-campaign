@@ -232,7 +232,7 @@ export default function PrizeWheel({ prize, onDone }) {
             one prize
           </h2>
           <p className="prize-wheel-blurb">
-            Every completed audit earns one spin. Spin once to see which prize this property gets.
+            Your property has an AED on site, so this audit earns a spin — give it a go and see what it wins.
           </p>
 
           {!revealed && (

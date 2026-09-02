@@ -1,9 +1,62 @@
 "use client";
 
 import { useState } from "react";
+import { COUNTRY_CODES } from "@/lib/phoneCountries";
+import { INDIA_STATES } from "@/lib/indiaStates";
+import { listDeliveryCities } from "@/lib/hotelCities";
 
 const EMPTY_FORM = { name: "", address1: "", address2: "", city: "", state: "", postalCode: "", country: "India", notes: "" };
 const REQUIRED_FIELDS = ["name", "address1", "city", "state", "postalCode", "country"];
+const COUNTRY_NAMES = COUNTRY_CODES.map((c) => c.name);
+const DELIVERY_CITIES = listDeliveryCities();
+
+// A plain <select> can't offer every city/state/country on earth, so each
+// of these pairs a curated dropdown with a manual fallback — picking
+// "Other" (or loading with a value the list doesn't contain, e.g. a
+// pre-existing free-typed entry) reveals a text input instead of silently
+// discarding or mis-selecting it.
+function DropdownField({ id, value, onChange, options, otherPlaceholder, required }) {
+  const [otherMode, setOtherMode] = useState(() => !!value && !options.includes(value));
+  const selectValue = otherMode ? "__other__" : value;
+
+  return (
+    <>
+      <select
+        id={id}
+        value={selectValue}
+        onChange={(e) => {
+          if (e.target.value === "__other__") {
+            setOtherMode(true);
+          } else {
+            setOtherMode(false);
+            onChange(e.target.value);
+          }
+        }}
+        required={required}
+      >
+        <option value="" disabled>
+          Select…
+        </option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+        <option value="__other__">Other (type manually)</option>
+      </select>
+      {otherMode && (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={otherPlaceholder}
+          required={required}
+          style={{ marginTop: 6 }}
+        />
+      )}
+    </>
+  );
+}
 
 // Shown on the report only for a prize that actually needs shipping (see
 // prizeRequiresDelivery in lib/prizes.js — the AEDSmartX subscription has
@@ -105,11 +158,27 @@ export default function DeliveryAddressCard({ submissionId, wonPrizeLabel, initi
               </label>
               <label className="delivery-field">
                 City*
-                <input type="text" value={form.city} onChange={(e) => setField("city", e.target.value)} required />
+                <DropdownField
+                  value={form.city}
+                  onChange={(v) => setField("city", v)}
+                  options={DELIVERY_CITIES}
+                  otherPlaceholder="Enter your city"
+                  required
+                />
               </label>
               <label className="delivery-field">
                 State / Province*
-                <input type="text" value={form.state} onChange={(e) => setField("state", e.target.value)} required />
+                {form.country === "India" ? (
+                  <DropdownField
+                    value={form.state}
+                    onChange={(v) => setField("state", v)}
+                    options={INDIA_STATES}
+                    otherPlaceholder="Enter your state"
+                    required
+                  />
+                ) : (
+                  <input type="text" value={form.state} onChange={(e) => setField("state", e.target.value)} required />
+                )}
               </label>
               <label className="delivery-field">
                 Postal code*
@@ -117,7 +186,13 @@ export default function DeliveryAddressCard({ submissionId, wonPrizeLabel, initi
               </label>
               <label className="delivery-field">
                 Country*
-                <input type="text" value={form.country} onChange={(e) => setField("country", e.target.value)} required />
+                <DropdownField
+                  value={form.country}
+                  onChange={(v) => setField("country", v)}
+                  options={COUNTRY_NAMES}
+                  otherPlaceholder="Enter your country"
+                  required
+                />
               </label>
               <label className="delivery-field span-2">
                 Delivery instructions (optional)
