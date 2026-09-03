@@ -1,9 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PrintButton from "./PrintButton";
 import DeliveryAddressCard from "./DeliveryAddressCard";
+
+const RING_CIRCUMFERENCE = 326.7;
+const SCORE_ANIM_MS = 1300;
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+// The score ring and category bars used to just appear at their final
+// value — instant, with nothing marking the moment as a payoff, even
+// though this is the one screen the entire audit exists to produce. This
+// sweeps the ring and counts the numbers up on mount, then reveals the
+// category bars staggered right after, so the score reads as *earned*
+// rather than stated. Skips straight to final values for anyone who's
+// asked the OS for reduced motion, same convention as the rest of this
+// stylesheet (see the prefers-reduced-motion blocks in globals.css).
+function useScoreRingAnimation(targetPct, targetPoints) {
+  const [progress, setProgress] = useState(0); // drives the two count-up numbers
+  const [revealed, setRevealed] = useState(false); // flips once, triggers the ring's own CSS sweep
+  const [barsVisible, setBarsVisible] = useState(false); // cascades in only once the ring/count finishes
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const reduceMotion = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      const frame = requestAnimationFrame(() => {
+        setProgress(1);
+        setRevealed(true);
+        setBarsVisible(true);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+    // Flipped on the next frame rather than immediately, so the browser
+    // paints the ring at its 0% starting offset first — flipping it in the
+    // same tick as mount can get batched into the same paint, leaving the
+    // CSS transition with nothing to animate from.
+    const revealFrame = requestAnimationFrame(() => setRevealed(true));
+    const startedAt = performance.now();
+    function tick(now) {
+      const elapsed = now - startedAt;
+      const t = Math.min(1, elapsed / SCORE_ANIM_MS);
+      setProgress(easeOutCubic(t));
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        setBarsVisible(true);
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(revealFrame);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  return {
+    displayedPct: Math.round(targetPct * progress),
+    displayedPoints: Math.round(targetPoints * progress),
+    ringOffset: revealed ? RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * targetPct) / 100 : RING_CIRCUMFERENCE,
+    barsVisible,
+  };
+}
 
 export default function ReportDashboardClient({
   submission,
@@ -28,6 +90,7 @@ export default function ReportDashboardClient({
   finalObsText,
 }) {
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'critical' | 'warn' | 'good'
+  const { displayedPct, displayedPoints, ringOffset, barsVisible } = useScoreRingAnimation(pct, scored.total.points);
 
   const statusBadge =
     pct >= 85 && criticalCount === 0
@@ -72,16 +135,17 @@ export default function ReportDashboardClient({
                 r="52"
                 className="ring-fill"
                 style={{
-                  strokeDasharray: 326.7,
-                  strokeDashoffset: 326.7 - (326.7 * pct) / 100,
+                  strokeDasharray: RING_CIRCUMFERENCE,
+                  strokeDashoffset: ringOffset,
                   stroke: statusBadge.color,
+                  transitionDuration: `${SCORE_ANIM_MS}ms`,
                 }}
               />
             </svg>
             <div className="ring-center-content">
-              <span className="ring-score-value tabular">{scored.total.points}</span>
+              <span className="ring-score-value tabular">{displayedPoints}</span>
               <span className="ring-score-max">of {scored.total.max}</span>
-              <span className="ring-score-pct tabular">{pct}%</span>
+              <span className="ring-score-pct tabular">{displayedPct}%</span>
             </div>
           </div>
         </div>
@@ -212,7 +276,7 @@ export default function ReportDashboardClient({
         </div>
 
         <div className="category-performance-grid">
-          {preparedRows.map((s) => {
+          {preparedRows.map((s, i) => {
             const ratio = s.max > 0 ? Math.round((s.points / s.max) * 100) : 0;
             const barBg = ratio >= 75 ? "#10b981" : ratio >= 45 ? "#f59e0b" : "#ef4444";
             return (
@@ -227,7 +291,10 @@ export default function ReportDashboardClient({
 
                 <div className="cat-progress-wrap">
                   <div className="cat-progress-bar">
-                    <div className="cat-progress-fill" style={{ width: `${ratio}%`, background: barBg }} />
+                    <div
+                      className="cat-progress-fill"
+                      style={{ width: barsVisible ? `${ratio}%` : "0%", background: barBg, transitionDelay: `${i * 70}ms` }}
+                    />
                   </div>
                   <span className="cat-pct-label tabular">{ratio}%</span>
                 </div>
@@ -240,7 +307,7 @@ export default function ReportDashboardClient({
           <div style={{ marginTop: 24 }}>
             <h3 className="subsection-title">Supplementary Sections</h3>
             <div className="category-performance-grid">
-              {supplementaryRows.map((s) => {
+              {supplementaryRows.map((s, i) => {
                 const ratio = s.max > 0 ? Math.round((s.points / s.max) * 100) : 0;
                 const barBg = ratio >= 75 ? "#10b981" : ratio >= 45 ? "#f59e0b" : "#ef4444";
                 return (
@@ -254,7 +321,10 @@ export default function ReportDashboardClient({
 
                     <div className="cat-progress-wrap">
                       <div className="cat-progress-bar">
-                        <div className="cat-progress-fill" style={{ width: `${ratio}%`, background: barBg }} />
+                        <div
+                          className="cat-progress-fill"
+                          style={{ width: barsVisible ? `${ratio}%` : "0%", background: barBg, transitionDelay: `${i * 70}ms` }}
+                        />
                       </div>
                       <span className="cat-pct-label tabular">{ratio}%</span>
                     </div>
