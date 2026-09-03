@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { REPORT_LOCALE } from "@/lib/formatDate";
 
 const WIDTH = 640;
 const HEIGHT = 180;
@@ -12,7 +13,9 @@ const PAD_BOTTOM = 28;
 function fmtDate(d) {
   const dt = new Date(d + "T00:00:00");
   if (Number.isNaN(dt.getTime())) return d;
-  return dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  // Explicit locale, same reasoning as lib/formatDate.js — an axis label
+  // that renders differently on server and client is a hydration mismatch.
+  return dt.toLocaleDateString(REPORT_LOCALE, { month: "short", day: "numeric" });
 }
 
 // A single-series (avg PREPARED score over time) line chart — no legend

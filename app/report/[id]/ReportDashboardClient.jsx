@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { formatReportDate } from "@/lib/formatDate";
 import PrintButton from "./PrintButton";
 import DeliveryAddressCard from "./DeliveryAddressCard";
 
@@ -206,7 +207,7 @@ export default function ReportDashboardClient({
               {statusBadge.label}
             </span>
             <span className="hero-date-badge">
-              Assessed: {assessmentDate.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+              Assessed: {formatReportDate(assessmentDate)}
             </span>
           </div>
 
@@ -405,29 +406,39 @@ export default function ReportDashboardClient({
           <div className="unit-tabs-row no-print">
             <button
               type="button"
-              className={`unit-tab ${activeUnit === "all" ? "active" : ""}`}
+              className={`unit-tab unit-tab-all ${activeUnit === "all" ? "active" : ""}`}
               onClick={() => selectUnit("all")}
             >
-              <span className="unit-tab-name">All units</span>
-              <span className="unit-tab-meta">{unitSummaries.length} AEDs</span>
+              <span className="unit-tab-title">All units</span>
+              <span className="unit-tab-sub">
+                {unitSummaries.length} AEDs · {insightRows.length} checks
+              </span>
             </button>
             {unitSummaries.map((u) => {
-              const unitRows = insightRows.filter((r) => r.unit === u.unit);
-              const unitCritical = unitRows.filter((r) => r.status === "critical").length;
+              const unitCritical = insightRows.filter((r) => r.unit === u.unit && r.status === "critical").length;
               return (
                 <button
                   key={u.unit}
                   type="button"
-                  className={`unit-tab ${activeUnit === u.unit ? "active" : ""} ${unitCritical > 0 ? "has-critical" : ""}`}
+                  className={`unit-tab ${activeUnit === u.unit ? "active" : ""}`}
                   onClick={() => selectUnit(u.unit)}
                 >
-                  <span className="unit-tab-name">
-                    AED {u.unit}
-                    {unitCritical > 0 && <span className="unit-tab-badge">{unitCritical}</span>}
+                  <span className="unit-tab-head">
+                    <span className="unit-tab-title">AED {u.unit}</span>
+                    {/* A count when this unit has unresolved criticals, a tick
+                        when it's clean — so the row answers "which AED is the
+                        problem" at a glance. Carried by the badge alone, never
+                        by the card's border: with 6 units all flagged, a row of
+                        red-bordered cards reads as one undifferentiated alert
+                        wall and the colour stops meaning anything. */}
+                    {unitCritical > 0 ? (
+                      <span className="unit-tab-badge critical">{unitCritical}</span>
+                    ) : (
+                      <span className="unit-tab-badge ok">✓</span>
+                    )}
                   </span>
-                  <span className="unit-tab-meta">
-                    {[u.modelLabel, u.serial ? `SN ${u.serial}` : null].filter(Boolean).join(" · ") || "No model/serial recorded"}
-                  </span>
+                  <span className="unit-tab-model">{u.modelLabel || "Model not recorded"}</span>
+                  {u.serial && <span className="unit-tab-serial">SN {u.serial}</span>}
                 </button>
               );
             })}
@@ -524,7 +535,7 @@ export default function ReportDashboardClient({
         <section id="certificate-section" className="dashboard-section certificate-section">
           <div className="section-header">
             <h2>Your Good Samaritan Warrior Certificate</h2>
-            <p>Issued {assessmentDate.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })} &middot; Certificate No: {certificateNumber}</p>
+            <p>Issued {formatReportDate(assessmentDate)} &middot; Certificate No: {certificateNumber}</p>
           </div>
           {/* Same URL backs the preview and the download — the image is
              generated from the submission itself, so what's on screen is
@@ -572,7 +583,7 @@ export default function ReportDashboardClient({
           </div>
           <div className="info-row">
             <span className="info-key">Assessment Date</span>
-            <span className="info-val">{assessmentDate.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</span>
+            <span className="info-val">{formatReportDate(assessmentDate)}</span>
           </div>
           <div className="info-row">
             <span className="info-key">Total Overall Score</span>

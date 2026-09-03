@@ -1786,31 +1786,56 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .filter-tab.active { background: var(--accent-tint); border-color: var(--accent); color: var(--accent-deep); }
 
 /* Per-unit scoping tabs, one tier "above" the urgency pills below them.
-   Deliberately squared-off two-line cards in --structure teal rather than
-   more accent-orange pills: they filter a different axis (which machine,
-   not how urgent), and reading as the same control would invite mistaking
-   one row for the other. */
-.unit-tabs-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+   Deliberately squared cards in --structure teal rather than more
+   accent-orange pills: they filter a different axis (which machine, not
+   how urgent), and reading as the same control would invite mistaking one
+   row for the other.
+
+   A grid rather than flex-wrap so every card is the same width regardless
+   of how long its serial runs — wrapped flex items sized to their own
+   content left the row visibly ragged, which read as broken rather than
+   deliberate. */
+.unit-tabs-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
 .unit-tab {
   font-family: inherit; text-align: left; cursor: pointer;
-  display: flex; flex-direction: column; gap: 2px;
-  background: var(--paper-raised); border: 1.5px solid var(--line-strong);
-  border-radius: 10px; padding: 8px 14px; transition: all 0.15s ease;
+  display: flex; flex-direction: column; gap: 3px;
+  background: var(--paper-raised); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 11px 14px;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
-.unit-tab:hover { border-color: var(--structure); }
-.unit-tab.active { background: var(--structure-tint); border-color: var(--structure); }
-.unit-tab-name {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 0.86rem; font-weight: 700; color: var(--ink);
+.unit-tab:hover { border-color: var(--structure); transform: translateY(-1px); }
+.unit-tab.active {
+  background: var(--structure-tint); border-color: var(--structure);
+  box-shadow: inset 3px 0 0 var(--structure);
 }
-.unit-tab-meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-soft); }
-/* A unit with unresolved criticals carries its own count, so "which AED is
-   the problem" is answerable without opening each tab in turn. */
-.unit-tab.has-critical { border-color: var(--notready); }
+.unit-tab-all { justify-content: center; }
+
+.unit-tab-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.unit-tab-title { font-size: 0.92rem; font-weight: 700; color: var(--ink); }
+.unit-tab-sub { font-size: 0.72rem; color: var(--ink-soft); }
+.unit-tab-model {
+  font-size: 0.74rem; color: var(--ink-soft); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* The serial is an identifier, not prose — mono keeps character widths even
+   so two near-identical serials are actually comparable at a glance. */
+.unit-tab-serial {
+  font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-soft); opacity: 0.8;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
 .unit-tab-badge {
-  background: var(--notready); color: #fff; font-size: 0.66rem; font-weight: 800;
-  border-radius: 999px; padding: 1px 6px; line-height: 1.5;
+  flex-shrink: 0; min-width: 18px; height: 18px; padding: 0 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; font-size: 0.68rem; font-weight: 800; line-height: 1;
 }
+.unit-tab-badge.critical { background: var(--notready); color: #fff; }
+.unit-tab-badge.ok { background: var(--ready-tint); color: var(--ready); }
 .filter-tab.critical.active { background: var(--notready-tint); border-color: var(--notready); color: var(--notready); }
 .filter-tab.warn.active { background: var(--warn-tint); border-color: var(--warn); color: var(--warn); }
 .filter-tab.good.active { background: var(--ready-tint); border-color: var(--ready); color: var(--ready); }
