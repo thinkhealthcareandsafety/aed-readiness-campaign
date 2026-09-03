@@ -13,7 +13,7 @@
 //
 // The stat row is real data, never decoration — it's what makes this read
 // as "a deliverable was produced" rather than "a form was submitted".
-export default function AuditCompleteCard({ firstName, hotelName, sectionCount, unitCount, answeredCount }) {
+export default function AuditCompleteCard({ firstName, hotelName, sectionCount, unitCount, answeredCount, hasAED }) {
   return (
     <div className="audit-complete">
       <div className="audit-complete-seal" aria-hidden="true">
@@ -53,7 +53,14 @@ export default function AuditCompleteCard({ firstName, hotelName, sectionCount, 
       </div>
 
       <p className="audit-complete-next">
-        Press <b>Submit audit</b> to lock this in and reveal your PREPARED score and full readiness report.
+        Press <b>Submit audit</b> to lock this in — you&apos;ll get your PREPARED score and full readiness report right away
+        {hasAED ? (
+          <>
+            , plus a spin of the prize wheel for completing today&apos;s audit.
+          </>
+        ) : (
+          "."
+        )}
       </p>
     </div>
   );

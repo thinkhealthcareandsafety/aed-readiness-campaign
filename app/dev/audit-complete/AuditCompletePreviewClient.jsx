@@ -21,6 +21,7 @@ export default function AuditCompletePreviewClient() {
             sectionCount={8}
             unitCount={unitCount}
             answeredCount={42}
+            hasAED={unitCount > 0}
           />
         </div>
 

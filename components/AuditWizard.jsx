@@ -616,6 +616,7 @@ export default function AuditWizard({ schema, detectedCity }) {
                 sectionCount={preparedTrack.length}
                 unitCount={aedModelSequence.length}
                 answeredCount={Object.keys(answers).length}
+                hasAED={identity.hasAED === "yes"}
               />
             ) : isModeChoice ? (
               autoScanActive ? (
