@@ -10,10 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ReportPage({ params }) {
   const { id } = await params;
-  const submission = getSubmission(id);
+  const submission = await getSubmission(id);
   if (!submission) return notFound();
 
-  const schema = expandUnitQuestions(getFormSchema(), submission.answers);
+  const schema = expandUnitQuestions(await getFormSchema(), submission.answers);
   const scored = scoreSubmission(schema, submission.answers);
   const pct = scored.total.max > 0 ? Math.round((scored.total.points / scored.total.max) * 100) : 0;
   const hotelName = submission.hotel;

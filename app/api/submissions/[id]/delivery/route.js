@@ -6,7 +6,7 @@ const REQUIRED_FIELDS = ["name", "address1", "city", "state", "postalCode", "cou
 
 export async function POST(request, { params }) {
   const { id } = await params;
-  const submission = getSubmission(id);
+  const submission = await getSubmission(id);
   if (!submission) return NextResponse.json({ error: "Submission not found" }, { status: 404 });
   if (!prizeRequiresDelivery(submission.prize)) {
     return NextResponse.json({ error: "This submission didn't win a prize that needs delivery." }, { status: 400 });
@@ -25,7 +25,7 @@ export async function POST(request, { params }) {
     }
   }
 
-  saveDeliveryAddress(id, {
+  await saveDeliveryAddress(id, {
     name: body.name.trim(),
     address1: body.address1.trim(),
     address2: (body.address2 || "").trim(),

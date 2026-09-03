@@ -6,13 +6,13 @@ export async function PATCH(request, { params }) {
   if (!(await isAdminAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
-  updateOption(Number(id), body);
+  await updateOption(id, body);
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(request, { params }) {
   if (!(await isAdminAuthed())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  deleteOption(Number(id));
+  await deleteOption(id);
   return NextResponse.json({ ok: true });
 }

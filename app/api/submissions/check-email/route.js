@@ -21,6 +21,6 @@ export async function POST(request) {
     return NextResponse.json({ taken: false });
   }
 
-  const existing = getSubmissionByEmail(email);
+  const existing = await getSubmissionByEmail(email);
   return NextResponse.json({ taken: !!existing });
 }

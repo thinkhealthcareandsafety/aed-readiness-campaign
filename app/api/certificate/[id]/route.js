@@ -11,12 +11,12 @@ import { renderCertificate } from "@/lib/certificateImage";
 // actually asks for it.
 export async function GET(request, { params }) {
   const { id } = await params;
-  const submission = getSubmission(id);
+  const submission = await getSubmission(id);
   if (!submission) return NextResponse.json({ error: "Submission not found" }, { status: 404 });
 
   // Re-derived rather than trusted from a query param: the certificate is
   // only issued to a responder whose own answers qualify for it.
-  const schema = expandUnitQuestions(getFormSchema(), submission.answers);
+  const schema = expandUnitQuestions(await getFormSchema(), submission.answers);
   const scored = scoreSubmission(schema, submission.answers);
   if (!scored.qualifiesForCertificate || !submission.certificate_number) {
     return NextResponse.json({ error: "This submission has not earned the certificate." }, { status: 403 });

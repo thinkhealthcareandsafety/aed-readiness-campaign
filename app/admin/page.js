@@ -18,8 +18,8 @@ export default async function AdminPage() {
   const authed = await isAdminAuthed();
   if (!authed) redirect("/admin/login");
 
-  const schema = getFormSchema();
-  const submissions = listSubmissionsFull();
+  const schema = await getFormSchema();
+  const submissions = await listSubmissionsFull();
   const agg = aggregateSubmissions(schema, submissions);
   const rows = submissions; // already has everything the table needs
 

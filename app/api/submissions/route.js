@@ -23,7 +23,7 @@ export async function POST(request) {
   // units' answers (required and scored client-side) silently ignored here,
   // since those unit blocks only ever existed as the wizard's in-memory
   // clones and were never re-derived server-side.
-  const baseSchema = getFormSchema();
+  const baseSchema = await getFormSchema();
   // Same self-heal as the wizard's own setAnswers: a stale client (an old
   // localStorage draft from before this existed, or a client that skipped
   // the UI entirely) could submit a quantity/checkbox answer that's over
@@ -49,7 +49,7 @@ export async function POST(request) {
   // and the insert below, so there's no race window within a single
   // request; the email column's UNIQUE index (lib/db.js) is the
   // defense-in-depth backstop beyond that.
-  if (getSubmissionByEmail(identity.email)) {
+  if (await getSubmissionByEmail(identity.email)) {
     return NextResponse.json({ error: "This email has already completed an audit." }, { status: 409 });
   }
 
@@ -62,7 +62,7 @@ export async function POST(request) {
   // wizard skips the wheel entirely — see AuditWizard.jsx's submit()).
   const prize = identity.hasAED === "yes" ? PRIZES[crypto.randomInt(PRIZES.length)].id : null;
 
-  const id = insertSubmission({ answers, scored, identity, prize });
+  const id = await insertSubmission({ answers, scored, identity, prize });
   return NextResponse.json({ id, prize }, { status: 201 });
 }
 
@@ -71,6 +71,6 @@ export async function GET() {
   if (!authed) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const rows = listSubmissions();
+  const rows = await listSubmissions();
   return NextResponse.json({ submissions: rows });
 }

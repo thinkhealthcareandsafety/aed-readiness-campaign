@@ -10,7 +10,7 @@ export default async function BuilderPage() {
   const authed = await isAdminAuthed();
   if (!authed) redirect("/admin/login");
 
-  const schema = getFormSchema();
+  const schema = await getFormSchema();
 
   return (
     <>
