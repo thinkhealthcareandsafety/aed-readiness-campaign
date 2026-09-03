@@ -259,7 +259,7 @@ function SectionCard({ section, isFirst, isLast, allQuestions, run }) {
               run(() =>
                 api(`/api/admin/sections/${section.id}`, {
                   method: "PATCH",
-                  body: { visibleIfQuestionId: e.target.value ? Number(e.target.value) : null, visibleIfValue: e.target.value ? section.visibleIfValue || "" : null },
+                  body: { visibleIfQuestionId: e.target.value || null, visibleIfValue: e.target.value ? section.visibleIfValue || "" : null },
                 })
               )
             }
@@ -412,7 +412,7 @@ function QuestionCard({ question, isFirst, isLast, siblingQuestions, dateQuestio
                   run(() =>
                     api(`/api/admin/questions/${question.id}`, {
                       method: "PATCH",
-                      body: { maxSelectionsLinkedQuestionId: e.target.value ? Number(e.target.value) : null, maxSelections: e.target.value ? null : question.maxSelections },
+                      body: { maxSelectionsLinkedQuestionId: e.target.value || null, maxSelections: e.target.value ? null : question.maxSelections },
                     })
                   )
                 }
@@ -463,7 +463,7 @@ function QuestionCard({ question, isFirst, isLast, siblingQuestions, dateQuestio
                     run(() =>
                       api(`/api/admin/questions/${question.id}`, {
                         method: "PATCH",
-                        body: { derivedFromDateQuestionId: e.target.value ? Number(e.target.value) : null },
+                        body: { derivedFromDateQuestionId: e.target.value || null },
                       })
                     )
                   }
