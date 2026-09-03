@@ -1546,6 +1546,26 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .prize-info h4 { font-size: 1rem; margin: 0 0 2px; color: var(--ink); }
 .prize-info p { font-size: 0.86rem; color: var(--ink-soft); margin: 0; }
 
+/* ---------- Certificate jump banner ---------- */
+.certificate-jump-banner {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--structure-tint); border: 1.5px solid var(--structure);
+  border-radius: 16px; padding: 14px 18px; margin-top: 16px;
+  text-decoration: none; transition: filter 0.15s ease;
+}
+.certificate-jump-banner:hover { filter: brightness(0.97); }
+.certificate-jump-icon { font-size: 1.5rem; flex-shrink: 0; }
+.certificate-jump-text { flex: 1; font-size: 0.92rem; color: var(--structure); }
+.certificate-jump-text b { color: var(--ink); }
+.certificate-jump-arrow {
+  font-size: 1.1rem; color: var(--structure); flex-shrink: 0;
+  animation: certificateJumpBounce 1.6s ease-in-out infinite;
+}
+@keyframes certificateJumpBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
 /* ---------- Delivery address card (report page, prize winners only) ---------- */
 .delivery-card { align-items: flex-start; }
 .delivery-card .prize-info p { margin-bottom: 10px; }

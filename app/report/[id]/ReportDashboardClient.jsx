@@ -117,6 +117,19 @@ export default function ReportDashboardClient({
         </div>
       </div>
 
+      {/* Certificate Jump Banner — the certificate itself lives at the
+          bottom of a long report, easy to miss on first glance, so this
+          gives an immediate, obvious way to it right where the score is. */}
+      {scored.qualifiesForCertificate && (
+        <a href="#certificate-section" className="certificate-jump-banner no-print">
+          <span className="certificate-jump-icon">🎓</span>
+          <span className="certificate-jump-text">
+            <b>Your Good Samaritan Warrior Certificate is ready.</b> Jump to it below.
+          </span>
+          <span className="certificate-jump-arrow">↓</span>
+        </a>
+      )}
+
       {/* Prize Won Banner */}
       {wonPrizeLabel && !needsDelivery && (
         <div className="prize-callout-card no-print">
@@ -347,7 +360,7 @@ export default function ReportDashboardClient({
 
       {/* Good Samaritan Warrior Certificate Section */}
       {scored.qualifiesForCertificate ? (
-        <section className="dashboard-section certificate-section">
+        <section id="certificate-section" className="dashboard-section certificate-section">
           <div className="section-header">
             <h2>Your Good Samaritan Warrior Certificate</h2>
             <p>Issued {assessmentDate.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })} &middot; Certificate No: {certificateNumber}</p>
