@@ -12,7 +12,13 @@ import { useEffect, useRef, useState } from "react";
 // anyone whose browser/device can't grant camera access.
 const MAX_RECORD_MS = 12_000; // long enough to catch a slow status-light blink cycle, short enough not to be tedious
 
-export default function LiveCamera({ mediaType, onCapture, onCancel }) {
+// A minimum, not a hard cap — the analysis prompt already accepts a single
+// confirmed flash as sufficient evidence, so this is a nudge toward footage
+// long enough to likely catch one (blinks can be up to 4-5s apart), not a
+// block on stopping early if someone genuinely wants to.
+const RECOMMENDED_MIN_RECORD_MS = 10_000;
+
+export default function LiveCamera({ mediaType, guidance, onCapture, onCancel }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const recorderRef = useRef(null);
@@ -122,6 +128,7 @@ export default function LiveCamera({ mediaType, onCapture, onCancel }) {
       <div className="live-camera-frame">
         <video ref={videoRef} muted playsInline className="live-camera-video" />
         {!ready && <div className="live-camera-loading">Starting camera…</div>}
+        {guidance && !recording && ready && <div className="live-camera-guidance">{guidance}</div>}
         {recording && (
           <div className="live-camera-rec">
             <span className="live-camera-rec-dot" /> {Math.ceil((MAX_RECORD_MS - elapsedMs) / 1000)}s left
@@ -135,7 +142,9 @@ export default function LiveCamera({ mediaType, onCapture, onCancel }) {
         {mediaType === "video" ? (
           recording ? (
             <button type="button" className="btn btn-primary" onClick={stopRecording}>
-              Stop recording
+              {elapsedMs < RECOMMENDED_MIN_RECORD_MS
+                ? `Stop recording (${Math.ceil((RECOMMENDED_MIN_RECORD_MS - elapsedMs) / 1000)}s more recommended)`
+                : "Stop recording"}
             </button>
           ) : (
             <button type="button" className="btn btn-primary" disabled={!ready} onClick={startRecording}>

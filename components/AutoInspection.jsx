@@ -22,6 +22,14 @@ const ITEM_REFERENCE_KIND = {
   pads_connected: "padsAttached",
 };
 
+// On-screen reminder shown live over the camera preview, before recording
+// starts — this exact mistake (aiming at the large power button instead of
+// the small status LED) was the single biggest cause of unusable readiness
+// captures before this item was temporarily dropped from auto-inspection.
+const ITEM_VIDEO_GUIDANCE = {
+  readiness_indicator: "🔴 Point at the small status LED, not the power button. Hold steady for 10+ seconds — the blink can be several seconds apart.",
+};
+
 // Fixed-count sampling regardless of clip length meant a longer or
 // lower-fps recording could sample right past a brief LED flash between
 // two sample points. Scaling the count to the clip's own duration (roughly
@@ -413,6 +421,7 @@ function InspectItemCard({ task, result, onCapture, onSkip }) {
       ) : showCamera ? (
         <LiveCamera
           mediaType={item.mediaType}
+          guidance={ITEM_VIDEO_GUIDANCE[item.id]}
           onCapture={handleBlobCaptured}
           onCancel={() => setShowCamera(false)}
         />
