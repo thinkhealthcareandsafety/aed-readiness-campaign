@@ -357,6 +357,9 @@ export default function AuditWizard({ schema, detectedCity }) {
           setAnswer(q.id, result.expiry_date.length === 7 ? `${result.expiry_date}-01` : result.expiry_date);
         } else if (item.id === "battery_attached" || item.id === "pads_connected") {
           setRadioAnswer(q, result.passed ? "yes" : "no");
+        } else if (item.id === "readiness_indicator") {
+          if (result.readinessStatus !== "ready" && result.readinessStatus !== "fault") continue; // "unclear" — leave for manual
+          setRadioAnswer(q, result.readinessStatus === "ready" ? "green" : "red");
         } else {
           continue;
         }

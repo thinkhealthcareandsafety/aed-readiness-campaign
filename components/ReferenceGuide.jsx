@@ -198,6 +198,15 @@ export function FieldReferencePhoto({ models, kind }) {
   return <ThumbRow items={items} kind={kind} />;
 }
 
+// Same reasoning as the model-keyed photos above: the status-light *pattern*
+// (solid or slow-blinking green = ready) is the same thing to look for
+// across brands, but the only real photo on hand is the Philips FRx panel —
+// so this is captioned as a worked example, not asserted to be this unit's
+// own brand.
+const READY_INDICATOR_PHOTO = { caption: "Example: green (ready) indicator", photo: "/reference/frx-status-ready.jpg" };
+export function ReadinessReferencePhoto() {
+  return <ThumbRow items={[READY_INDICATOR_PHOTO]} kind="photo" labelKey="caption" />;
+}
 
 // Maps a question to which kind of reference photo helps it, purely from its
 // label/type — works for AED (1), (2), and any (3)+ clone without needing

@@ -3,11 +3,12 @@
 import { useRef, useState } from "react";
 import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import LiveCamera from "@/components/LiveCamera";
-import { FieldReferencePhoto } from "@/components/ReferenceGuide";
+import { FieldReferencePhoto, ReadinessReferencePhoto } from "@/components/ReferenceGuide";
 
 const ITEM_ICON = {
   battery_attached: "/icons/battery-ok.svg",
   pads_connected: "/icons/pads-sealed.svg",
+  readiness_indicator: "/icons/status-ready.svg",
 };
 
 // Maps a checklist item to the same per-model reference-photo `kind` the
@@ -471,6 +472,7 @@ function InspectItemCard({ task, result, onCapture, onSkip }) {
 }
 
 function ItemReferencePhoto({ itemId, model }) {
+  if (itemId === "readiness_indicator") return <ReadinessReferencePhoto />;
   const kind = ITEM_REFERENCE_KIND[itemId];
   if (!kind || !model) return null;
   return <FieldReferencePhoto models={[model]} kind={kind} />;
