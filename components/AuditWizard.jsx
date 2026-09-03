@@ -11,6 +11,7 @@ import { logoForHotel } from "@/lib/hotelBrands";
 import Landing from "@/components/Landing";
 import LiveScore from "@/components/LiveScore";
 import PrizeWheel from "@/components/PrizeWheel";
+import AuditCompleteCard from "@/components/AuditCompleteCard";
 import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import { sortHotelOptionsByCity } from "@/lib/hotelCities";
 import { isSectionVisible, maxSelectionsFor, validateSection, questionMax, extractIdentity, resolveDerivedAnswers, expandUnitQuestions, reconcileLinkedSelections, getSelectedAedModels, getAedModelSequence, getModelLabelMap, scoreSubmission } from "@/lib/genericScoring";
@@ -609,11 +610,13 @@ export default function AuditWizard({ schema, detectedCity }) {
               </h2>
             </div>
             {isReview ? (
-              <div className="callout ready">
-                Thanks, {identity.firstName || "there"} — everything&rsquo;s filled in for{" "}
-                <b>{identity.hotel || "your hotel"}</b>. Press <b>Submit audit</b> below to save this response and see
-                your PREPARED score and detailed AED report.
-              </div>
+              <AuditCompleteCard
+                firstName={identity.firstName}
+                hotelName={identity.hotel}
+                sectionCount={preparedTrack.length}
+                unitCount={aedModelSequence.length}
+                answeredCount={Object.keys(answers).length}
+              />
             ) : isModeChoice ? (
               autoScanActive ? (
                 <AutoInspection
