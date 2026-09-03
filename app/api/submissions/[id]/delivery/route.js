@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSubmission, saveDeliveryAddress } from "@/lib/db";
 import { prizeRequiresDelivery } from "@/lib/prizes";
+import { isValidPersonName } from "@/lib/genericScoring";
 
 const REQUIRED_FIELDS = ["name", "address1", "city", "state", "postalCode", "country"];
+const INDIA_POSTAL_RE = /^[1-9][0-9]{5}$/;
 
 export async function POST(request, { params }) {
   const { id } = await params;
@@ -23,6 +25,12 @@ export async function POST(request, { params }) {
     if (!String(body?.[field] || "").trim()) {
       return NextResponse.json({ error: `${field} is required.` }, { status: 400 });
     }
+  }
+  if (!isValidPersonName(body.name)) {
+    return NextResponse.json({ error: "Enter a valid name (letters only)." }, { status: 400 });
+  }
+  if (body.country.trim() === "India" && !INDIA_POSTAL_RE.test(body.postalCode.trim())) {
+    return NextResponse.json({ error: "Enter a valid 6-digit PIN code." }, { status: 400 });
   }
 
   await saveDeliveryAddress(id, {

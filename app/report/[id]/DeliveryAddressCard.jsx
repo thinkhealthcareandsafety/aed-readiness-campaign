@@ -4,18 +4,35 @@ import { useState } from "react";
 import { COUNTRY_CODES } from "@/lib/phoneCountries";
 import { INDIA_STATES } from "@/lib/indiaStates";
 import { listDeliveryCities } from "@/lib/hotelCities";
+import { isValidPersonName } from "@/lib/genericScoring";
 
 const EMPTY_FORM = { name: "", address1: "", address2: "", city: "", state: "", postalCode: "", country: "India", notes: "" };
 const REQUIRED_FIELDS = ["name", "address1", "city", "state", "postalCode", "country"];
 const COUNTRY_NAMES = COUNTRY_CODES.map((c) => c.name);
 const DELIVERY_CITIES = listDeliveryCities();
+const INDIA_POSTAL_RE = /^[1-9][0-9]{5}$/;
+
+// Field-level checks beyond "is it non-empty" — the same trust boundary
+// AuditWizard's own text fields already enforce (see isValidPersonName in
+// genericScoring.js), applied here too since this form previously accepted
+// literally anything ("ttt4" as an address, a PIN of "4t4t") with no
+// feedback beyond a single generic "fill in every field" message.
+function fieldError(field, value, country) {
+  const trimmed = String(value || "").trim();
+  if (REQUIRED_FIELDS.includes(field) && !trimmed) return "Required";
+  if (field === "name" && trimmed && !isValidPersonName(trimmed)) return "Enter a valid name (letters only)";
+  if (field === "postalCode" && trimmed && country === "India" && !INDIA_POSTAL_RE.test(trimmed)) {
+    return "Enter a valid 6-digit PIN code";
+  }
+  return "";
+}
 
 // A plain <select> can't offer every city/state/country on earth, so each
 // of these pairs a curated dropdown with a manual fallback — picking
 // "Other" (or loading with a value the list doesn't contain, e.g. a
 // pre-existing free-typed entry) reveals a text input instead of silently
 // discarding or mis-selecting it.
-function DropdownField({ id, value, onChange, options, otherPlaceholder, required }) {
+function DropdownField({ id, value, onChange, options, otherPlaceholder, autoComplete, required }) {
   const [otherMode, setOtherMode] = useState(() => !!value && !options.includes(value));
   const selectValue = otherMode ? "__other__" : value;
 
@@ -24,6 +41,7 @@ function DropdownField({ id, value, onChange, options, otherPlaceholder, require
       <select
         id={id}
         value={selectValue}
+        autoComplete={otherMode ? "off" : autoComplete}
         onChange={(e) => {
           if (e.target.value === "__other__") {
             setOtherMode(true);
@@ -47,6 +65,7 @@ function DropdownField({ id, value, onChange, options, otherPlaceholder, require
       {otherMode && (
         <input
           type="text"
+          autoComplete={autoComplete}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={otherPlaceholder}
@@ -75,16 +94,39 @@ export default function DeliveryAddressCard({ submissionId, wonPrizeLabel, initi
   }));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   function setField(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+    const country = field === "country" ? value : form.country;
+    setFieldErrors((fe) => {
+      const next = { ...fe };
+      if (touched[field]) next[field] = fieldError(field, value, country);
+      // Postal-code validity depends on country, so switching country
+      // re-checks an already-touched postal code even though its own
+      // value didn't change.
+      if (field === "country" && touched.postalCode) next.postalCode = fieldError("postalCode", form.postalCode, country);
+      return next;
+    });
+  }
+
+  function blurField(field) {
+    setTouched((t) => ({ ...t, [field]: true }));
+    setFieldErrors((fe) => ({ ...fe, [field]: fieldError(field, form[field], form.country) }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const missing = REQUIRED_FIELDS.filter((f) => !form[f].trim());
-    if (missing.length > 0) {
-      setError("Please fill in every required field before saving.");
+    const nextErrors = {};
+    for (const f of Object.keys(EMPTY_FORM)) {
+      const msg = fieldError(f, form[f], form.country);
+      if (msg) nextErrors[f] = msg;
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      setTouched(Object.fromEntries(Object.keys(EMPTY_FORM).map((f) => [f, true])));
+      setError("Please fix the highlighted fields before saving.");
       return;
     }
     setError("");
@@ -144,59 +186,115 @@ export default function DeliveryAddressCard({ submissionId, wonPrizeLabel, initi
           <>
             <p>Tell us where to send it — one-time details so we can ship your prize.</p>
             <form className="delivery-form-grid" onSubmit={handleSubmit}>
-              <label className="delivery-field span-2">
+              <label className={`delivery-field span-2${fieldErrors.name ? " has-error" : ""}`}>
                 Full name*
-                <input type="text" value={form.name} onChange={(e) => setField("name", e.target.value)} required />
+                <input
+                  type="text"
+                  autoComplete="name"
+                  value={form.name}
+                  onChange={(e) => setField("name", e.target.value)}
+                  onBlur={() => blurField("name")}
+                  required
+                />
+                {fieldErrors.name && <span className="delivery-field-error">{fieldErrors.name}</span>}
               </label>
-              <label className="delivery-field span-2">
+              <label className={`delivery-field span-2${fieldErrors.address1 ? " has-error" : ""}`}>
                 Address line 1*
-                <input type="text" value={form.address1} onChange={(e) => setField("address1", e.target.value)} required />
+                <input
+                  type="text"
+                  autoComplete="address-line1"
+                  value={form.address1}
+                  onChange={(e) => setField("address1", e.target.value)}
+                  onBlur={() => blurField("address1")}
+                  required
+                />
+                {fieldErrors.address1 && <span className="delivery-field-error">{fieldErrors.address1}</span>}
               </label>
               <label className="delivery-field span-2">
                 Address line 2 (optional)
-                <input type="text" value={form.address2} onChange={(e) => setField("address2", e.target.value)} />
-              </label>
-              <label className="delivery-field">
-                City*
-                <DropdownField
-                  value={form.city}
-                  onChange={(v) => setField("city", v)}
-                  options={DELIVERY_CITIES}
-                  otherPlaceholder="Enter your city"
-                  required
+                <input
+                  type="text"
+                  autoComplete="address-line2"
+                  value={form.address2}
+                  onChange={(e) => setField("address2", e.target.value)}
                 />
               </label>
-              <label className="delivery-field">
+              <label className={`delivery-field${fieldErrors.city ? " has-error" : ""}`}>
+                City*
+                <DropdownField
+                  id="delivery-city"
+                  value={form.city}
+                  onChange={(v) => {
+                    setField("city", v);
+                    blurField("city");
+                  }}
+                  options={DELIVERY_CITIES}
+                  otherPlaceholder="Enter your city"
+                  autoComplete="address-level2"
+                  required
+                />
+                {fieldErrors.city && <span className="delivery-field-error">{fieldErrors.city}</span>}
+              </label>
+              <label className={`delivery-field${fieldErrors.state ? " has-error" : ""}`}>
                 State / Province*
                 {form.country === "India" ? (
                   <DropdownField
+                    id="delivery-state"
                     value={form.state}
-                    onChange={(v) => setField("state", v)}
+                    onChange={(v) => {
+                      setField("state", v);
+                      blurField("state");
+                    }}
                     options={INDIA_STATES}
                     otherPlaceholder="Enter your state"
+                    autoComplete="address-level1"
                     required
                   />
                 ) : (
-                  <input type="text" value={form.state} onChange={(e) => setField("state", e.target.value)} required />
+                  <input
+                    type="text"
+                    autoComplete="address-level1"
+                    value={form.state}
+                    onChange={(e) => setField("state", e.target.value)}
+                    onBlur={() => blurField("state")}
+                    required
+                  />
                 )}
+                {fieldErrors.state && <span className="delivery-field-error">{fieldErrors.state}</span>}
               </label>
-              <label className="delivery-field">
+              <label className={`delivery-field${fieldErrors.postalCode ? " has-error" : ""}`}>
                 Postal code*
-                <input type="text" value={form.postalCode} onChange={(e) => setField("postalCode", e.target.value)} required />
+                <input
+                  type="text"
+                  autoComplete="postal-code"
+                  inputMode={form.country === "India" ? "numeric" : "text"}
+                  maxLength={form.country === "India" ? 6 : 12}
+                  placeholder={form.country === "India" ? "6-digit PIN code" : ""}
+                  value={form.postalCode}
+                  onChange={(e) => setField("postalCode", e.target.value)}
+                  onBlur={() => blurField("postalCode")}
+                  required
+                />
+                {fieldErrors.postalCode && <span className="delivery-field-error">{fieldErrors.postalCode}</span>}
               </label>
-              <label className="delivery-field">
+              <label className={`delivery-field${fieldErrors.country ? " has-error" : ""}`}>
                 Country*
                 <DropdownField
+                  id="delivery-country"
                   value={form.country}
-                  onChange={(v) => setField("country", v)}
+                  onChange={(v) => {
+                    setField("country", v);
+                    blurField("country");
+                  }}
                   options={COUNTRY_NAMES}
                   otherPlaceholder="Enter your country"
+                  autoComplete="country-name"
                   required
                 />
               </label>
               <label className="delivery-field span-2">
                 Delivery instructions (optional)
-                <textarea rows={2} value={form.notes} onChange={(e) => setField("notes", e.target.value)} />
+                <textarea rows={2} maxLength={300} value={form.notes} onChange={(e) => setField("notes", e.target.value)} />
               </label>
 
               {error && (
