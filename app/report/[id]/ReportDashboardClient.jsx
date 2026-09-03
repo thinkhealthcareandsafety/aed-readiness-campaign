@@ -92,12 +92,18 @@ export default function ReportDashboardClient({
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'critical' | 'warn' | 'good'
   const { displayedPct, displayedPoints, ringOffset, barsVisible } = useScoreRingAnimation(pct, scored.total.points);
 
-  const statusBadge =
-    pct >= 85 && criticalCount === 0
-      ? { label: "High Readiness", class: "ready", color: "#10b981", icon: "✓" }
-      : pct >= 65 && criticalCount === 0
-      ? { label: "Moderate Readiness", class: "warn", color: "#f59e0b", icon: "!" }
-      : { label: "Needs Attention", class: "notready", color: "#ef4444", icon: "⚠" };
+  // A "Needs Attention"/"Moderate Readiness" verdict is itself a reading of
+  // the PREPARED score — showing one here while the score ring next to it
+  // says "No AED installed" (no score generated at all) would contradict
+  // itself, so this case gets its own honest label instead of falling
+  // through the normal score-based tiers.
+  const statusBadge = !hasAED
+    ? { label: "No AED Installed", class: "notready", color: "#ef4444", icon: "⚠" }
+    : pct >= 85 && criticalCount === 0
+    ? { label: "High Readiness", class: "ready", color: "#10b981", icon: "✓" }
+    : pct >= 65 && criticalCount === 0
+    ? { label: "Moderate Readiness", class: "warn", color: "#f59e0b", icon: "!" }
+    : { label: "Needs Attention", class: "notready", color: "#ef4444", icon: "⚠" };
 
   const filteredInsightSections = insightSections
     .map((sec) => {
@@ -126,28 +132,42 @@ export default function ReportDashboardClient({
       {/* Hero Score & Status Banner */}
       <div className="dashboard-hero-card">
         <div className="hero-left">
-          <div className="hero-score-ring">
-            <svg viewBox="0 0 120 120" className="score-ring-svg">
-              <circle cx="60" cy="60" r="52" className="ring-bg" />
-              <circle
-                cx="60"
-                cy="60"
-                r="52"
-                className="ring-fill"
-                style={{
-                  strokeDasharray: RING_CIRCUMFERENCE,
-                  strokeDashoffset: ringOffset,
-                  stroke: statusBadge.color,
-                  transitionDuration: `${SCORE_ANIM_MS}ms`,
-                }}
-              />
-            </svg>
-            <div className="ring-center-content">
-              <span className="ring-score-value tabular">{displayedPoints}</span>
-              <span className="ring-score-max">of {scored.total.max}</span>
-              <span className="ring-score-pct tabular">{displayedPct}%</span>
+          {hasAED ? (
+            <div className="hero-score-ring">
+              <svg viewBox="0 0 120 120" className="score-ring-svg">
+                <circle cx="60" cy="60" r="52" className="ring-bg" />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  className="ring-fill"
+                  style={{
+                    strokeDasharray: RING_CIRCUMFERENCE,
+                    strokeDashoffset: ringOffset,
+                    stroke: statusBadge.color,
+                    transitionDuration: `${SCORE_ANIM_MS}ms`,
+                  }}
+                />
+              </svg>
+              <div className="ring-center-content">
+                <span className="ring-score-value tabular">{displayedPoints}</span>
+                <span className="ring-score-max">of {scored.total.max}</span>
+                <span className="ring-score-pct tabular">{displayedPct}%</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            // No AED installed means there's nothing for a PREPARED score to
+            // measure readiness against — showing a ring/number here (even a
+            // low one) implied a score was generated when it wasn't, which
+            // is exactly what the audit-complete screen now tells the
+            // responder *won't* happen for this submission (see
+            // AuditCompleteCard.jsx). Same footprint as the ring so the hero
+            // layout doesn't jump between the two states.
+            <div className="hero-score-ring hero-score-empty">
+              <span className="hero-score-empty-icon">⛔</span>
+              <span className="hero-score-empty-label">No AED installed</span>
+            </div>
+          )}
         </div>
 
         <div className="hero-main-info">
@@ -166,18 +186,20 @@ export default function ReportDashboardClient({
             Submitted by <b>{name || "Responder"}</b> &middot; {submission.email || ""} {submission.phone ? `(${submission.phone})` : ""}
           </p>
 
-          <div className="hero-score-breakdown">
-            <div className="chip-score">
-              <span className="chip-label">PREPARED Core Score:</span>
-              <span className="chip-val tabular">{scored.prepared.points} / {scored.prepared.max}</span>
-            </div>
-            {scored.supplementary.max > 0 && (
-              <div className="chip-score sub">
-                <span className="chip-label">Supplementary Score:</span>
-                <span className="chip-val tabular">{scored.supplementary.points} / {scored.supplementary.max}</span>
+          {hasAED && (
+            <div className="hero-score-breakdown">
+              <div className="chip-score">
+                <span className="chip-label">PREPARED Core Score:</span>
+                <span className="chip-val tabular">{scored.prepared.points} / {scored.prepared.max}</span>
               </div>
-            )}
-          </div>
+              {scored.supplementary.max > 0 && (
+                <div className="chip-score sub">
+                  <span className="chip-label">Supplementary Score:</span>
+                  <span className="chip-val tabular">{scored.supplementary.points} / {scored.supplementary.max}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

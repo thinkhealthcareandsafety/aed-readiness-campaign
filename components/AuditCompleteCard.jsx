@@ -53,13 +53,16 @@ export default function AuditCompleteCard({ firstName, hotelName, sectionCount, 
       </div>
 
       <p className="audit-complete-next">
-        Press <b>Submit audit</b> to lock this in — you&apos;ll get your PREPARED score and full readiness report right away
         {hasAED ? (
           <>
-            , plus a spin of the prize wheel for completing today&apos;s audit.
+            Press <b>Submit audit</b> to lock this in — you&apos;ll get your PREPARED score and full readiness report right away, plus a
+            spin of the prize wheel for completing today&apos;s audit.
           </>
         ) : (
-          "."
+          <>
+            Press <b>Submit audit</b> to save your responses. Your PREPARED score needs an AED in place to measure — once an AED is
+            installed, run this audit again to unlock your full score, report, and free gifts.
+          </>
         )}
       </p>
     </div>

@@ -1409,6 +1409,14 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   height: 140px;
 }
 
+.hero-score-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 50%; border: 3px dashed var(--line-strong); background: var(--paper);
+  text-align: center; padding: 12px;
+}
+.hero-score-empty-icon { font-size: 1.8rem; line-height: 1; }
+.hero-score-empty-label { font-size: 0.78rem; font-weight: 700; color: var(--ink-soft); line-height: 1.25; }
+
 .score-ring-svg {
   width: 100%;
   height: 100%;
