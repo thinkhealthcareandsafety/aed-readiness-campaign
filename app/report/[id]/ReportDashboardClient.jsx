@@ -87,9 +87,11 @@ export default function ReportDashboardClient({
   warnCount,
   goodCount,
   insightSections,
+  unitSummaries,
   finalObsText,
 }) {
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'critical' | 'warn' | 'good'
+  const [activeUnit, setActiveUnit] = useState("all"); // 'all' | 1 | 2 | ... (only offered for a multi-unit property)
   const { displayedPct, displayedPoints, ringOffset, barsVisible } = useScoreRingAnimation(pct, scored.total.points);
 
   // A "Needs Attention"/"Moderate Readiness" verdict is itself a reading of
@@ -105,7 +107,34 @@ export default function ReportDashboardClient({
     ? { label: "Moderate Readiness", class: "warn", color: "#f59e0b", icon: "!" }
     : { label: "Needs Attention", class: "notready", color: "#ef4444", icon: "⚠" };
 
-  const filteredInsightSections = insightSections
+  // Unit filter runs *before* the urgency filter so the urgency tab counts
+  // describe the unit you're actually looking at — "Critical (2)" while
+  // AED 3 is selected has to mean two problems on AED 3, not two somewhere
+  // on the property. Property-wide rows (training, documentation, contacts)
+  // belong to no single machine and are deliberately dropped when one unit
+  // is picked: the whole point of that tab is answering "what's wrong with
+  // this AED", and they're always there on "All units".
+  const unitScopedSections = insightSections
+    .map((sec) => ({ ...sec, rows: activeUnit === "all" ? sec.rows : sec.rows.filter((r) => r.unit === activeUnit) }))
+    .filter((sec) => sec.rows.length > 0);
+
+  // Switching units resets urgency back to "All" — AED 1 having criticals
+  // doesn't mean AED 2 does, and leaving a now-empty "Critical" filter
+  // active would show a blank list under a tab that no longer renders.
+  function selectUnit(unit) {
+    setActiveUnit(unit);
+    setActiveTab("all");
+  }
+
+  const unitScopedRows = unitScopedSections.flatMap((sec) => sec.rows);
+  const tabCounts = {
+    all: unitScopedRows.length,
+    critical: unitScopedRows.filter((r) => r.status === "critical").length,
+    warn: unitScopedRows.filter((r) => r.status === "warn").length,
+    good: unitScopedRows.filter((r) => r.status === "good").length,
+  };
+
+  const filteredInsightSections = unitScopedSections
     .map((sec) => {
       const rows = sec.rows.filter((r) => {
         if (activeTab === "critical") return r.status === "critical";
@@ -362,8 +391,48 @@ export default function ReportDashboardClient({
       <section className="dashboard-section">
         <div className="section-header">
           <h2>Actionable Recommendations &amp; Audit Trail</h2>
-          <p>Filtered by urgency so critical fixes come first</p>
+          <p>
+            {unitSummaries.length > 1
+              ? "Pick a specific AED to see only that unit's findings, then filter by urgency"
+              : "Filtered by urgency so critical fixes come first"}
+          </p>
         </div>
+
+        {/* Per-unit tabs — only earn their place on a multi-AED property.
+            With one unit every row belongs to it anyway, so a lone "AED 1"
+            tab would be a control that can't change anything. */}
+        {unitSummaries.length > 1 && (
+          <div className="unit-tabs-row no-print">
+            <button
+              type="button"
+              className={`unit-tab ${activeUnit === "all" ? "active" : ""}`}
+              onClick={() => selectUnit("all")}
+            >
+              <span className="unit-tab-name">All units</span>
+              <span className="unit-tab-meta">{unitSummaries.length} AEDs</span>
+            </button>
+            {unitSummaries.map((u) => {
+              const unitRows = insightRows.filter((r) => r.unit === u.unit);
+              const unitCritical = unitRows.filter((r) => r.status === "critical").length;
+              return (
+                <button
+                  key={u.unit}
+                  type="button"
+                  className={`unit-tab ${activeUnit === u.unit ? "active" : ""} ${unitCritical > 0 ? "has-critical" : ""}`}
+                  onClick={() => selectUnit(u.unit)}
+                >
+                  <span className="unit-tab-name">
+                    AED {u.unit}
+                    {unitCritical > 0 && <span className="unit-tab-badge">{unitCritical}</span>}
+                  </span>
+                  <span className="unit-tab-meta">
+                    {[u.modelLabel, u.serial ? `SN ${u.serial}` : null].filter(Boolean).join(" · ") || "No model/serial recorded"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Filter Tabs */}
         <div className="filter-tabs-row no-print">
@@ -372,33 +441,33 @@ export default function ReportDashboardClient({
             className={`filter-tab ${activeTab === "all" ? "active" : ""}`}
             onClick={() => setActiveTab("all")}
           >
-            All Items ({insightRows.length})
+            All Items ({tabCounts.all})
           </button>
-          {criticalCount > 0 && (
+          {tabCounts.critical > 0 && (
             <button
               type="button"
               className={`filter-tab critical ${activeTab === "critical" ? "active" : ""}`}
               onClick={() => setActiveTab("critical")}
             >
-              🚨 Critical Action Required ({criticalCount})
+              🚨 Critical Action Required ({tabCounts.critical})
             </button>
           )}
-          {warnCount > 0 && (
+          {tabCounts.warn > 0 && (
             <button
               type="button"
               className={`filter-tab warn ${activeTab === "warn" ? "active" : ""}`}
               onClick={() => setActiveTab("warn")}
             >
-              ⚠️ Warnings / Review ({warnCount})
+              ⚠️ Warnings / Review ({tabCounts.warn})
             </button>
           )}
-          {goodCount > 0 && (
+          {tabCounts.good > 0 && (
             <button
               type="button"
               className={`filter-tab good ${activeTab === "good" ? "active" : ""}`}
               onClick={() => setActiveTab("good")}
             >
-              ✅ Working Well ({goodCount})
+              ✅ Working Well ({tabCounts.good})
             </button>
           )}
         </div>

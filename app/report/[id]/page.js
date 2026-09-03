@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSubmission, getFormSchema } from "@/lib/db";
 import { scoreSubmission, expandUnitQuestions } from "@/lib/genericScoring";
-import { buildQuestionRows, finalObservation } from "@/lib/reportInsights";
+import { buildQuestionRows, buildUnitSummaries, finalObservation } from "@/lib/reportInsights";
 import { prizeLabel, prizeRequiresDelivery } from "@/lib/prizes";
 import { formatCertificateNumber } from "@/lib/certificateNumber";
 import ReportDashboardClient from "./ReportDashboardClient";
@@ -43,6 +43,7 @@ export default async function ReportPage({ params }) {
   const supplementaryRows = scored.sections.filter((s) => !s.unscored && s.isSupplementary);
 
   const insightRows = hasAED ? buildQuestionRows(schema, submission.answers) : [];
+  const unitSummaries = hasAED ? buildUnitSummaries(schema, submission.answers) : [];
   const criticalCount = insightRows.filter((r) => r.status === "critical").length;
   const warnCount = insightRows.filter((r) => r.status === "warn").length;
   const goodCount = insightRows.filter((r) => r.status === "good").length;
@@ -80,6 +81,7 @@ export default async function ReportPage({ params }) {
       warnCount={warnCount}
       goodCount={goodCount}
       insightSections={insightSections}
+      unitSummaries={unitSummaries}
       finalObsText={finalObsText}
     />
   );

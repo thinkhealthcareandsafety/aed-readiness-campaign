@@ -1784,6 +1784,33 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 
 .filter-tab:hover { border-color: var(--accent); color: var(--accent-deep); }
 .filter-tab.active { background: var(--accent-tint); border-color: var(--accent); color: var(--accent-deep); }
+
+/* Per-unit scoping tabs, one tier "above" the urgency pills below them.
+   Deliberately squared-off two-line cards in --structure teal rather than
+   more accent-orange pills: they filter a different axis (which machine,
+   not how urgent), and reading as the same control would invite mistaking
+   one row for the other. */
+.unit-tabs-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.unit-tab {
+  font-family: inherit; text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--paper-raised); border: 1.5px solid var(--line-strong);
+  border-radius: 10px; padding: 8px 14px; transition: all 0.15s ease;
+}
+.unit-tab:hover { border-color: var(--structure); }
+.unit-tab.active { background: var(--structure-tint); border-color: var(--structure); }
+.unit-tab-name {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.86rem; font-weight: 700; color: var(--ink);
+}
+.unit-tab-meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-soft); }
+/* A unit with unresolved criticals carries its own count, so "which AED is
+   the problem" is answerable without opening each tab in turn. */
+.unit-tab.has-critical { border-color: var(--notready); }
+.unit-tab-badge {
+  background: var(--notready); color: #fff; font-size: 0.66rem; font-weight: 800;
+  border-radius: 999px; padding: 1px 6px; line-height: 1.5;
+}
 .filter-tab.critical.active { background: var(--notready-tint); border-color: var(--notready); color: var(--notready); }
 .filter-tab.warn.active { background: var(--warn-tint); border-color: var(--warn); color: var(--warn); }
 .filter-tab.good.active { background: var(--ready-tint); border-color: var(--ready); color: var(--ready); }
