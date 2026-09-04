@@ -11,5 +11,6 @@ export async function POST(request, { params }) {
     label: body.label || "New question",
     required: !!body.required,
   });
+  if (!questionId) return NextResponse.json({ error: "Section not found" }, { status: 404 });
   return NextResponse.json({ id: questionId }, { status: 201 });
 }

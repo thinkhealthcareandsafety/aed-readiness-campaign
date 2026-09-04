@@ -2052,7 +2052,13 @@ table.admin-table tr:hover td { background: var(--structure-tint); }
 
 .weak-list { display: flex; flex-direction: column; gap: 12px; }
 .weak-item .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 5px; }
-.weak-item .row .name { font-size: .86rem; font-weight: 600; }
+/* Same failure mode as the report's .action-card-header had (fixed in
+   5e5f01a): a long question label sitting next to a nowrap sibling with
+   no flex-basis of its own got squeezed to a sliver on a narrow admin
+   viewport, wrapping one word per line. Here the sibling (.meta/.val) is
+   always short, so letting .name take the remaining row width and wrap
+   normally — rather than stacking the whole row — is enough. */
+.weak-item .row .name { font-size: .86rem; font-weight: 600; flex: 1; min-width: 0; }
 .weak-item .row .meta { font-size: .72rem; color: var(--ink-soft); white-space: nowrap; }
 .weak-item .row .val { font-family: var(--font-mono); font-size: .84rem; color: var(--ink-soft); white-space: nowrap; }
 

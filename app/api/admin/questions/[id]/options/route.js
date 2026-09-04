@@ -11,5 +11,6 @@ export async function POST(request, { params }) {
     label: body.label || "New option",
     points: body.points || 0,
   });
+  if (!optionId) return NextResponse.json({ error: "Question not found" }, { status: 404 });
   return NextResponse.json({ id: optionId }, { status: 201 });
 }
