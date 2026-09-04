@@ -188,6 +188,22 @@ export default function Landing() {
   const [whyRef, whyClass] = useReveal();
   const [closeRef, closeClass] = useReveal();
 
+  // The hero demo is a real ~85s screen recording, not a short loop — far
+  // too long to autoplay silently. It starts on a poster frame with a big
+  // play button, exactly like clicking "Watch demo" on any SaaS landing
+  // page, and switches to native controls once actually playing so a
+  // visitor can pause/seek/rewatch. onEnded resets to the poster/play
+  // state (and rewinds) rather than freezing on the last frame, so the
+  // card is immediately replayable instead of looking finished-and-dead.
+  const demoVideoRef = useRef(null);
+  const [demoPlaying, setDemoPlaying] = useState(false);
+  function playDemo() {
+    const v = demoVideoRef.current;
+    if (!v) return;
+    if (v.ended) v.currentTime = 0;
+    v.play();
+  }
+
   return (
     <>
       <header className="landing-header">
@@ -234,64 +250,42 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="landing-hero-gift">
-            <div className="landing-gift-card">
-              <div className="landing-gift-card-head">
-                <span className="landing-gift-card-label">Your thank-you gift</span>
-                <span className="landing-gift-card-meta">1 spin &middot; {PRIZES.length} gifts</span>
+          <div className="landing-hero-preview">
+            <div className="landing-preview-frame">
+              <div className="landing-preview-chrome">
+                <span className="landing-preview-chrome-dots" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                <span className="landing-preview-chrome-label">AED Readiness &mdash; Live Demo</span>
               </div>
-
-              <div className="landing-hero-wheel" aria-hidden="true">
-                <div className="landing-hero-wheel-pointer" />
-                <div className="landing-hero-wheel-ring" />
-                <div className="landing-hero-wheel-disc" />
-                <div className="landing-hero-wheel-innerline" />
-                <div className="landing-hero-wheel-face">
-                  <div className="landing-hero-wheel-spin">
-                    <div className="landing-hero-wheel-wedges" />
-                    {PRIZES.map((p, i) => (
-                      <div
-                        key={`div-${p.id}`}
-                        className="landing-hero-wheel-divider"
-                        style={{ transform: `rotate(${i * WHEEL_SEG}deg)` }}
-                      />
-                    ))}
-                    {PRIZES.map((p, i) => {
-                      const c = i * WHEEL_SEG + WHEEL_SEG / 2;
-                      return (
-                        <div key={p.id} className="landing-hero-wheel-slot" style={{ transform: `rotate(${c}deg)` }}>
-                          <div
-                            className="landing-hero-wheel-tile"
-                            style={{ transform: `translate(-50%, -50%) translateY(-76px) rotate(${-c}deg)` }}
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element -- tiny decorative tile photo inside a fixed-size non-interactive graphic */}
-                            <img src={p.image} alt="" className="landing-hero-wheel-photo" />
-                            <span className="landing-hero-wheel-label">{PRIZE_SHORT_LABEL[p.id] || p.label}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="landing-hero-wheel-hub">
-                  <span className="landing-hero-wheel-hub-dot" />
-                </div>
+              <div className="landing-preview-media">
+                <video
+                  ref={demoVideoRef}
+                  className="landing-preview-video"
+                  poster="/videos/aed-demo-poster.jpg"
+                  src="/videos/aed-demo.mp4"
+                  playsInline
+                  controls={demoPlaying}
+                  onPlay={() => setDemoPlaying(true)}
+                  onPause={() => setDemoPlaying(false)}
+                  onEnded={() => setDemoPlaying(false)}
+                />
+                {!demoPlaying && (
+                  <button type="button" className="landing-preview-play" onClick={playDemo} aria-label="Play the AED Readiness demo">
+                    <PlayIcon />
+                  </button>
+                )}
               </div>
-
-              <p className="landing-gift-card-tagline">
-                Finish the checkup,
+            </div>
+            <div className="landing-preview-badge">
+              <span className="landing-preview-badge-dot" aria-hidden="true" />
+              <span>
+                <b>12 quick health checks</b>
                 <br />
-                spin for a free gift
-              </p>
-
-              <div className="landing-gift-card-thumbs">
-                {PRIZES.map((p) => (
-                  // eslint-disable-next-line @next/next/no-img-element -- small static thumbnail row, no next/image needed
-                  <img key={p.id} src={p.image} alt={p.label} title={p.label} />
-                ))}
-              </div>
-
-              <div className="landing-gift-card-footer">Every completed checkup earns one spin</div>
+                Instant PREPARED score
+              </span>
             </div>
           </div>
         </div>
@@ -326,7 +320,6 @@ export default function Landing() {
 
       <section className="landing-how" ref={howRef}>
         <div className={`landing-section-inner ${howClass}`}>
-          <span className="landing-eyebrow dark">Simple 3-Step Process</span>
           <h2 className="landing-h2">Three simple steps, about five minutes</h2>
           <div className="landing-how-steps">
             {HOW_STEPS.map((s, i) => (
@@ -403,25 +396,70 @@ export default function Landing() {
             </a>
           </div>
 
-          <div className="landing-voucher">
-            <div className="landing-voucher-notch left" aria-hidden="true" />
-            <div className="landing-voucher-notch right" aria-hidden="true" />
-            <div className="landing-voucher-head">
-              <span className="landing-voucher-label">Gift voucher</span>
-              <span className="landing-voucher-badge">1 spin</span>
-            </div>
-            <p className="landing-voucher-title">
-              One spin,
-              <br />
-              one free gift
-            </p>
-            <div className="landing-voucher-rule" />
-            <p className="landing-voucher-fine">Unlocked automatically when your checkup is complete.</p>
-            <div className="landing-voucher-thumbs">
-              {PRIZES.map((p) => (
-                // eslint-disable-next-line @next/next/no-img-element -- small static thumbnail row, no next/image needed
-                <img key={p.id} src={p.image} alt="" />
-              ))}
+          {/* Relocated from the hero — the actual spinning-wheel graphic
+              belongs at the moment a visitor is deciding to commit, right
+              next to the final CTA, more than it belongs beside the headline
+              before they've read anything. Reuses .landing-gift-card as-is
+              (the same card the hero used to show) rather than maintaining
+              a second parallel "here's your prize" visual language. */}
+          <div className="landing-hero-gift">
+            <div className="landing-gift-card">
+              <div className="landing-gift-card-head">
+                <span className="landing-gift-card-label">Your thank-you gift</span>
+                <span className="landing-gift-card-meta">1 spin &middot; {PRIZES.length} gifts</span>
+              </div>
+
+              <div className="landing-hero-wheel" aria-hidden="true">
+                <div className="landing-hero-wheel-pointer" />
+                <div className="landing-hero-wheel-ring" />
+                <div className="landing-hero-wheel-disc" />
+                <div className="landing-hero-wheel-innerline" />
+                <div className="landing-hero-wheel-face">
+                  <div className="landing-hero-wheel-spin">
+                    <div className="landing-hero-wheel-wedges" />
+                    {PRIZES.map((p, i) => (
+                      <div
+                        key={`div-${p.id}`}
+                        className="landing-hero-wheel-divider"
+                        style={{ transform: `rotate(${i * WHEEL_SEG}deg)` }}
+                      />
+                    ))}
+                    {PRIZES.map((p, i) => {
+                      const c = i * WHEEL_SEG + WHEEL_SEG / 2;
+                      return (
+                        <div key={p.id} className="landing-hero-wheel-slot" style={{ transform: `rotate(${c}deg)` }}>
+                          <div
+                            className="landing-hero-wheel-tile"
+                            style={{ transform: `translate(-50%, -50%) translateY(-76px) rotate(${-c}deg)` }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- tiny decorative tile photo inside a fixed-size non-interactive graphic */}
+                            <img src={p.image} alt="" className="landing-hero-wheel-photo" />
+                            <span className="landing-hero-wheel-label">{PRIZE_SHORT_LABEL[p.id] || p.label}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="landing-hero-wheel-hub">
+                  <span className="landing-hero-wheel-hub-dot" />
+                </div>
+              </div>
+
+              <p className="landing-gift-card-tagline">
+                Finish the checkup,
+                <br />
+                spin for a free gift
+              </p>
+
+              <div className="landing-gift-card-thumbs">
+                {PRIZES.map((p) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- small static thumbnail row, no next/image needed
+                  <img key={p.id} src={p.image} alt={p.label} title={p.label} />
+                ))}
+              </div>
+
+              <div className="landing-gift-card-footer">Every completed checkup earns one spin</div>
             </div>
           </div>
         </div>
@@ -441,6 +479,14 @@ function ArrowIcon() {
   return (
     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="landing-cta-arrow">
       <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+      <path d="M7 5.5v13a1 1 0 0 0 1.53.85l10.4-6.5a1 1 0 0 0 0-1.7l-10.4-6.5A1 1 0 0 0 7 5.5Z" fill="currentColor" />
     </svg>
   );
 }
