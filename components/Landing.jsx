@@ -279,14 +279,6 @@ export default function Landing() {
                 )}
               </div>
             </div>
-            <div className="landing-preview-badge">
-              <span className="landing-preview-badge-dot" aria-hidden="true" />
-              <span>
-                <b>12 quick health checks</b>
-                <br />
-                Instant PREPARED score
-              </span>
-            </div>
           </div>
         </div>
       </section>
