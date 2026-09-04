@@ -155,7 +155,10 @@ button { font-family: inherit; }
   background: linear-gradient(100deg, var(--paper) 12%, color-mix(in srgb, var(--paper) 86%, transparent) 52%, color-mix(in srgb, var(--structure-tint) 72%, transparent) 100%);
 }
 .landing-hero-inner {
-  position: relative; max-width: 1400px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center;
+  /* Top-aligned, not centred: centring left the card floating with 64px of
+     unrelated space above and below it and no shared edge with the copy.
+     Aligning the tops gives the hero one horizontal line to read against. */
+  position: relative; max-width: 1400px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: flex-start;
   gap: clamp(32px, 4vw, 64px); padding: clamp(44px, 6vw, 88px) clamp(18px, 4vw, 48px) clamp(40px, 5vw, 72px);
 }
 .landing-hero-copy { flex: 1 1 420px; min-width: 0; max-width: 520px; text-align: left; }
@@ -217,9 +220,16 @@ button { font-family: inherit; }
    frame behind it being quiet — a scrim gives the disc and its caption a
    consistent surface to sit on whatever the poster happens to show, and
    it drops away the moment playback starts. */
+/* A flat 34-52% wash over the whole frame made the screenshot behind it
+   read as greyed-out rather than ready-to-play. A vignette darkens only
+   what sits under the control and leaves the report legible at the edges. */
 .landing-preview-scrim {
   position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ink) 34%, transparent), color-mix(in srgb, var(--ink) 52%, transparent));
+  background: radial-gradient(circle at 50% 50%,
+    color-mix(in srgb, var(--ink) 46%, transparent) 0%,
+    color-mix(in srgb, var(--ink) 30%, transparent) 24%,
+    color-mix(in srgb, var(--ink) 8%, transparent) 52%,
+    transparent 72%);
 }
 /* The whole control — disc plus caption — is one button, so the words are
    part of the click target rather than a label sitting next to it. */
@@ -240,10 +250,16 @@ button { font-family: inherit; }
 }
 .landing-preview-play:hover .landing-preview-play-btn { transform: scale(1.07); }
 .landing-preview-play-btn svg { margin-left: 3px; } /* optically centers the triangle's weighted point */
+/* Pill rather than bare text: the caption has to stay legible over
+   whatever frame the cover happens to show, and a text-shadow alone
+   doesn't survive a light background. */
 .landing-preview-play-label {
   display: inline-flex; align-items: center; gap: 10px;
   font-size: .84rem; font-weight: 700; letter-spacing: .01em; color: #fff;
-  white-space: nowrap; text-shadow: 0 1px 10px rgba(28, 36, 48, .5);
+  white-space: nowrap;
+  padding: 7px 14px; border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 72%, transparent);
+  backdrop-filter: blur(6px);
 }
 .landing-preview-play-label i {
   font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums;

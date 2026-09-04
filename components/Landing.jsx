@@ -152,7 +152,10 @@ function scrollToAuditSlowly(e) {
 /* "Takes ~5 minutes" lived here too, directly under a CTA microcopy line
    that already says "Takes about 5 minutes" — the same claim twice, two
    lines apart. Dropped, leaving the three that say something new. */
-const TRUST_ITEMS = ["12 quick health checks", "AI photo scanner", "Instant readiness report"];
+/* Kept short enough that all three sit on one line in the hero column —
+   at the previous lengths the third wrapped and sat alone, the same orphan
+   the old 2x2 chip grid existed to avoid. */
+const TRUST_ITEMS = ["12 health checks", "AI photo scanner", "Instant report"];
 
 const HOW_STEPS = [
   {
