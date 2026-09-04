@@ -264,7 +264,7 @@ export default function Landing() {
                 <video
                   ref={demoVideoRef}
                   className="landing-preview-video"
-                  poster="/videos/aed-demo-poster.jpg"
+                  poster="/videos/aed-demo-cover.jpg"
                   src="/videos/aed-demo.mp4"
                   playsInline
                   controls={demoPlaying}
