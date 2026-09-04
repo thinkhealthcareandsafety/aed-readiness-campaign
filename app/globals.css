@@ -216,21 +216,10 @@ button { font-family: inherit; }
 }
 .landing-preview-media { position: relative; aspect-ratio: 1918 / 942; background: var(--ink); }
 .landing-preview-video { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
-/* The cover is a real screenshot, so the play control can't rely on the
-   frame behind it being quiet — a scrim gives the disc and its caption a
-   consistent surface to sit on whatever the poster happens to show, and
-   it drops away the moment playback starts. */
-/* A flat 34-52% wash over the whole frame made the screenshot behind it
-   read as greyed-out rather than ready-to-play. A vignette darkens only
-   what sits under the control and leaves the report legible at the edges. */
-.landing-preview-scrim {
-  position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(circle at 50% 50%,
-    color-mix(in srgb, var(--ink) 46%, transparent) 0%,
-    color-mix(in srgb, var(--ink) 30%, transparent) 24%,
-    color-mix(in srgb, var(--ink) 8%, transparent) 52%,
-    transparent 72%);
-}
+/* No scrim, no glow bloom. Any translucent wash — flat or vignette — just
+   smeared a grey cloud across the screenshot, and the animated glow added
+   an orange one on top of it. The control earns its contrast from solid
+   shapes instead: an opaque disc with a white ring, and a solid pill. */
 /* The whole control — disc plus caption — is one button, so the words are
    part of the click target rather than a label sitting next to it. */
 .landing-preview-play {
@@ -239,14 +228,12 @@ button { font-family: inherit; }
   padding: 0; background: none; border: none; cursor: pointer;
 }
 .landing-preview-play-btn {
-  width: 74px; height: 74px; border-radius: 50%; color: #fff;
+  width: 78px; height: 78px; border-radius: 50%; color: #fff;
+  box-sizing: border-box; border: 5px solid #fff;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 100%, white 14%), var(--accent) 60%, var(--accent-deep));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(0, 0, 0, .1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(0, 0, 0, .1), 0 8px 22px -8px rgba(28, 36, 48, .5);
   transition: transform .2s cubic-bezier(.2, .8, .2, 1);
-  /* Same breathing-glow already used on the prize-wheel's CTA — the one
-     button this card exists to get pressed earns the same cue. */
-  animation: prizeWheelCtaGlow 1.8s ease-in-out infinite;
 }
 .landing-preview-play:hover .landing-preview-play-btn { transform: scale(1.07); }
 .landing-preview-play-btn svg { margin-left: 3px; } /* optically centers the triangle's weighted point */
@@ -258,19 +245,13 @@ button { font-family: inherit; }
   font-size: .84rem; font-weight: 700; letter-spacing: .01em; color: #fff;
   white-space: nowrap;
   padding: 7px 14px; border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 72%, transparent);
-  backdrop-filter: blur(6px);
+  background: var(--ink);
+  box-shadow: 0 6px 18px -8px rgba(28, 36, 48, .55);
 }
 .landing-preview-play-label i {
   font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums;
   font-size: .78rem; color: rgba(255, 255, 255, .72);
   padding-left: 10px; border-left: 1px solid rgba(255, 255, 255, .3);
-}
-@media (prefers-reduced-motion: reduce) {
-  .landing-preview-play-btn {
-    animation: none;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(0, 0, 0, .1), 0 0 14px 2px color-mix(in srgb, var(--accent) 45%, transparent);
-  }
 }
 /* This card used to stretch to the copy column's full height, which meant
    forcing a 2.04:1 recording into a roughly square box and cropping ~55%

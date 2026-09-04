@@ -270,7 +270,6 @@ export default function Landing() {
                   onPause={() => setDemoPlaying(false)}
                   onEnded={() => setDemoPlaying(false)}
                 />
-                {!demoPlaying && <span className="landing-preview-scrim" aria-hidden="true" />}
                 {!demoPlaying && (
                   <button type="button" className="landing-preview-play" onClick={playDemo} aria-label="Watch the AED Readiness demo, 1 minute 24 seconds">
                     <span className="landing-preview-play-btn" aria-hidden="true">
