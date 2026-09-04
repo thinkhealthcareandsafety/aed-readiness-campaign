@@ -231,7 +231,7 @@ export default function Landing() {
             <span className="landing-eyebrow">Think Health &middot; AED Readiness Campaign</span>
             <h1 className="landing-h1">Is your property&rsquo;s AED truly ready to save a life today?</h1>
             <p className="landing-lead">
-              An emergency can happen in seconds. Take 5 minutes to check your property’s AED battery, pads, signage, and team training. Get an instant, easy-to-read readiness report to make sure you&rsquo;re always prepared.
+              An emergency can happen in seconds. Check your AED&rsquo;s battery, pads, signage and team training in five minutes &mdash; and get an instant readiness report you can act on.
             </p>
             <div className="landing-hero-cta-row">
               <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-cta landing-cta-lg">
@@ -267,6 +267,7 @@ export default function Landing() {
                   onPause={() => setDemoPlaying(false)}
                   onEnded={() => setDemoPlaying(false)}
                 />
+                {!demoPlaying && <span className="landing-preview-scrim" aria-hidden="true" />}
                 {!demoPlaying && (
                   <button type="button" className="landing-preview-play" onClick={playDemo} aria-label="Watch the AED Readiness demo, 1 minute 24 seconds">
                     <span className="landing-preview-play-btn" aria-hidden="true">
