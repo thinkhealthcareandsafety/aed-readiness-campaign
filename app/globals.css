@@ -234,6 +234,21 @@ button { font-family: inherit; }
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(0, 0, 0, .1), 0 0 14px 2px color-mix(in srgb, var(--accent) 45%, transparent);
   }
 }
+/* Below 1180px the hero stacks (copy and preview each get their own full-
+   width row), where the video's natural aspect ratio already looks right.
+   At 1180px+ they sit side by side and the copy column — four lines of
+   headline, a paragraph, a CTA row, four chips — runs taller than a
+   2:1-ratio video card ever will, leaving dead air above and below the
+   card. Stretching the card to the row's full height and letting the video
+   cover it (cropping left/right, not top/bottom) fills that space; the
+   video's own empty gray margins either side of its centered UI are what
+   gets cropped first, so the actual on-screen product stays intact. */
+@media (min-width: 1180px) {
+  .landing-hero-inner { align-items: stretch; }
+  .landing-hero-preview { display: flex; flex-direction: column; }
+  .landing-preview-frame { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .landing-preview-media { flex: 1; aspect-ratio: auto; min-height: 0; }
+}
 /* ---------- Landing: hero gift card + decorative idle wheel ---------- */
 .landing-hero-gift { flex: 0 1 400px; min-width: 300px; }
 .landing-gift-card {
