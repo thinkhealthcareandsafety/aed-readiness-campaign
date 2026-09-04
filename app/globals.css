@@ -155,10 +155,10 @@ button { font-family: inherit; }
   background: linear-gradient(100deg, var(--paper) 12%, color-mix(in srgb, var(--paper) 86%, transparent) 52%, color-mix(in srgb, var(--structure-tint) 72%, transparent) 100%);
 }
 .landing-hero-inner {
-  position: relative; max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center;
+  position: relative; max-width: 1400px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center;
   gap: clamp(32px, 4vw, 64px); padding: clamp(44px, 6vw, 88px) clamp(18px, 4vw, 48px) clamp(40px, 5vw, 72px);
 }
-.landing-hero-copy { flex: 1 1 460px; min-width: 0; text-align: left; }
+.landing-hero-copy { flex: 1 1 420px; min-width: 0; max-width: 560px; text-align: left; }
 .landing-h1 { font-family: var(--font-body); font-weight: 800; font-size: clamp(2.2rem, 5.4vw, 4.5rem); line-height: 1.04; max-width: 17ch; margin-top: 20px; color: var(--ink); letter-spacing: -0.02em; }
 .landing-lead { color: var(--ink-soft); font-size: 1.1rem; max-width: 52ch; margin: 22px 0 0; line-height: 1.65; }
 .landing-hero-cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 30px 0 0; }
@@ -202,7 +202,7 @@ button { font-family: inherit; }
    column instead of sitting capped at its basis while the headline eats
    everything else — the video shows real on-screen UI text, so it needs
    real width to stay legible, not just enough room for a decorative card. */
-.landing-hero-preview { flex: 1 1 480px; min-width: 300px; max-width: 640px; position: relative; padding-bottom: 26px; }
+.landing-hero-preview { flex: 1 1 600px; min-width: 300px; max-width: 820px; position: relative; padding-bottom: 26px; }
 .landing-preview-frame {
   border-radius: 18px; overflow: hidden; background: var(--paper-raised); border: 1px solid var(--line);
   box-shadow: 0 24px 48px -24px color-mix(in srgb, var(--ink) 28%, transparent);
