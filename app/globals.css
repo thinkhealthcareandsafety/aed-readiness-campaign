@@ -1688,6 +1688,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 }
 
 .cat-card {
+  /* A grid item's default min-width is auto — the min-content size of its
+     children — and for the nowrap "X/Y pts" pill inside, that's its full
+     unwrapped width, not the box it visually renders at. Without this,
+     that forced the track wider than its own minmax(220px, 1fr) upper
+     limit on a narrow phone, pushing the whole grid past the viewport
+     edge instead of collapsing to one column. */
+  min-width: 0;
   background: var(--paper-raised);
   border: 1.5px solid var(--line-strong);
   border-radius: 14px;
@@ -1802,6 +1809,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   margin-bottom: 16px;
 }
 .unit-tab {
+  /* Same fix as .cat-card above: the model/serial lines below are
+     white-space: nowrap + ellipsis, whose min-content width is their full
+     unclipped text — without this, a long model name or serial forced
+     this grid item (and its track) wider than minmax(190px, 1fr) allows,
+     overflowing the row past a phone's viewport instead of the text
+     actually ellipsis-truncating inside it. */
+  min-width: 0;
   font-family: inherit; text-align: left; cursor: pointer;
   display: flex; flex-direction: column; gap: 3px;
   background: var(--paper-raised); border: 1.5px solid var(--line);
@@ -1925,6 +1939,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
 .action-status-pill.critical { background: var(--notready-tint); color: var(--notready); border: 1px solid var(--notready); }
 .action-status-pill.warn { background: var(--warn-tint); color: var(--warn); border: 1px solid var(--warn); }
 .action-status-pill.good { background: var(--ready-tint); color: var(--ready); border: 1px solid var(--ready); }
+
+/* Below ~480px, the side-by-side header (label left, status pill pinned
+   right with white-space: nowrap) left almost no width for the label —
+   "Is there any visible damage on AED (cracks, swelling, or leakage)?"
+   was wrapping to one word per line while "CRITICAL ACTION REQUIRED" sat
+   untouched on the right. Stacking the pill below the label instead gives
+   the label the full card width to wrap normally. */
+@media (max-width: 480px) {
+  .action-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .action-status-pill { align-self: flex-start; }
+}
 
 .action-card-answer {
   font-size: 0.9rem;
