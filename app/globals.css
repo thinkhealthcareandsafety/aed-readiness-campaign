@@ -562,6 +562,23 @@ button { font-family: inherit; }
    the app, no separate gold treatment. Only the spacing/size differ, since
    this is the one action the whole card exists to prompt. */
 .btn-primary.prize-wheel-spin-cta { width: 100%; padding: 16px 30px; font-size: 1.05rem; border-radius: 14px; }
+/* A soft breathing glow — this is the one button the whole card exists to
+   get pressed (spin the wheel, then claim the report), so it earns a
+   motion cue the way no other button on the site needs. :not(:disabled)
+   means it automatically pauses during the "Spinning…" state (disabled
+   while the wheel animates) and resumes once there's something to click
+   again — inviting a click only when there actually is one to make. */
+@keyframes prizeWheelCtaGlow {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.1), 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.1), 0 0 20px 5px color-mix(in srgb, var(--accent) 55%, transparent); }
+}
+.btn-primary.prize-wheel-spin-cta:not(:disabled) { animation: prizeWheelCtaGlow 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary.prize-wheel-spin-cta:not(:disabled) {
+    animation: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.1), 0 0 14px 2px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+}
 /* The desktop-sized wheel pane plus the copy pane's list, result and CTA
    added up to more vertical space than a real phone viewport has left once
    its browser chrome (address bar, home indicator) is counted — trimmed
