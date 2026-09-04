@@ -163,16 +163,19 @@ button { font-family: inherit; }
 .landing-lead { color: var(--ink-soft); font-size: 1.1rem; max-width: 52ch; margin: 22px 0 0; line-height: 1.65; }
 .landing-hero-cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 30px 0 0; }
 .landing-hero-microcopy { font-size: .88rem; line-height: 1.4; color: var(--ink-soft); }
-/* Four chips in a flex-wrap row broke 3-then-1 at the hero column's width,
-   leaving a single orphan chip stranded on its own line — the most visible
-   "unfinished" detail in the hero. A two-column grid makes the same four
-   items land as a deliberate 2x2 block instead. justify-items: start keeps
-   each chip its own content width rather than stretching to fill the
-   column, which would pad the shorter labels out to match the longer. */
-.landing-hero-chips { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; justify-items: start; gap: 10px; margin: 34px 0 0; }
+/* Was a 2x2 block of bordered chips, which put four more boxes under a
+   headline, a paragraph and a CTA — the hero read as a wall of panels.
+   These are supporting details, not competing calls to action, so they're
+   one quiet line of text now: no boxes, no borders, just a small teal dot
+   per item. Same information, a fraction of the visual weight. */
+.landing-hero-chips { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 30px 0 0; }
 .landing-hero-chip {
-  padding: 9px 15px; border-radius: 10px; background: var(--paper-raised); border: 1px solid var(--line);
-  font-size: .84rem; font-weight: 600; color: var(--structure);
+  display: inline-flex; align-items: center; gap: 9px;
+  font-size: .86rem; font-weight: 600; color: var(--ink-soft);
+}
+.landing-hero-chip::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--structure); flex-shrink: 0;
 }
 
 .landing-cta {

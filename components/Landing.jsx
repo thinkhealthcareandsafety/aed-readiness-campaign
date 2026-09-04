@@ -149,7 +149,10 @@ function scrollToAuditSlowly(e) {
   requestAnimationFrame(step);
 }
 
-const TRUST_ITEMS = ["Takes ~5 minutes", "12 quick health checks", "AI photo scanner included", "Instant readiness report"];
+/* "Takes ~5 minutes" lived here too, directly under a CTA microcopy line
+   that already says "Takes about 5 minutes" — the same claim twice, two
+   lines apart. Dropped, leaving the three that say something new. */
+const TRUST_ITEMS = ["12 quick health checks", "AI photo scanner", "Instant readiness report"];
 
 const HOW_STEPS = [
   {
