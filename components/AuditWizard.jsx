@@ -525,16 +525,30 @@ export default function AuditWizard({ schema, detectedCity }) {
       <div className="wizard-page" id="audit">
         <div className="wizard-topbar">
           <div className="brandrow">
-            <div className="brand">
-              {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, no next/image needed */}
-              <img src="/brand/thinkhealth-logo.png" alt="Think Health" className="brand-logo" />
-              <span>
-                AED Readiness Campaign
-                <small>Think Health &middot; PREPARED Score</small>
-              </span>
-            </div>
+            {/* On step 0 the landing page is still mounted directly above
+                this, carrying the same logo and brand line in its own
+                header — repeating the full lockup here made scrolling from
+                the pitch into the form feel like leaving the site and
+                entering a separate app, two brand headers deep. Once the
+                landing unmounts (step 1+) this shell is the only chrome on
+                screen and earns its identity back. */}
+            {stepIndex !== 0 && (
+              <div className="brand">
+                {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, no next/image needed */}
+                <img src="/brand/thinkhealth-logo.png" alt="Think Health" className="brand-logo" />
+                <span>
+                  AED Readiness Campaign
+                  <small>Think Health &middot; PREPARED Score</small>
+                </span>
+              </div>
+            )}
             <div className="topbar-meta">
-              {!isModeChoice && <LiveScore points={scored.total.points} max={scored.total.max} />}
+              {/* Nothing is scored on the contact-details step, so a "LIVE
+                  SCORE 0 / 200" pill is the first number a visitor sees
+                  after being sold on the audit — it reads as a verdict
+                  they've already failed rather than a progress meter that
+                  hasn't started. It appears from the first scored step on. */}
+              {!isModeChoice && stepIndex !== 0 && <LiveScore points={scored.total.points} max={scored.total.max} />}
               <div className="step-label">
                 Step {stepIndex + 1} / {steps.length}
               </div>

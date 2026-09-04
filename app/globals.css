@@ -140,8 +140,11 @@ button { font-family: inherit; }
 .landing-header-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .landing-header-cta { min-height: 44px; padding: 0 22px; border-radius: 12px; font-size: .9rem; }
 @media (max-width: 560px) {
-  .landing-header-pill span:not(.landing-header-pill-dot) { display: none; }
-  .landing-header-pill { padding: 7px 9px; }
+  /* Hiding just the pill's text left the pill itself behind as a bordered
+     circle containing a single orange dot — a decoration that says
+     nothing, sitting right next to the primary CTA. The whole pill goes
+     instead, leaving the mobile header as logo + one clear action. */
+  .landing-header-pill { display: none; }
 }
 
 /* ---------- Landing: hero (two-column: copy + gift/wheel card) ---------- */
@@ -160,7 +163,13 @@ button { font-family: inherit; }
 .landing-lead { color: var(--ink-soft); font-size: 1.1rem; max-width: 52ch; margin: 22px 0 0; line-height: 1.65; }
 .landing-hero-cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin: 30px 0 0; }
 .landing-hero-microcopy { font-size: .88rem; line-height: 1.4; color: var(--ink-soft); }
-.landing-hero-chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 34px 0 0; }
+/* Four chips in a flex-wrap row broke 3-then-1 at the hero column's width,
+   leaving a single orphan chip stranded on its own line — the most visible
+   "unfinished" detail in the hero. A two-column grid makes the same four
+   items land as a deliberate 2x2 block instead. justify-items: start keeps
+   each chip its own content width rather than stretching to fill the
+   column, which would pad the shorter labels out to match the longer. */
+.landing-hero-chips { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; justify-items: start; gap: 10px; margin: 34px 0 0; }
 .landing-hero-chip {
   padding: 9px 15px; border-radius: 10px; background: var(--paper-raised); border: 1px solid var(--line);
   font-size: .84rem; font-weight: 600; color: var(--structure);
@@ -395,7 +404,17 @@ button { font-family: inherit; }
   .landing-hero-inner { text-align: center; }
   .landing-hero-copy { text-align: center; }
   .landing-hero-cta-row { justify-content: center; }
-  .landing-hero-chips { justify-content: center; }
+  /* Two fixed columns of chips don't fit a phone — back to a centred
+     wrapping row here, where letting them flow naturally reads better
+     than forcing a grid that would overflow. */
+  .landing-hero-chips { display: flex; flex-wrap: wrap; justify-content: center; }
+  /* "Designed for top hospitality & commercial properties" is 439px wide
+     as one line, and flex: 0 0 auto meant it could never shrink below
+     that — on a 390px phone it alone pushed the whole document to 457px
+     wide, giving the entire landing page a horizontal scrollbar. Giving
+     it its own full-width row lets the text wrap normally, with the logo
+     marquee flowing underneath. */
+  .landing-brand-label { flex: 1 1 100%; text-align: center; }
   .landing-gift-head { text-align: left; }
   .landing-close-card { text-align: center; }
   /* Each line needs to read as one row, not wrap — a wrapped line breaks
