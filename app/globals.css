@@ -255,7 +255,18 @@ button { font-family: inherit; }
   -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
 }
 .landing-brand-strip-logos { display: flex; width: max-content; animation: landingBrandScroll 34s linear infinite; }
-.landing-brand-strip-group { display: flex; align-items: center; gap: clamp(28px, 4vw, 56px); padding-right: clamp(28px, 4vw, 56px); opacity: .55; }
+/* opacity: .55 alone left half this strip unreadable. The logos don't
+   start from a common tone: measured ink luminance runs from 0 (Sheraton,
+   Renaissance — solid black marks) to 119 (Westin's mid-grey wordmark) and
+   149 (Courtyard's pale gold), so a flat 55% that reads as "tastefully
+   subdued" on the black marks washed the two light ones out to ~180-197
+   against a white bar — effectively invisible, which defeats the point of
+   showing recognisable brands at all. Raising opacity fixes the black
+   marks; the brightness knock-down is what actually rescues the pale two,
+   pulling every logo into a legible band without flattening them to
+   grayscale (these are real brand marks — Marriott's red, Aloft's pink and
+   Courtyard's gold stay their own colours, just deepened). */
+.landing-brand-strip-group { display: flex; align-items: center; gap: clamp(28px, 4vw, 56px); padding-right: clamp(28px, 4vw, 56px); opacity: .9; filter: brightness(.8); }
 .landing-brand-strip-track:hover .landing-brand-strip-logos { animation-play-state: paused; }
 .landing-brand-strip-logos img { height: 22px; width: auto; max-width: 84px; object-fit: contain; flex-shrink: 0; }
 @keyframes landingBrandScroll {
