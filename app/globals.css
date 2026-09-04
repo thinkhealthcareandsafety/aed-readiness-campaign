@@ -207,32 +207,39 @@ button { font-family: inherit; }
   box-shadow: 0 24px 48px -24px color-mix(in srgb, var(--ink) 28%, transparent);
   animation: landingFadeUp 620ms cubic-bezier(.2, .7, .2, 1) both;
 }
-.landing-preview-chrome {
-  display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--paper); border-bottom: 1px solid var(--line);
-}
-.landing-preview-chrome-dots { display: flex; gap: 5px; flex-shrink: 0; }
-.landing-preview-chrome-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
-.landing-preview-chrome-label {
-  font-size: .72rem; font-weight: 700; letter-spacing: .04em; color: var(--ink-soft);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
 .landing-preview-media { position: relative; aspect-ratio: 1918 / 942; background: var(--ink); }
 .landing-preview-video { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+/* The whole control — disc plus caption — is one button, so the words are
+   part of the click target rather than a label sitting next to it. */
 .landing-preview-play {
-  position: absolute; inset: 0; margin: auto; width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; color: #fff;
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  padding: 0; background: none; border: none; cursor: pointer;
+}
+.landing-preview-play-btn {
+  width: 74px; height: 74px; border-radius: 50%; color: #fff;
+  display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 100%, white 14%), var(--accent) 60%, var(--accent-deep));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(0, 0, 0, .1);
-  transition: transform .15s ease;
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1);
+  /* Same breathing-glow already used on the prize-wheel's CTA — the one
+     button this card exists to get pressed earns the same cue. */
+  animation: prizeWheelCtaGlow 1.8s ease-in-out infinite;
 }
-.landing-preview-play:hover { transform: scale(1.08); }
-.landing-preview-play svg { margin-left: 3px; } /* optically centers the play triangle's own weighted point */
-/* Same breathing-glow treatment already used on the prize-wheel's own CTA
-   (see .prize-wheel-spin-cta) — the one button this whole card exists to
-   get pressed earns the same "click me" cue, for the same reason. */
-.landing-preview-play { animation: prizeWheelCtaGlow 1.8s ease-in-out infinite; }
+.landing-preview-play:hover .landing-preview-play-btn { transform: scale(1.07); }
+.landing-preview-play-btn svg { margin-left: 3px; } /* optically centers the triangle's weighted point */
+.landing-preview-play-label {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: .84rem; font-weight: 700; letter-spacing: .01em; color: var(--ink);
+  white-space: nowrap;
+}
+.landing-preview-play-label i {
+  font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums;
+  font-size: .78rem; color: var(--ink-soft);
+  padding-left: 10px; border-left: 1px solid var(--line);
+}
 @media (prefers-reduced-motion: reduce) {
-  .landing-preview-play {
+  .landing-preview-play-btn {
     animation: none;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(0, 0, 0, .1), 0 0 14px 2px color-mix(in srgb, var(--accent) 45%, transparent);
   }

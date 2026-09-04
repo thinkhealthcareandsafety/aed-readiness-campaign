@@ -255,14 +255,6 @@ export default function Landing() {
 
           <div className="landing-hero-preview">
             <div className="landing-preview-frame">
-              <div className="landing-preview-chrome">
-                <span className="landing-preview-chrome-dots" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-                <span className="landing-preview-chrome-label">AED Readiness &mdash; Live Demo</span>
-              </div>
               <div className="landing-preview-media">
                 <video
                   ref={demoVideoRef}
@@ -276,8 +268,14 @@ export default function Landing() {
                   onEnded={() => setDemoPlaying(false)}
                 />
                 {!demoPlaying && (
-                  <button type="button" className="landing-preview-play" onClick={playDemo} aria-label="Play the AED Readiness demo">
-                    <PlayIcon />
+                  <button type="button" className="landing-preview-play" onClick={playDemo} aria-label="Watch the AED Readiness demo, 1 minute 24 seconds">
+                    <span className="landing-preview-play-btn" aria-hidden="true">
+                      <PlayIcon />
+                    </span>
+                    <span className="landing-preview-play-label" aria-hidden="true">
+                      Watch the demo
+                      <i>1:24</i>
+                    </span>
                   </button>
                 )}
               </div>
