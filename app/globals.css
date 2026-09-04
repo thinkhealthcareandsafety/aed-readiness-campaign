@@ -198,7 +198,11 @@ button { font-family: inherit; }
    absolutely positioned and would otherwise stick out past this flex
    item's own box and get clipped by (or visually collide with) whatever
    sits below the hero. */
-.landing-hero-preview { flex: 0 1 460px; min-width: 300px; position: relative; padding-bottom: 26px; }
+/* flex-grow:1 (not 0) so this shares leftover row space with the copy
+   column instead of sitting capped at its basis while the headline eats
+   everything else — the video shows real on-screen UI text, so it needs
+   real width to stay legible, not just enough room for a decorative card. */
+.landing-hero-preview { flex: 1 1 480px; min-width: 300px; max-width: 640px; position: relative; padding-bottom: 26px; }
 .landing-preview-frame {
   border-radius: 18px; overflow: hidden; background: var(--paper-raised); border: 1px solid var(--line);
   box-shadow: 0 24px 48px -24px color-mix(in srgb, var(--ink) 28%, transparent);
