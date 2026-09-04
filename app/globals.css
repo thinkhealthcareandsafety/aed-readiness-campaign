@@ -287,21 +287,35 @@ button { font-family: inherit; }
    white in a dark-mode browser, which turned this into a near-white panel
    still carrying white-on-white text — the one section on the page that
    silently broke under system dark mode while everything else (built from
-   the same variables the "right" way round) kept reading fine. */
-.landing-gift { background: #1c2430; border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08); position: relative; overflow: hidden; }
+   the same variables the "right" way round) kept reading fine.
+   The specific hex values matter too, not just "fixed vs. variable": this
+   used to be #1c2430 (light-mode --ink, reused as a background) paired
+   with #f0973a for the eyebrow/numerals — #f0973a is --accent's DARK-MODE
+   value, not its light-mode one. Mixing a light-mode token with a
+   dark-mode token reads as an unrelated third palette bolted onto an
+   otherwise warm, light-themed page, which is exactly what it looked
+   like. Background is now --structure's own light-mode teal (#2f5d5a),
+   ties this promotional section to the same teal already used for the
+   PREPARED badges/progress dots elsewhere. The highlight text is a
+   lightened tint of --accent (#f2a565, not the literal #d9761c) rather
+   than reusing --accent verbatim — #d9761c's own contrast against this
+   teal runs too low for small uppercase text; this keeps the same warm
+   orange hue as every button/eyebrow elsewhere, just brightened enough to
+   stay legible against a darker backdrop specifically. */
+.landing-gift { background: #2f5d5a; border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08); position: relative; overflow: hidden; }
 .landing-gift-glow {
   position: absolute; width: 520px; height: 520px; right: -140px; top: -180px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 68%);
+  background: radial-gradient(circle, rgba(217, 118, 28, .28), transparent 68%);
 }
 .landing-gift-inner { position: relative; text-align: left; }
 .landing-gift-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; }
-.landing-gift .landing-eyebrow { color: #f0973a; }
+.landing-gift .landing-eyebrow { color: #f2a565; }
 .landing-gift .landing-h2 { color: #fff; margin: 16px 0 0; }
-.landing-gift-head p { font-size: .94rem; line-height: 1.6; color: rgba(245, 246, 243, .72); max-width: 34ch; margin: 0; }
+.landing-gift-head p { font-size: .94rem; line-height: 1.6; color: rgba(245, 246, 243, .78); max-width: 34ch; margin: 0; }
 .landing-gift-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-top: 36px; }
-.landing-gift-card-tile { padding: 14px; border-radius: 18px; background: rgba(245, 246, 243, .06); border: 1px solid rgba(245, 246, 243, .14); }
+.landing-gift-card-tile { padding: 14px; border-radius: 18px; background: rgba(245, 246, 243, .1); border: 1px solid rgba(245, 246, 243, .18); }
 .landing-gift-card-tile img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; display: block; }
-.landing-gift-card-tile-num { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #f0973a; margin: 14px 0 0; font-variant-numeric: tabular-nums; }
+.landing-gift-card-tile-num { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #f2a565; margin: 14px 0 0; font-variant-numeric: tabular-nums; }
 .landing-gift-card-tile p { font-size: .94rem; line-height: 1.4; font-weight: 600; margin: 6px 0 0; color: #fff; }
 
 /* ---------- Landing: why-this-matters cards ---------- */
