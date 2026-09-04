@@ -384,10 +384,6 @@ export default function Landing() {
                 <span className="tick star">&#9733;</span> One spin of the prize wheel upon completion
               </li>
             </ul>
-            <a href="#audit" onClick={scrollToAuditSlowly} className="btn btn-primary landing-cta landing-cta-lg">
-              Start your free audit
-              <ArrowIcon />
-            </a>
           </div>
 
           {/* Relocated from the hero — the actual spinning-wheel graphic
