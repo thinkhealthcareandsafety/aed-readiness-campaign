@@ -216,42 +216,33 @@ button { font-family: inherit; }
 }
 .landing-preview-media { position: relative; aspect-ratio: 1918 / 942; background: var(--ink); }
 .landing-preview-video { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
-/* No scrim, no glow bloom. Any translucent wash — flat or vignette — just
-   smeared a grey cloud across the screenshot, and the animated glow added
-   an orange one on top of it. The control earns its contrast from solid
-   shapes instead: an opaque disc with a white ring, and a solid pill. */
-/* The whole control — disc plus caption — is one button, so the words are
-   part of the click target rather than a label sitting next to it. */
+/* The cover is a tall screenshot of a real report, not a photo — dense
+   text runs edge to edge, so any label anchored inside the media area
+   (centre, corner, wherever) is gambling on what happens to be behind it.
+   At this crop it landed mid-sentence on a card heading. Fix: nothing but
+   the bare disc goes over the image. The caption moves to its own strip
+   below the frame, where the background is this card's own paper — never
+   the screenshot — so it can never collide with report text again. */
 .landing-preview-play {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  display: flex; flex-direction: column; align-items: center; gap: 18px;
-  padding: 0; background: none; border: none; cursor: pointer;
-}
-.landing-preview-play-btn {
   width: 78px; height: 78px; border-radius: 50%; color: #fff;
-  box-sizing: border-box; border: 5px solid #fff;
+  box-sizing: border-box; border: 5px solid #fff; padding: 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 100%, white 14%), var(--accent) 60%, var(--accent-deep));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -1px 0 rgba(0, 0, 0, .1), 0 8px 22px -8px rgba(28, 36, 48, .5);
   transition: transform .2s cubic-bezier(.2, .8, .2, 1);
 }
-.landing-preview-play:hover .landing-preview-play-btn { transform: scale(1.07); }
-.landing-preview-play-btn svg { margin-left: 3px; } /* optically centers the triangle's weighted point */
-/* Pill rather than bare text: the caption has to stay legible over
-   whatever frame the cover happens to show, and a text-shadow alone
-   doesn't survive a light background. */
-.landing-preview-play-label {
-  display: inline-flex; align-items: center; gap: 10px;
-  font-size: .84rem; font-weight: 700; letter-spacing: .01em; color: #fff;
-  white-space: nowrap;
-  padding: 7px 14px; border-radius: 999px;
-  background: var(--ink);
-  box-shadow: 0 6px 18px -8px rgba(28, 36, 48, .55);
+.landing-preview-play:hover { transform: translate(-50%, -50%) scale(1.07); }
+.landing-preview-play svg { margin-left: 3px; } /* optically centers the triangle's weighted point */
+.landing-preview-caption {
+  display: flex; align-items: center; gap: 10px; padding: 12px 18px;
+  background: var(--paper); border-top: 1px solid var(--line);
+  font-size: .84rem; font-weight: 700; letter-spacing: .01em; color: var(--ink);
 }
-.landing-preview-play-label i {
+.landing-preview-caption i {
   font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums;
-  font-size: .78rem; color: rgba(255, 255, 255, .72);
-  padding-left: 10px; border-left: 1px solid rgba(255, 255, 255, .3);
+  font-size: .78rem; color: var(--ink-soft);
+  padding-left: 10px; border-left: 1px solid var(--line);
 }
 /* This card used to stretch to the copy column's full height, which meant
    forcing a 2.04:1 recording into a roughly square box and cropping ~55%

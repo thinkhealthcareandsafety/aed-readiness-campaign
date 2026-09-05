@@ -272,16 +272,16 @@ export default function Landing() {
                 />
                 {!demoPlaying && (
                   <button type="button" className="landing-preview-play" onClick={playDemo} aria-label="Watch the AED Readiness demo, 1 minute 24 seconds">
-                    <span className="landing-preview-play-btn" aria-hidden="true">
-                      <PlayIcon />
-                    </span>
-                    <span className="landing-preview-play-label" aria-hidden="true">
-                      Watch the demo
-                      <i>1:24</i>
-                    </span>
+                    <PlayIcon />
                   </button>
                 )}
               </div>
+              {!demoPlaying && (
+                <div className="landing-preview-caption" aria-hidden="true">
+                  <span>Watch the demo</span>
+                  <i>1:24</i>
+                </div>
+              )}
             </div>
           </div>
         </div>
