@@ -1326,9 +1326,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
    120px-tall box next to full-bleed photo options in the same grid — a
    contained circular badge behind it reads as a deliberate icon instead of
    a leftover placeholder. */
+/* Fixed light background, not var(--paper) — these pictograms are dark
+   ink line-art on a transparent PNG, drawn assuming a light backdrop. In
+   dark mode --paper flips to near-black, so a dark icon on a dark badge
+   nearly vanishes (confirmed on-device: CPR/AED/confidence icons read as
+   blank circles). Pinning the badge itself to a light neutral keeps every
+   one of these icons legible regardless of the surrounding page theme,
+   without touching or re-exporting any of the 60 icon assets. */
 .icon-card-art-zoomable.is-icon-art {
   width: 78px; height: 78px; margin: 0 auto; border-radius: 50%;
-  background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  background: #f2f0ea; box-shadow: inset 0 0 0 1.5px rgba(28, 36, 48, 0.14);
   display: flex; align-items: center; justify-content: center; padding: 12px;
 }
 .icon-card-zoom-btn {
