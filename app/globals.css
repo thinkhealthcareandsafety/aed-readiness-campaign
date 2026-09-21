@@ -1406,7 +1406,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   background: var(--paper); color: var(--structure); border: 1.5px solid var(--line-strong);
   transition: background .25s ease, color .25s ease, border-color .25s ease, transform .2s ease;
 }
+.prepared-letter { position: relative; }
 .prepared-letter.done { background: var(--structure); border-color: var(--structure); color: var(--paper-raised); }
+/* Tick badge in the corner so the letter stays readable when done. */
+.prepared-letter.done::after {
+  content: "✓"; position: absolute; top: -6px; right: -6px;
+  width: 12px; height: 12px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff; font-size: .55rem; font-weight: 800; line-height: 1;
+  border: 1.5px solid var(--paper-raised);
+}
 .prepared-letter.current { background: var(--accent); border-color: var(--accent); color: #fff; transform: scale(1.12); }
 @media (max-width: 480px) {
   .prepared-track { margin-top: 6px; gap: 4px; }

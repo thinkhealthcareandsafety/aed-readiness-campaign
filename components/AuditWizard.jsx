@@ -589,7 +589,7 @@ export default function AuditWizard({ schema, detectedCity }) {
                     className={`prepared-letter${done ? " done" : ""}${current ? " current" : ""}`}
                     title={`${s.title}${done ? " — done" : current ? " — in progress" : ""}`}
                   >
-                    {done ? "✓" : s.letter}
+                    {s.letter}
                   </div>
                 );
               })}
