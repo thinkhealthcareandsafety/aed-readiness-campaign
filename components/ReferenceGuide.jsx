@@ -20,6 +20,10 @@ const MODEL_PHOTOS = {
     readyIndicator: "/reference/frx-status-ready.jpg",
     notReadyIndicator: "/reference/frx-status-notready.jpg",
     damage: "/reference/frx-damage.jpg",
+    child: "/reference/frx-child-key.jpg",
+    tips: {
+      child: "Infant/child key: a blue key with a pink ring",
+    },
   },
   hs1: {
     brand: "Philips HeartStart HS1",
@@ -38,17 +42,24 @@ const MODEL_PHOTOS = {
     // and dark/unlit (not ready).
     readyIndicator: "/reference/hs1-ready.jpg",
     notReadyIndicator: "/reference/hs1-notready.jpg",
+    // Drawn from Philips' own description of the cartridge — no clean photo
+    // of one exists — so the tip says it's a drawing.
+    child: "/reference/hs1-child-pads.jpg",
+    tips: {
+      child: "Infant/child pads cartridge: look for the teddy bear (drawing)",
+    },
   },
   zollPlus: {
     brand: "ZOLL AED Plus",
     serial: "/reference/zollplus-serial.jpg",
     pads: "/reference/zollplus-pads.jpg",
-    // Real photo from ZOLL's own AED Plus Administrator's Guide (Figure 8:
-    // Battery Compartment) — the AED Plus takes 10 loose lithium cells in a
-    // battery bank rather than a single labeled pack, so there's no single
-    // "expiry sticker" shot the way the Philips units have; this shows the
-    // actual compartment/cell layout instead.
-    battery: "/reference/zollplus-battery.jpg",
+    // The AED Plus takes 10 loose cells, so the date isn't on the battery:
+    // per ZOLL's battery-label instructions it's written on a "Replace
+    // batteries on or before" label stuck just below the status window.
+    // A drawing of that label (no clean photo of one exists) — it answers
+    // "where is the date" where the old cell-compartment photo
+    // (zollplus-battery.jpg) showed no date at all.
+    battery: "/reference/zollplus-battery-label.jpg",
     // Real photos of this exact unit (same lime-green AED Plus as
     // zollplus-serial/pads above) showing both the pass and fail state for
     // each question — supersedes an earlier round that reused one official
@@ -67,24 +78,76 @@ const MODEL_PHOTOS = {
     // reported as a ZOLL AED Plus.
     readyIndicator: "/reference/zollplus-ready.jpg",
     notReadyIndicator: "/reference/zollplus-notready.jpg",
+    child: "/reference/zollplus-child-pads.jpg",
+    tips: {
+      battery: "“Replace batteries on or before” label, just below the status window (drawing)",
+      child: "Pedi-padz II: a separate pack of child pads (drawing)",
+    },
   },
+  // The orange Powerheart G5 in the model picker (Cardiac Science, now
+  // ZOLL). Photos of real units from the AED inspection platform's library,
+  // except the two "not" states, which no real photo was found for:
+  // g5-pads-not-connected is a generated picture drawn from real photos of
+  // the unit, and g5-notready is the real front shot with its Rescue Ready
+  // light turned red — the colour ZOLL documents for "needs attention".
+  g5: {
+    brand: "Cardiac Science Powerheart G5",
+    serial: "/reference/g5-serial.jpg",
+    battery: "/reference/g5-battery.jpg",
+    pads: "/reference/g5-pads.jpg",
+    batteryAttached: "/reference/g5-battery-attached.jpg",
+    batteryNotAttached: "/reference/g5-battery-not-attached.jpg",
+    padsAttached: "/reference/g5-pads-connected.jpg",
+    padsNotAttached: "/reference/g5-pads-not-connected.jpg",
+    readyIndicator: "/reference/g5-ready.jpg",
+    notReadyIndicator: "/reference/g5-notready.jpg",
+    goodCondition: "/reference/g5-front.jpg",
+    child: "/reference/g5-child-pads.jpg",
+    tips: {
+      serial: "The number beside “SN” on the label on the back",
+      // The G5's battery carries its manufacture date, not an expiry date.
+      battery: "The date by the factory symbol is when it was made: it lasts 4 years from fitting",
+      pads: "The pads' date shows in the window on the lid",
+      readyIndicator: "Rescue Ready light by the handle: green is ready, red needs attention",
+      child: "Child pads pack, kept beside the AED",
+    },
+  },
+  // The yellow Lifeline (DDU-100) in the model picker. Real photos of the
+  // unit and its packs replace the manual's line drawings, which showed
+  // where parts are but never the date itself. defibtech-battery-attached
+  // and defibtech-pads-not-connected are generated pictures drawn from real
+  // photos of the unit — no real photo of either state was found.
   defibtech: {
-    brand: "Defibtech",
+    brand: "Defibtech Lifeline",
+    serial: "/reference/defibtech-serial.jpg",
     battery: "/reference/defibtech-battery.jpg",
-    // Sourced from Defibtech's own DDU-100 User Manual (the exact
-    // sub-model matching this app's existing defibtech.jpg selector
-    // thumbnail — Defibtech has several visually different sub-models, so
-    // this specific match mattered) rather than a stock photo, for the
-    // same reason as zollPlus above: an official diagram is unambiguous
-    // about which exact part is which, and only one page reused for both.
-    pads: "/reference/defibtech-pads.jpg",
-    batteryAttached: "/reference/defibtech-unit-diagram.jpg",
-    padsAttached: "/reference/defibtech-unit-diagram.jpg",
+    pads: "/reference/defibtech-pads-label.jpg",
+    batteryAttached: "/reference/defibtech-battery-attached.jpg",
+    batteryNotAttached: "/reference/defibtech-battery-not-attached.jpg",
+    padsAttached: "/reference/defibtech-pads-connected.jpg",
+    padsNotAttached: "/reference/defibtech-pads-not-connected.jpg",
+    readyIndicator: "/reference/defibtech-ready.jpg",
+    goodCondition: "/reference/defibtech-front.jpg",
+    child: "/reference/defibtech-child-pads.jpg",
+    tips: {
+      serial: "Slide the pads pack out of the back: the serial label is behind it",
+      battery: "The date beside the ⌛ on the battery label",
+      pads: "The date beside the ⌛ on the pads pack's white label",
+      readyIndicator: "The small light at the top right corner: it flashes green when ready",
+      child: "Child pads pack (DDP-200P): light blue",
+    },
   },
 };
 
 function modelsWithPhoto(models, kind) {
   return models.map((m) => MODEL_PHOTOS[m]).filter((m) => m && m[kind]);
+}
+
+// A short "where exactly to look" line for one model's photo, where the
+// photo alone isn't enough (a label hidden behind the pads pack, a battery
+// that carries its made-on date instead of an expiry date).
+function tipFor(item, kind) {
+  return item?.tips?.[kind] || null;
 }
 
 // Exposes one specific model's photo without handing callers the whole
@@ -121,6 +184,7 @@ export function ImageLightbox({ item, kind, labelKey, onClose }) {
 
   if (!item) return null;
   const caption = item[labelKey];
+  const tip = item.tip;
 
   // Portaled straight onto <body> rather than rendered in place: a `fixed`
   // element positions itself relative to any ancestor that has a `transform`
@@ -143,6 +207,7 @@ export function ImageLightbox({ item, kind, labelKey, onClose }) {
         {/* eslint-disable-next-line @next/next/no-img-element -- static reference photo, not build-time content */}
         <img src={item[kind] || item.photo || item.src || item.imageUrl} alt={`${caption} — reference photo`} />
         {caption && <div className="ref-lightbox-caption">{caption}</div>}
+        {tip && <div className="ref-lightbox-tip">{tip}</div>}
       </div>
     </div>,
     document.body
@@ -160,26 +225,36 @@ function ThumbRow({ items, kind, labelKey = "brand" }) {
     <div className="ref-inline">
       <span className="ref-inline-hint">Your reference photo</span>
       <div className="ref-inline-list">
-        {items.map((m) => (
-          <button
-            key={m[labelKey] + m[kind]}
-            type="button"
-            className="ref-inline-item"
-            onClick={() => setPreview(m)}
-          >
-            <span className="ref-inline-thumb">
-              {/* eslint-disable-next-line @next/next/no-img-element -- static reference photo, not build-time content */}
-              <img src={m[kind]} alt={`${m[labelKey]} — where to find this`} loading="lazy" />
-              <span className="ref-inline-zoom" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <circle cx="10.5" cy="10.5" r="6.5" />
-                  <path d="M20 20l-4.7-4.7" />
-                </svg>
+        {items.map((m) => {
+          const tip = m.tip || tipFor(m, kind);
+          return (
+            <button
+              key={m[labelKey] + m[kind]}
+              type="button"
+              className="ref-inline-item"
+              onClick={() => setPreview({ ...m, tip })}
+            >
+              <span className="ref-inline-thumb">
+                {/* eslint-disable-next-line @next/next/no-img-element -- static reference photo, not build-time content */}
+                <img src={m[kind]} alt={`${m[labelKey]} — where to find this`} loading="lazy" />
+                <span className="ref-inline-zoom" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <circle cx="10.5" cy="10.5" r="6.5" />
+                    <path d="M20 20l-4.7-4.7" />
+                  </svg>
+                </span>
               </span>
-            </span>
-            <span className="ref-inline-label">{m[labelKey]}</span>
-          </button>
-        ))}
+              {tip ? (
+                <span className="ref-inline-meta">
+                  <span className="ref-inline-model">{m[labelKey]}</span>
+                  <span className="ref-inline-part">{tip}</span>
+                </span>
+              ) : (
+                <span className="ref-inline-label">{m[labelKey]}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
       <ImageLightbox item={preview} kind={kind} labelKey={labelKey} onClose={() => setPreview(null)} />
     </div>
@@ -198,13 +273,15 @@ export function FieldReferencePhoto({ models, kind }) {
   return <ThumbRow items={items} kind={kind} />;
 }
 
-// Same reasoning as the model-keyed photos above: the status-light *pattern*
-// (solid or slow-blinking green = ready) is the same thing to look for
-// across brands, but the only real photo on hand is the Philips FRx panel —
-// so this is captioned as a worked example, not asserted to be this unit's
-// own brand.
+// The status light sits somewhere different on every brand (a dot by the
+// handle on a Lifeline, a big ring on a G5), so the unit's own photo is shown
+// when there is one. Only a model with no photo of its own falls back to the
+// Philips FRx panel, captioned as a worked example rather than as this unit.
 const READY_INDICATOR_PHOTO = { caption: "Example: green (ready) indicator", photo: "/reference/frx-status-ready.jpg" };
-export function ReadinessReferencePhoto() {
+export function ReadinessReferencePhoto({ model }) {
+  if (model && MODEL_PHOTOS[model]?.readyIndicator) {
+    return <FieldReferencePhoto models={[model]} kind="readyIndicator" />;
+  }
   return <ThumbRow items={[READY_INDICATOR_PHOTO]} kind="photo" labelKey="caption" />;
 }
 
@@ -224,6 +301,10 @@ export function referenceKindFor(question) {
   if (question.type === "radio" && label.includes("pads") && label.includes("connected")) return "padsAttached";
   if (question.type === "radio" && label.includes("damage")) return "damage";
   if (question.type === "radio" && label.includes("ready") && label.includes("indicator")) return "readyIndicator";
+  // "Is there a Paediatric Pad or Infant/Child Key for AED (1)?" — each
+  // brand provides for children differently (a key, a cartridge, a pack),
+  // so the unit's own child provision is shown under the answer cards.
+  if (question.type === "radio" && (label.includes("paediatric") || label.includes("child key"))) return "child";
   return null;
 }
 

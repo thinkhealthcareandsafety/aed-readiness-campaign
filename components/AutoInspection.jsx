@@ -481,7 +481,7 @@ function InspectItemCard({ task, result, onCapture, onSkip }) {
 }
 
 function ItemReferencePhoto({ itemId, model }) {
-  if (itemId === "readiness_indicator") return <ReadinessReferencePhoto />;
+  if (itemId === "readiness_indicator") return <ReadinessReferencePhoto model={model} />;
   const kind = ITEM_REFERENCE_KIND[itemId];
   if (!kind || !model) return null;
   return <FieldReferencePhoto models={[model]} kind={kind} />;

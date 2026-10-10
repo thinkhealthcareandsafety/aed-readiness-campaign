@@ -35,15 +35,18 @@ const PREPARED_LETTERS = new Set(["P", "R", "E", "A", "D"]);
 // an FRx unit, actively wrong for any other reported model. Maps each
 // "attached" reference-photo kind to its "not attached" sibling in
 // MODEL_PHOTOS (ReferenceGuide.jsx) — used for a non-FRx unit's "No"
-// answer once a model has its own real photo for that state (currently
-// zollPlus; see the resolvedOptionImage below).
+// answer once a model has its own photo for that state (every listed model
+// except the two Physio-Control units; see the resolvedOptionImage below).
 const NOT_ATTACHED_KIND = { batteryAttached: "batteryNotAttached", padsAttached: "padsNotAttached", readyIndicator: "notReadyIndicator" };
 // Brand-agnostic line icons (the seed's own pre-photo defaults) — the
 // final fallback when a model has neither a real "not attached" photo nor
 // the seeded FRx one applies. Showing the FRx-specific "not attached"
 // photo mislabeled as e.g. a Defibtech unit would be worse than a generic
 // icon, not better.
-const GENERIC_NOT_ATTACHED_ICON = { batteryAttached: "/icons/battery-bad.svg", padsAttached: "/icons/pads-unsealed.svg" };
+const GENERIC_NOT_ATTACHED_ICON = { batteryAttached: "/icons/battery-bad.svg", padsAttached: "/icons/pads-unsealed.svg", readyIndicator: "/icons/status-notready.svg" };
+// The "Yes"/"green" side of the same rule: a model with no photo of its own
+// (Physio-Control, "Other") gets a neutral icon, not the seeded FRx photo.
+const GENERIC_ATTACHED_ICON = { batteryAttached: "/icons/battery-ok.svg", padsAttached: "/icons/pads-sealed.svg", readyIndicator: "/icons/status-ready.svg" };
 
 // Only ever inserted right after the AED Status (registration) section —
 // i.e. only when the responder has already confirmed they have an AED and
@@ -1028,10 +1031,16 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
   function resolvedOptionImage(o) {
     if (isDamageField) {
       if (o.value === "yes") return photoForModel(perUnitModel, "damage") || o.imageUrl;
-      if (o.value === "no") return photoForModel(perUnitModel, "padsAttached") || o.imageUrl;
+      // A plain shot of the whole unit reads as "good condition" better
+      // than a close-up of its pads, where a model has one.
+      if (o.value === "no") return photoForModel(perUnitModel, "goodCondition") || photoForModel(perUnitModel, "padsAttached") || o.imageUrl;
     }
     if (isAttachedField && perUnitModel) {
-      if (o.value === "yes" || o.value === "green") return photoForModel(perUnitModel, refKind) || o.imageUrl;
+      if (o.value === "yes" || o.value === "green") {
+        const own = photoForModel(perUnitModel, refKind);
+        if (own) return own;
+        return perUnitModel === "frx" ? o.imageUrl : GENERIC_ATTACHED_ICON[refKind] || o.imageUrl;
+      }
       if (o.value === "no" || o.value === "red") {
         const notAttachedKind = NOT_ATTACHED_KIND[refKind];
         return photoForModel(perUnitModel, notAttachedKind) || GENERIC_NOT_ATTACHED_ICON[refKind] || o.imageUrl;
@@ -1286,6 +1295,7 @@ function QuestionBlock({ question, aiInfo, answers, setAnswer, setRadioAnswer, s
               />
             </div>
           )}
+          {refKind === "child" && <FieldReferencePhoto models={refModels} kind="child" />}
           <ImageLightbox item={zoomPreview} kind="photo" labelKey="caption" onClose={() => setZoomPreview(null)} />
         </QBlock>
       </>
