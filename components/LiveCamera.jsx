@@ -12,10 +12,10 @@ import { useEffect, useRef, useState } from "react";
 // anyone whose browser/device can't grant camera access.
 const MAX_RECORD_MS = 12_000; // long enough to catch a slow status-light blink cycle, short enough not to be tedious
 
-// A minimum, not a hard cap — the analysis prompt already accepts a single
-// confirmed flash as sufficient evidence, so this is a nudge toward footage
-// long enough to likely catch one (blinks can be up to 4-5s apart), not a
-// block on stopping early if someone genuinely wants to.
+// A recommendation, not a hard minimum: blinks can be up to ~5 s apart, and
+// only a clip at least this long and steady lets a light that never blinked
+// be called "not ready" rather than sent back for a retake (see
+// checkReadiness in lib/inspectionGemini.js).
 const RECOMMENDED_MIN_RECORD_MS = 10_000;
 
 export default function LiveCamera({ mediaType, guidance, onCapture, onCancel }) {
@@ -89,7 +89,8 @@ export default function LiveCamera({ mediaType, guidance, onCapture, onCancel })
     };
     recorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "video/webm" });
-      onCapture(blob);
+      // Filmed with the centre circle up, so the AI is told to look there.
+      onCapture(blob, { guided: true });
     };
     recorderRef.current = recorder;
     recorder.start();
@@ -127,6 +128,11 @@ export default function LiveCamera({ mediaType, guidance, onCapture, onCancel })
     <div className="live-camera">
       <div className="live-camera-frame">
         <video ref={videoRef} muted playsInline className="live-camera-video" />
+        {/* Where to keep the indicator while filming. The preview is cropped
+            evenly around the centre, so this is the centre of the recording
+            too — and the AI is told to look there (guided, in
+            lib/inspectionGemini.js). */}
+        {mediaType === "video" && ready && <div className="live-camera-target" aria-hidden="true" />}
         {!ready && <div className="live-camera-loading">Starting camera…</div>}
         {guidance && !recording && ready && <div className="live-camera-guidance">{guidance}</div>}
         {recording && (

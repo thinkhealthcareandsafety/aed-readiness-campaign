@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --no-warnings --import ./tests/resolve-js.mjs --test tests/ai-rules.test.mjs tests/ai-service.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",

@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { getChecklistItem } from "@/lib/inspectionChecklist";
-import { analyzeChecklistItem } from "@/lib/inspectionGemini";
+import { analyzeChecklistItem, DailyLimitReached } from "@/lib/inspectionGemini";
 import { checkRateLimit } from "@/lib/rateLimiter";
 
 // Same persisted-volume convention as app/api/admin/upload/route.js — see
@@ -11,8 +11,29 @@ import { checkRateLimit } from "@/lib/rateLimiter";
 import { UPLOADS_DIR, ensureUploadsDir } from "@/lib/dataDir";
 
 const MAX_FILE_BYTES = 6 * 1024 * 1024; // one photo, or one extracted video frame
-const MAX_FILES = 26; // the readiness-indicator's frame count now scales with clip length, up to 24, plus headroom
+const MAX_FILES = 26; // a readiness clip sends up to 24 frames (lib/readinessScan.js), plus headroom
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+// What the browser's scan of every frame of a readiness clip found (see
+// lib/readinessScan.js). It decides whether a blinking unit can pass, so a
+// malformed one is dropped — the clip is then judged as unscanned, which can
+// only make a pass harder, never easier.
+function parseScan(raw, frameCount) {
+  if (typeof raw !== "string" || !raw) return null;
+  let scan;
+  try {
+    scan = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const finite = (v, lo, hi) => typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi;
+  const { times, flashPositions, flashCount, duration, steadyShare } = scan || {};
+  if (!Array.isArray(times) || times.length !== frameCount || !times.every((t) => finite(t, 0, 600))) return null;
+  if (!Array.isArray(flashPositions) || !flashPositions.every((p) => Number.isInteger(p) && p >= 1 && p <= frameCount)) return null;
+  if (!Number.isInteger(flashCount) || flashCount < 0 || flashCount > 200) return null;
+  if (!finite(duration, 0, 600) || !finite(steadyShare, 0, 1)) return null;
+  return { times, flashPositions, flashCount, duration, steadyShare };
+}
 
 export async function POST(request) {
   // A burst of concurrent auto-scans is the expected happy path (this
@@ -49,10 +70,20 @@ export async function POST(request) {
   const buffers = await Promise.all(files.map(async (f) => Buffer.from(await f.arrayBuffer())));
   const media = buffers.map((buf, i) => ({ base64: buf.toString("base64"), mimeType: files[i].type }));
 
+  const isVideoItem = getChecklistItem(itemId).mediaType === "video";
+  const scan = isVideoItem ? parseScan(formData.get("scan"), files.length) : null;
+  const guided = isVideoItem && formData.get("guided") === "1";
+
   let result;
   try {
-    result = await analyzeChecklistItem(itemId, media, aedModel);
+    result = await analyzeChecklistItem(itemId, media, aedModel, { scan, guided });
   } catch (err) {
+    if (err instanceof DailyLimitReached) {
+      return NextResponse.json(
+        { error: "AI scanning is paused for today — please answer these questions manually." },
+        { status: 503 }
+      );
+    }
     const message = err instanceof Error ? err.message : "AI analysis failed";
     const timedOut = message.includes("exceeded");
     return NextResponse.json(
@@ -61,14 +92,13 @@ export async function POST(request) {
     );
   }
 
-  // Persist whichever frame Gemini itself pointed to as the evidence for
-  // its verdict (key_frame_index, only meaningful for the multi-frame video
-  // item) — falls back to the first frame for a single-photo item, or if
-  // the model left it out/returned something out of range. Previously this
-  // always saved frame 1, which for a video call could show a dark,
-  // inconclusive moment even when the actual pass/fail was correctly based
-  // on a flash caught later in the clip — a real mismatch between the
-  // audit's saved visual record and the evidence behind its own verdict.
+  // Persist the frame that is the evidence for the verdict (key_frame_index,
+  // only meaningful for the multi-frame video item: the first frame the
+  // model cited as showing the ready signal, else the one it picked) — falls
+  // back to the first frame for a single-photo item, or if the index is
+  // missing or out of range. Always saving frame 1 could show a dark,
+  // inconclusive moment even when the verdict was correctly based on a flash
+  // caught later in the clip.
   const { key_frame_index, ...publicResult } = result;
   const frameIndex =
     Number.isInteger(key_frame_index) && key_frame_index >= 1 && key_frame_index <= buffers.length

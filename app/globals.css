@@ -2378,6 +2378,12 @@ table.admin-table tr:hover td { background: var(--structure-tint); }
   background: #000;
 }
 .live-camera-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.live-camera-target {
+  position: absolute; left: 50%; top: 50%; width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), 0 0 0 9999px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
 .live-camera-loading {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: .82rem; background: rgba(0, 0, 0, 0.35);

@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { CHECKLIST_ITEMS, fieldRoleFor } from "@/lib/inspectionChecklist";
 import LiveCamera from "@/components/LiveCamera";
 import { FieldReferencePhoto, ReadinessReferencePhoto } from "@/components/ReferenceGuide";
+import { scanReadinessClip } from "@/lib/readinessScan";
+import { readinessFilmHint } from "@/lib/readinessFilmHints";
 
 const ITEM_ICON = {
   battery_attached: "/icons/battery-ok.svg",
@@ -23,17 +25,17 @@ const ITEM_REFERENCE_KIND = {
 };
 
 // On-screen reminder shown live over the camera preview, before recording
-// starts — this exact mistake (aiming at the large power button instead of
-// the small status LED) was the single biggest cause of unusable readiness
-// captures before this item was temporarily dropped from auto-inspection.
-const ITEM_VIDEO_GUIDANCE = {
-  readiness_indicator: "🔴 Point at the small status LED, not the power button. Hold steady for 10+ seconds — the blink can be several seconds apart.",
-};
+// starts, naming this unit's own indicator — aiming at the large power
+// button instead of the small status light was the single biggest cause of
+// unusable readiness captures.
+function videoGuidanceFor(itemId, model) {
+  return itemId === "readiness_indicator" ? readinessFilmHint(model) : undefined;
+}
 
-// Fixed-count sampling regardless of clip length meant a longer or
-// lower-fps recording could sample right past a brief LED flash between
-// two sample points. Scaling the count to the clip's own duration (roughly
-// one sample every 400ms) keeps sampling density consistent instead.
+// Fallback sampling for a browser that can't scan every frame (see
+// lib/readinessScan.js): evenly spaced frames, scaled to the clip's length.
+// These can fall between a blink's frames, so the server judges such a clip
+// without a scan — which can only make a pass harder, never easier.
 const MIN_VIDEO_FRAMES = 8;
 const MAX_VIDEO_FRAMES = 24;
 const TARGET_FRAME_INTERVAL_S = 0.4;
@@ -165,6 +167,15 @@ async function extractFrames(videoFile) {
       video.onloadedmetadata = resolve;
       video.onerror = () => reject(new Error("Could not read video"));
     });
+    // A browser's own recording (MediaRecorder WebM) carries no duration in
+    // its header: seeking far past the end makes the browser work it out.
+    if (!Number.isFinite(video.duration)) {
+      await new Promise((resolve) => {
+        video.ondurationchange = () => Number.isFinite(video.duration) && resolve();
+        video.currentTime = 1e101;
+        setTimeout(resolve, 3000);
+      });
+    }
 
     const [canvasW, canvasH] = constrainedSize(video.videoWidth, video.videoHeight, MAX_IMAGE_EDGE);
     const canvas = document.createElement("canvas");
@@ -172,7 +183,7 @@ async function extractFrames(videoFile) {
     canvas.height = canvasH;
     const ctx = canvas.getContext("2d");
 
-    const duration = video.duration || 0;
+    const duration = Number.isFinite(video.duration) ? video.duration : 0;
     const frameCount = Math.min(
       MAX_VIDEO_FRAMES,
       Math.max(MIN_VIDEO_FRAMES, Math.round(duration / TARGET_FRAME_INTERVAL_S))
@@ -203,10 +214,12 @@ function hasCamera() {
   return typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
 }
 
-async function uploadItem(itemId, aedModel, blobs) {
+async function uploadItem(itemId, aedModel, blobs, { scan, guided } = {}) {
   const form = new FormData();
   form.append("itemId", itemId);
   if (aedModel) form.append("aedModel", aedModel);
+  if (scan) form.append("scan", JSON.stringify(scan));
+  if (guided) form.append("guided", "1");
   blobs.forEach((blob, i) => form.append("file", blob, `${itemId}_${i}.jpg`));
   const res = await fetch("/api/inspection/analyze", { method: "POST", body: form });
   const data = await res.json().catch(() => ({}));
@@ -246,12 +259,31 @@ export default function AutoInspection({ unitCount, modelSequence, modelLabelMap
     setResults((r) => ({ ...r, [resultKey]: { ...r[resultKey], ...patch } }));
   }
 
-  async function handleCapture(task, file) {
-    setStatus(task.resultKey, { status: "analyzing" });
+  // `guided`: the clip was filmed in the live camera with its centre circle
+  // (see LiveCamera.jsx), so the indicator should be near the middle.
+  async function handleCapture(task, file, { guided = false } = {}) {
+    const isVideo = task.item.mediaType === "video";
+    setStatus(task.resultKey, { status: "analyzing", phase: isVideo ? "scanning" : "analyzing" });
     try {
-      const blobs = task.item.mediaType === "video" ? await extractFrames(file) : [await downscaleImage(file)];
+      let blobs;
+      let scan = null;
+      if (isVideo) {
+        // Every frame is scanned for the indicator's blinks first; only if
+        // this browser can't, evenly spaced frames go unscanned.
+        const scanned = await scanReadinessClip(file);
+        if (scanned) {
+          const { frames, scanned: _count, ...summary } = scanned;
+          blobs = frames;
+          scan = summary;
+        } else {
+          blobs = await extractFrames(file);
+        }
+        setStatus(task.resultKey, { phase: "analyzing" });
+      } else {
+        blobs = [await downscaleImage(file)];
+      }
       if (!blobs.length) throw new Error("Could not read that clip — please try again.");
-      const data = await uploadItem(task.item.id, task.model, blobs);
+      const data = await uploadItem(task.item.id, task.model, blobs, { scan, guided: isVideo && guided });
       // data.status is Gemini's own field (ready/fault/unclear — only
       // meaningful for the readiness-indicator item), separate from this
       // card's pending/analyzing/pass/fail/error status below. Rename it on
@@ -262,8 +294,11 @@ export default function AutoInspection({ unitCount, modelSequence, modelLabelMap
       // shouldn't silently auto-fill a safety-relevant audit field. This is
       // the actual enforcement of the confidence score the UI already
       // displayed but, until now, never acted on.
-      const lowConfidence = typeof data.confidence === "number" && data.confidence < MIN_CONFIDENCE;
-      const status = lowConfidence ? "needs_review" : data.passed ? "pass" : "fail";
+      // An "unclear" readiness clip is a retake, and its notes already say
+      // exactly what to film — shown as they are, not as a confidence issue.
+      const unclear = readinessStatus === "unclear";
+      const lowConfidence = !unclear && typeof data.confidence === "number" && data.confidence < MIN_CONFIDENCE;
+      const status = unclear || lowConfidence ? "needs_review" : data.passed ? "pass" : "fail";
       const notes = lowConfidence
         ? `Low AI confidence — please check this one yourself. (AI said: "${data.notes || "no detail given"}")`
         : data.notes;
@@ -346,7 +381,7 @@ function InspectItemCard({ task, result, onCapture, onSkip }) {
   const icon = ITEM_ICON[item.id];
   const canSkip = status === "fail" || status === "error" || status === "needs_review";
 
-  async function processCapture(blob) {
+  async function processCapture(blob, captureInfo) {
     if (item.mediaType === "image") {
       const warning = await assessImageQuality(blob);
       if (warning) {
@@ -354,12 +389,12 @@ function InspectItemCard({ task, result, onCapture, onSkip }) {
         return;
       }
     }
-    onCapture(task, blob);
+    onCapture(task, blob, captureInfo);
   }
 
-  function handleBlobCaptured(blob) {
+  function handleBlobCaptured(blob, captureInfo) {
     setShowCamera(false);
-    processCapture(blob);
+    processCapture(blob, captureInfo);
   }
 
   return (
@@ -421,7 +456,7 @@ function InspectItemCard({ task, result, onCapture, onSkip }) {
       ) : showCamera ? (
         <LiveCamera
           mediaType={item.mediaType}
-          guidance={ITEM_VIDEO_GUIDANCE[item.id]}
+          guidance={videoGuidanceFor(item.id, task.model)}
           onCapture={handleBlobCaptured}
           onCancel={() => setShowCamera(false)}
         />
@@ -453,7 +488,7 @@ function InspectItemCard({ task, result, onCapture, onSkip }) {
                 else inputRef.current?.click();
               }}
             >
-              {busy ? "Analysing…" : status === "pending" ? (item.mediaType === "video" ? "Record video" : "Take live photo") : "Retake"}
+              {busy ? (result?.phase === "scanning" ? "Checking the light…" : "Analysing…") : status === "pending" ? (item.mediaType === "video" ? "Record video" : "Take live photo") : "Retake"}
             </button>
             {hasCamera() && !useUploadFallback && (
               <button
